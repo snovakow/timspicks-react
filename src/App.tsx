@@ -50,7 +50,7 @@ const makeRows = (data: RowData[]): RowKey[] => {
     const gg = item.goals / item.gamesPlayed;
     return {
       rawOrder: index,
-      name: `${item.lastName}, ${item.firstName}`,
+      name: `${item.firstName} ${item.lastName}`,
       logoLight: getLogo(item.team, false),
       logoDark: getLogo(item.team, true),
       gg: gg,
