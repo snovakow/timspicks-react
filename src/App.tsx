@@ -6,7 +6,6 @@ import type { RowData, KeyType, RowKey, ColumnData, RequestSort, SortConfig } fr
 import playerData from './data/picks.json';
 console.log(playerData);
 
-const chances = true;
 
 type OrderKeyType = KeyType | "rawOrder" | "gg";
 
@@ -19,30 +18,36 @@ const columns: ColumnData[] = [
   { key: "bet4", title: "Hard Rock" },
 ];
 
-const rountdTo = (num: number, places: number): string => {
-  const factor = Math.pow(10, places);
-  return num.toFixed(places);
+const rountdToPercent = (num: number, places: number): string => {
+  return (num * 100).toFixed(places) + "%";
 }
 
 // Poisson distribution chance of 0 goals: e^(−μ)
 // Chance of at least one goal: 1 − e^(−μ)
 const ggChance = (x: number): string => {
   const chance = 1 - Math.exp(-x);
-  return rountdTo(chance * 100, 2) + "%";
+  return rountdToPercent(chance, 2);
 }
 
 // Implied Odds
-const betChance = (x: number): string => {
-  if (x === 0) {
-    return "-";
-  }
-  let chance;
-  if (x < 0) {
-    chance = -x / (100 - x);
+const betChance = (x: number): number => {
+  if (x === undefined) return 0;
+  if (x < 0) return -x / (100 - x);
+  else return 100 / (x + 100);
+}
+
+const betChanceRounded = (x: number): string => {
+  const chance = betChance(x);
+  if (chance === 0) return "-";
+  return rountdToPercent(chance, 2);
+}
+
+const trueOddsToAmerican = (x: number): number => {
+  if (x >= 2) {
+    return Math.round(100 * (x - 1));
   } else {
-    chance = 100 / (x + 100);
+    return Math.round(100 / (1 - x));
   }
-  return rountdTo(chance * 100, 2) + "%";
 }
 
 const makeRows = (data: RowData[]): RowKey[] => {
@@ -56,13 +61,13 @@ const makeRows = (data: RowData[]): RowKey[] => {
       gg: gg,
       ggChance: ggChance(gg),
       bet1: item.bet1,
-      betChance1: betChance(item.bet1),
+      betChance1: betChanceRounded(item.bet1),
       bet2: item.bet2,
-      betChance2: betChance(item.bet2),
+      betChance2: betChanceRounded(item.bet2),
       bet3: item.bet3,
-      betChance3: betChance(item.bet3),
+      betChance3: betChanceRounded(item.bet3),
       bet4: item.bet4,
-      betChance4: betChance(item.bet4),
+      betChance4: betChanceRounded(item.bet4),
     }
   });
 }
@@ -154,7 +159,9 @@ function App() {
   return (
     <>
       <header className='header satisfy-regular'>
+        <span></span>
         Tims Hockey Challenge Picks
+        <button className={chances ? 'chances-on' : 'chances-off'} onClick={toggleHandler}>%</button>
       </header>
       <main className='content'>
         <div className="table-container">

@@ -5,6 +5,42 @@
   text-align: center;
 }
 
+button {
+  justify-self: end;
+
+  border-radius: 8px;
+  border: 1px solid transparent;
+  font-size: 1em;
+  font-weight: 900;
+  font-family: inherit;
+  background-color: #fff;
+  cursor: pointer;
+  font-family: sans-serif;
+
+  display: inline-flex;
+  align-items: center;
+  /* Centers based on text height, ignoring descenders */
+
+  transition: border-color 0.25s;
+}
+
+button:hover {
+  border-color: #646cff;
+}
+
+.chances-on {
+  color: #000;
+}
+
+.chances-off {
+  color: #ddd;
+}
+
+/* button:focus,
+button:focus-visible {
+  outline: 4px auto -webkit-focus-ring-color;
+} */
+
 .table-container {
   margin-top: 2rem;
   /* overflow-x: auto; */
@@ -23,19 +59,19 @@ th {
   /* color: #fff; */
 }
 
-.header-pad {
+.theader-pad {
   visibility: hidden;
 }
 
-.header-title {
+.theader-title {
   width: 100%;
 }
 
-.header-sort {
+.theader-sort {
   opacity: 0.8;
 }
 
-.header-sort-hidden {
+.theader-sort-hidden {
   opacity: 0.1;
 }
 
