@@ -8,7 +8,6 @@ type RowKeyString = Record<KeyString, string>
     & Record<"gg", number>
     & Record<"logoLight", string>
     & Record<"logoDark", string>
-    & Record<"rawOrder", number>
     & Record<"ggChance", string>
     & Record<"betChance1", string>
     & Record<"betChance2", string>
@@ -58,9 +57,9 @@ export default function Table(props: {
                             <th key={item.key}
                                 onClick={() => requestSort(item.key)}>
                                 <span className='cell-container'>
-                                    <span className='header-pad'>▲</span>
-                                    <span className='header-title'>{item.title}</span>
-                                    <span className={sortConfig?.keyOrder[0] === item.key ? 'header-sort' : 'header-sort-hidden'}>▲</span>
+                                    <span className='theader-pad'>▲</span>
+                                    <span className='theader-title'>{item.title}</span>
+                                    <span className={sortConfig?.keyOrder[0] === item.key ? 'theader-sort' : 'theader-sort-hidden'}>▲</span>
                                 </span>
                             </th>
                         ))
