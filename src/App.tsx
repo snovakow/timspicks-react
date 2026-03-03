@@ -3,9 +3,9 @@ import './App.css';
 import { getLogo } from './components/logo';
 import Table from './components/Table';
 import type { RowData, KeyType, RowKey, ColumnData, RequestSort, SortConfig } from './components/Table';
+import type { DataDraftKings, DataTimsHelper } from './data/Data';
 import playerData from './data/helper.json';
 import playerOdds from './data/fanduel.json';
-import type { DataDraftKings, DataTimsHelper } from './data/Data';
 
 
 
@@ -22,8 +22,6 @@ async function loadAndParseJSON(url: string, complete: (data: any) => void) {
     console.error("Error loading or parsing JSON:", error);
   }
 }
-
-type OrderKeyType = KeyType | "gg";
 
 const columns: ColumnData[] = [
   { key: "name", title: "Player" },
@@ -289,7 +287,6 @@ function App() {
       const max2 = betChance(max2row.bet1);
       const max3 = betChance(max3row.bet1);
       const winningChance = 1 - (1 - max1) * (1 - max2) * (1 - max3);
-      console.log("---");
       console.log("Any (70-74):", rountdToPercent(winningChance, 3));
       console.log("Avg (33-38):", rountdToPercent((max1 + max2 + max3) / 3, 3));
       console.log("All (03-04):", rountdToPercent(max1 * max2 * max3, 3));
@@ -298,7 +295,6 @@ function App() {
       console.log(max1row.name);
       console.log(max2row.name);
       console.log(max3row.name);
-      console.log("---");
     };
     window.addEventListener("DraftKings", handleChange);
     return () => window.removeEventListener('DraftKings', handleChange);
