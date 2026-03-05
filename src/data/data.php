@@ -43,9 +43,11 @@ if ($response === false) {
 // 4. Close the cURL session
 // curl_close($ch);
 
-if (file_put_contents('./helper.json', $response) === false) {
+$local_file = './helper.json';
+if (file_put_contents($local_file, $response) === false) {
     die('Error saving local JSON file.');
 }
+echo "<br>Data has been written to $local_file.";
 
 
 
@@ -78,9 +80,11 @@ if ($response === false) {
 // 4. Close the cURL session
 // curl_close($ch);
 
-if (file_put_contents('./draftkings.json', $response) === false) {
+$local_file = './draftkings.json';
+if (file_put_contents($local_file, $response) === false) {
     die('Error saving local JSON file.');
 }
+echo "<br>Data has been written to $local_file.";
 
 
 
@@ -124,9 +128,11 @@ if ($response === false) {
     echo 'cURL Error: ' . curl_error($ch);
 }
 
-if (file_put_contents('./fanduel.json', $response) === false) {
+$local_file = './fanduel.json';
+if (file_put_contents($local_file, $response) === false) {
     die('Error saving local JSON file.');
 }
+echo "<br>Data has been written to $local_file.";
 
 
 
@@ -147,13 +153,6 @@ if ($json_data === false) {
     die('Error fetching remote JSON file.');
 }
 
-// Optionally, save the data to a local file on your server
-if (file_put_contents($local_file, $json_data) === false) {
-    die('Error saving local JSON file.');
-}
-
-echo "JSON file downloaded and saved as $local_file <br><br>";
-
 // To immediately use the JSON data within your PHP script, decode it into a PHP array or object
 $data_array = json_decode($json_data, false); // true for an associative array
 // var_dump($data_array->paging->totalPages); // Output the decoded data for verification
@@ -164,23 +163,15 @@ if (json_last_error() !== JSON_ERROR_NONE) {
 $items = [$data_array->items];
 
 $pages = $data_array->paging->totalPages;
+echo "<br>{$pages} pages<br>";
 for ($i = 2; $i <= $pages; $i++) {
     $remote_url = $remote_url_base . $i;
     $json_data = file_get_contents($remote_url); // Append page number to the URL
-
-    echo "{$remote_url}<br/>";
 
     if ($json_data === false) {
         die('Error fetching remote JSON file.');
     }
 
-    $local_file = "{$local_file_base}{$i}{$local_file_ext}"; // Update local file name for the current page
-    // Optionally, save the data to a local file on your server
-    if (file_put_contents($local_file, $json_data) === false) {
-        die('Error saving local JSON file.');
-    }
-
-    echo "JSON file downloaded and saved as $local_file <br/><br>";
     $data_array = json_decode($json_data, false); // true for an associative array
     if (json_last_error() !== JSON_ERROR_NONE) {
         die('Error decoding JSON: ' . json_last_error_msg());
@@ -199,7 +190,7 @@ $local_file = './betrivers.json'; // Update local file name for the current page
 
 // 3. Write the JSON string to the file and handle errors
 if (file_put_contents($local_file, $json_string, LOCK_EX) !== false) {
-    echo "Data has been written to $local_file.";
+    echo "<br>Data has been merged and written to $local_file.";
 } else {
     echo "Error occurred while writing to $local_file.";
 }
