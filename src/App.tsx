@@ -262,9 +262,17 @@ if (directLoad) {
 const processOddsFanDuel = () => {
   const map = new Map<string, number>();
 
-  for (const market of Object.values(playerOddsFanDuel.attachments.markets)) {
+  if (!('attachments' in playerOddsFanDuel)) return;
+  const attachments = playerOddsFanDuel.attachments;
+  if (!(typeof attachments === 'object' && attachments !== null)) return;
+  if (!('markets' in attachments)) return;
+  const markets = attachments.markets;
+  if (!(typeof markets === 'object' && markets !== null)) return;
+
+  for (const market of Object.values(markets)) {
     if (market.marketType !== 'ANY_TIME_GOAL_SCORER') continue;
     for (const runner of market.runners) {
+      if (!('winRunnerOdds' in runner)) return;
       const num = runner.winRunnerOdds.trueOdds.fractionalOdds.numerator;
       const den = runner.winRunnerOdds.trueOdds.fractionalOdds.denominator;
       const trueOdds = num / den + 1;
