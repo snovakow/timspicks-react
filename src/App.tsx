@@ -108,6 +108,7 @@ const betChanceRounded = (x: number): string => {
 }
 
 const trueOddsToAmerican = (x: number): number => {
+  if (x === 0) return 0;
   if (x >= 2) {
     return Math.round(100 * (x - 1));
   } else {
