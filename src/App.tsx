@@ -373,20 +373,23 @@ const logStats = () => {
   const max1c = betChance(max1crow[0].bet3);
   const max2c = betChance(max2crow[0].bet3);
   const max3c = betChance(max3crow[0].bet3);
-  console.log("Any (70-74) 79.1:   ",
+  console.log("Any:",
     "DraftKings: " + rountdToPercent(1 - (1 - max1a) * (1 - max2a) * (1 - max3a), 3),
     "FanDuel: " + rountdToPercent(1 - (1 - max1b) * (1 - max2b) * (1 - max3b), 3),
     "BetRivers: " + rountdToPercent(1 - (1 - max1c) * (1 - max2c) * (1 - max3c), 3),
+    "(70-74) 79.1"
   );
-  console.log("Avg (33-36) 38-39.7:",
+  console.log("Avg:",
     "DraftKings: " + rountdToPercent((max1a + max2a + max3a) / 3, 3),
     "FanDuel: " + rountdToPercent((max1b + max2b + max3b) / 3, 3),
     "BetRivers: " + rountdToPercent((max1c + max2c + max3c) / 3, 3),
+    "(33-36) 38-39.7"
   );
-  console.log("All (3-4) 5.5:      ",
+  console.log("All:",
     "DraftKings:  " + rountdToPercent(max1a * max2a * max3a, 3),
     "FanDuel:  " + rountdToPercent(max1b * max2b * max3b, 3),
     "BetRivers:  " + rountdToPercent(max1c * max2c * max3c, 3),
+    "(3-4) 5.5"
   );
 
   const printRow = (header: string, maxarow: RowKey[], maxbrow: RowKey[], maxcrow: RowKey[]) => {
