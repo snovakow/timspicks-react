@@ -14,25 +14,30 @@ const directLoad = true;
 const nameMap = new Map<string, string>();
 nameMap.set("Freddy Gaudreau", "Frederick Gaudreau");
 nameMap.set("Joshua Norris", "Josh Norris");
+nameMap.set("Michael Matheson", "Mike Matheson"); // DraftKings, FanDuel
+nameMap.set("Nicholas Suzuki", "Nick Suzuki");
+nameMap.set("Sebastian Aho", "Sebastian Aho (CAR)"); // FanDuel, BetRivers
 
 nameMap.set("Alex Kerfoot", "Alexander Kerfoot"); // DraftKings, FanDuel, BetRivers Unknown
-nameMap.set("Alexei Toropchenko", "Alexey Toropchenko"); // Alexey in DraftKings and FanDuel
-nameMap.set("Jake Middleton", "Jacob Middleton"); // Unknown
+nameMap.set("Alexei Toropchenko", "Alexey Toropchenko"); // DraftKings, FanDuel, BetRivers Unknown
 nameMap.set("Martin Fehérváry", "Martin Fehervary"); // Unknown
-nameMap.set("Nicholas Suzuki", "Nick Suzuki"); // Unknown
-nameMap.set("Sebastian Aho", "Sebastian Aho (CAR)"); // BetRivers and FanDuel
 
 const nameMap1 = new Map<string, string>(nameMap);
 const nameMap2 = new Map<string, string>(nameMap);
 const nameMap3 = new Map<string, string>(nameMap);
 
 nameMap1.set("Tim Stützle", "Tim Stuetzle");
+nameMap1.set("Mitchell Marner", "Mitch Marner");
 
 nameMap2.set("Elias Pettersson", "Elias Pettersson #40");
 
 nameMap3.set("Artem Zub", "Artyom Zub");
 nameMap3.set("Elias Pettersson", "Elias Pettersson (1998)");
 nameMap3.set("J.J. Moser", "Janis Jérôme Moser");
+nameMap3.set("Jake Middleton", "Jacob Middleton");
+nameMap3.set("Ondrej Palat", "Ondrej Palát");
+nameMap3.set("Vasily Podkolzin", "Vasili Podkolzin");
+nameMap3.set("Matt Boldy", "Matthew Boldy");
 
 async function loadAndParseXML(url: string, complete: (data: RowKey[]) => void) {
   try {
