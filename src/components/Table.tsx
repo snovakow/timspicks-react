@@ -1,4 +1,4 @@
-type KeyNumber = "gg" | "bet1" | "bet2" | "bet3";
+type KeyNumber = "gg" | "bet1" | "bet2" | "bet3" | "bet5v5";
 type RowKeyNumber = Record<KeyNumber, number>;
 
 type KeyString = "name";
@@ -10,6 +10,7 @@ type RowKeyString = Record<KeyString, string>
     & Record<"betChance1", string>
     & Record<"betChance2", string>
     & Record<"betChance3", string>
+    & Record<"betChance5v5", string>
 
 export type KeyType = KeyString | KeyNumber;
 export type RowKey = RowKeyString & RowKeyNumber;
@@ -65,6 +66,7 @@ export default function Table(props: {
                         <td>{chances ? row.betChance1 : (row.bet1 || "-")}</td>
                         <td>{chances ? row.betChance2 : (row.bet2 || "-")}</td>
                         <td>{chances ? row.betChance3 : (row.bet3 || "-")}</td>
+                        <td>{chances ? row.betChance5v5 : (row.bet5v5 || "-")}</td>
                     </tr>
                 ))}
             </tbody>

@@ -8,6 +8,7 @@ import playerData from './data/helper.json';
 import playerOddsDraftKings from './data/draftkings.json';
 import playerOddsFanDuel from './data/fanduel.json';
 import playerOddsBetRivers from './data/betrivers.json';
+import { table_1_data as hockey5v5_1, table_2_data as hockey5v5_2, table_3_data as hockey5v5_3 } from './data/5v5hockey.ts';
 
 const directLoad = true;
 
@@ -37,7 +38,11 @@ nameMap3.set("J.J. Moser", "Janis Jérôme Moser");
 nameMap3.set("Jake Middleton", "Jacob Middleton");
 nameMap3.set("Ondrej Palat", "Ondrej Palát");
 nameMap3.set("Vasily Podkolzin", "Vasili Podkolzin");
-nameMap3.set("Matt Boldy", "Matthew Boldy");
+
+const nameMap4 = new Map<string, string>(nameMap);
+nameMap4.set("Olli Maatta", "Olli Määttä");
+nameMap4.set("Matty Beniers", "Matthew Beniers");
+nameMap4.set("Tim Stützle", "Tim Stutzle");
 
 async function loadAndParseXML(url: string, complete: (data: RowKey[]) => void) {
   try {
@@ -81,6 +86,7 @@ const columns: ColumnData[] = [
   { key: "bet1", title: "DraftKings" },
   { key: "bet2", title: "FanDuel" },
   { key: "bet3", title: "BetRivers" },
+  { key: "bet5v5", title: "5v5Hockey" },
 ];
 
 const rountdToPercent = (num: number, places: number): string => {
@@ -118,7 +124,7 @@ const trueOddsToAmerican = (x: number): number => {
 
 const makeRows = (data: DataTimsHelper[]): RowKey[] => {
   return data.map((item: DataTimsHelper): RowKey => {
-    const gg = item.goals / item.gamesPlayed;
+    const gg = item.gamesPlayed > 0 ? item.goals / item.gamesPlayed : 0;
     return {
       name: `${item.firstName} ${item.lastName}`,
       logoLight: getLogo(item.team as Team, false),
@@ -131,6 +137,8 @@ const makeRows = (data: DataTimsHelper[]): RowKey[] => {
       betChance2: "-",
       bet3: 0,
       betChance3: "-",
+      bet5v5: 0,
+      betChance5v5: "-",
     }
   });
 }
@@ -149,7 +157,7 @@ const sortFunction = (sortConfig: SortConfig) => {
         if (bVal === 0) return -1;
 
         if (aVal !== bVal) {
-          if (key === 'gg') return bVal - aVal;
+          if (key === 'gg' || key === 'bet5v5') return bVal - aVal;
           else return aVal - bVal;
         }
       }
@@ -191,8 +199,8 @@ const betOddsFromMap = (row: RowKey, map: Map<string, number>, buMap: Map<string
   }
   return trueOdds;
 }
-type betKeys = "bet1" | "bet2" | "bet3";
-type betChanceKey = "betChance1" | "betChance2" | "betChance3";
+type betKeys = "bet1" | "bet2" | "bet3" | "bet5v5";
+type betChanceKey = "betChance1" | "betChance2" | "betChance3" | "betChance5v5";
 const assignOdds = (row: RowKey, trueOdds: number, betKey: betKeys, betChanceKey: betChanceKey): void => {
   const odds = trueOddsToAmerican(trueOdds);
   row[betKey] = odds;
@@ -332,6 +340,25 @@ const processOddsBetRivers = () => {
   console.log("BetRivers", err);
 }
 processOddsBetRivers();
+
+const processOdds5v5Hockey = () => {
+  const map1 = new Map<string, number>();
+  for (const item of [...hockey5v5_1, ...hockey5v5_2, ...hockey5v5_3]) {
+    map1.set(item.player_name, item.projection_goals); // item.predicted_probability
+  }
+
+  const err: string[] = [];
+  for (const row of [...table1Rows, ...table2Rows, ...table3Rows]) {
+    const odds = betOddsFromMap(row, map1, nameMap4);
+    if (odds === undefined) err.push(row.name);
+    else {
+      row.bet5v5 = odds;
+      row.betChance5v5 = ggChance(odds);
+    }
+  }
+  if (err.length > 0) console.log("5v5Hockey", err);
+}
+processOdds5v5Hockey();
 
 const logStats = () => {
   const processRow = (key: 'bet1' | 'bet2' | 'bet3', rows: RowKey[]): RowKey[] | null => {
