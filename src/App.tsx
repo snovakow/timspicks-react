@@ -13,30 +13,39 @@ import { table_1_data as hockey5v5_1, table_2_data as hockey5v5_2, table_3_data 
 const directLoad = true;
 
 const nameMap = new Map<string, string>();
+nameMap.set("Alex Wennberg", "Alexander Wennberg"); // DraftKings, BetRivers
+nameMap.set("Alexis Lafrenière", "Alexis Lafreniere"); // DraftKings, FanDuel
 nameMap.set("Freddy Gaudreau", "Frederick Gaudreau");
 nameMap.set("Joshua Norris", "Josh Norris");
+nameMap.set("Martin Fehérváry", "Martin Fehervary");
 nameMap.set("Michael Matheson", "Mike Matheson"); // DraftKings, FanDuel
 nameMap.set("Nicholas Suzuki", "Nick Suzuki");
 nameMap.set("Sebastian Aho", "Sebastian Aho (CAR)"); // FanDuel, BetRivers
 
 nameMap.set("Alex Kerfoot", "Alexander Kerfoot"); // DraftKings, FanDuel, BetRivers Unknown
 nameMap.set("Alexei Toropchenko", "Alexey Toropchenko"); // DraftKings, FanDuel, BetRivers Unknown
-nameMap.set("Martin Fehérváry", "Martin Fehervary"); // Unknown
 
 const nameMap1 = new Map<string, string>(nameMap);
 const nameMap2 = new Map<string, string>(nameMap);
 const nameMap3 = new Map<string, string>(nameMap);
 
-nameMap1.set("Tim Stützle", "Tim Stuetzle");
+nameMap1.set("Axel Sandin-Pellikka", "Axel Sandin Pellikka");
 nameMap1.set("Mitchell Marner", "Mitch Marner");
+nameMap1.set("Tim Stützle", "Tim Stuetzle");
 
 nameMap2.set("Elias Pettersson", "Elias Pettersson #40");
 
+nameMap3.set("Aliaksei Protas", "Alexei Protas");
 nameMap3.set("Artem Zub", "Artyom Zub");
+nameMap3.set("Dmitry Orlov", "Dimitri Orlov");
 nameMap3.set("Elias Pettersson", "Elias Pettersson (1998)");
 nameMap3.set("J.J. Moser", "Janis Jérôme Moser");
+nameMap3.set("J.T. Compher", "JT Compher");
 nameMap3.set("Jake Middleton", "Jacob Middleton");
+nameMap3.set("Matt Boldy", "Matthew Boldy");
 nameMap3.set("Ondrej Palat", "Ondrej Palát");
+nameMap3.set("Shea Theodore", "Shea Théodore");
+nameMap3.set("Teuvo Teravainen", "Teuvo Teräväinen");
 nameMap3.set("Vasily Podkolzin", "Vasili Podkolzin");
 
 const nameMap4 = new Map<string, string>(nameMap);
