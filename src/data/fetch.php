@@ -12,35 +12,23 @@ if ($live && $secure) {
     $csrf_token = $_SESSION['csrf_token'];
     unset($_SESSION['csrf_token']);
 
-    // header('HTTP/1.1 500 Internal Server Error');
-
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
         die();
     }
 
-    // Read the raw POST data from the input stream
     $json_data = file_get_contents('php://input');
 
-    // Decode the JSON data into a PHP associative array
     $data = json_decode($json_data, true);
 
     if (!isset($data['code']) || !isset($data['name'])) {
-        // CSRF token validation failed, stop the request and handle the error
         die();
     }
 
     if (!hash_equals($csrf_token, $data['csrf_token'])) {
-        // CSRF token validation failed, stop the request and handle the error
-        die('Invalid CSRF token. Request aborted.');
+        die();
     }
 
-    // If the token is valid, process the form data safely
-    // ... continue processing form data ...
-
-    // Optional: Unset the token after a single use for added security (token rotation)
-
     if (!hash_equals('snovakow', $data['name']) || !hash_equals('sept2376', $data['code'])) {
-        // CSRF token validation failed, stop the request and handle the error
         die();
     }
 }
@@ -273,7 +261,7 @@ if ($live) {
     $data = str_replace('const table_2_data = ', 'export const table_2_data = ', $data);
     $data = str_replace('const table_3_data = ', 'export const table_3_data = ', $data);
 
-    $local_file = './5v5hockey.js';
+    $local_file = './5v5hockey.ts';
     if (file_put_contents($local_file, $data, LOCK_EX) !== false) {
         echo "<br>Data has been written to $local_file.";
     } else {
