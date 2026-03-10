@@ -181,18 +181,15 @@ const assignOdds = (row: RowKey, trueOdds: number, betKey: betKeys, betChanceKey
 }
 
 const processJSON = (json: any) => {
-  const data: DataDraftKings[] = json.selections;
   const map = new Map<string, number>();
 
   // const arr = [];
-  for (const selection of data) {
-    const label = selection.participants[0].seoIdentifier;
-    const trueOdds = selection.trueOdds;
+  for (const item of json) {
+    const label = item.name;
+    const trueOdds = item.odds;
 
     // const participant = selection.participants[0];
     // arr.push({ label, trueOdds, seoIdentifier: participant.seoIdentifier });
-    const has = map.has(label);
-    if (has) console.error("ALREADY HAS", label);
     map.set(label, trueOdds);
   }
   // arr.sort((a, b) => { return a.label.localeCompare(b.label); });
@@ -216,55 +213,15 @@ const processJSON = (json: any) => {
   }
   if (err.length > 0) console.log("DraftKings", err);
 }
-async function loadAndParseJSON(url: string, complete: (data: any) => void, init?: RequestInit) {
-  try {
-    const response = await fetch(url, init);
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const json = await response.json();
-    complete(json);
-  } catch (error) {
-    console.error("Error loading or parsing JSON:", error);
-  }
-}
-// 2026 2 4 2200
-// const d = new Date(Date.UTC(2026, 2, 4, 22, 0));
-// console.log(d.toLocaleString());
-if (directLoad) {
-  processJSON(playerOddsDraftKings);
-} else {
-  const url = "https://sportsbook-nash.draftkings.com/sites/CA-ON-SB/api/sportscontent/controldata/league/leagueSubcategory/v1/markets?isBatchable=false&templateVars=42133%2C13809&eventsQuery=%24filter%3DleagueId%20eq%20%2742133%27%20AND%20clientMetadata%2FSubcategories%2Fany%28s%3A%20s%2FId%20eq%20%2713809%27%29&marketsQuery=%24filter%3DclientMetadata%2FsubCategoryId%20eq%20%2713809%27%20AND%20tags%2Fall%28t%3A%20t%20ne%20%27SportcastBetBuilder%27%29&include=Events&entity=events";
-  loadAndParseJSON(url, (json: any) => {
-    processJSON(json);
-    const myCustomEvent = new Event("DraftKings", {
-      bubbles: false,
-      cancelable: true,
-    });
-    window.dispatchEvent(myCustomEvent);
-  });
-}
+processJSON(playerOddsDraftKings);
 
 const processOddsFanDuel = () => {
   const map = new Map<string, number>();
 
-  if (!('attachments' in playerOddsFanDuel)) return;
-  const attachments = playerOddsFanDuel.attachments;
-  if (!(typeof attachments === 'object' && attachments !== null)) return;
-  if (!('markets' in attachments)) return;
-  const markets = attachments.markets;
-  if (!(typeof markets === 'object' && markets !== null)) return;
-
-  for (const market of Object.values(markets)) {
-    if (market.marketType !== 'ANY_TIME_GOAL_SCORER') continue;
-    for (const runner of market.runners) {
-      if (!('winRunnerOdds' in runner)) return;
-      const num = runner.winRunnerOdds.trueOdds.fractionalOdds.numerator;
-      const den = runner.winRunnerOdds.trueOdds.fractionalOdds.denominator;
-      const trueOdds = num / den + 1;
-      map.set(runner.runnerName, trueOdds);
-    }
+  for (const item of playerOddsFanDuel) {
+    const label = item.name;
+    const trueOdds = item.odds;
+    map.set(label, trueOdds);
   }
 
   const err: string[] = [];
@@ -290,8 +247,9 @@ processOddsFanDuel();
 const processOddsBetRivers = () => {
   const map = new Map<string, number>();
   for (const item of playerOddsBetRivers) {
-    const outcome = item.outcomes[0];
-    map.set(item.playerInfo.name, outcome.odds);
+    const label = item.name;
+    const trueOdds = item.odds;
+    map.set(label, trueOdds);
   }
 
   const err: string[] = [];
@@ -329,7 +287,7 @@ const processOdds5v5Hockey = () => {
       row.betChance5v5 = ggChance(odds);
     }
   }
-  if (err.length > 0) console.log("5v5Hockey", err);
+  // if (err.length > 0) console.log("5v5Hockey", err);
 }
 processOdds5v5Hockey();
 
@@ -404,6 +362,16 @@ const logStats = () => {
     "(3-4) 5.5 7.259"
   );
 
+  const isSameArray = (arr1: string[], arr2: string[]): boolean => {
+    if (arr1.length !== arr2.length) return false;
+    const set1 = new Set(arr1);
+    const set2 = new Set(arr2);
+    if (set1.size !== set2.size) return false;
+    for (const item of set1) {
+      if (!set2.has(item)) return false;
+    }
+    return true;
+  }
   const addPicks = (pick: Map<string, string[]>, rows: RowKey[], title: string): void => {
     for (const row of rows) {
       const name = row.name;
@@ -418,7 +386,24 @@ const logStats = () => {
     addPicks(pick, max1row, allOdds[0]);
     addPicks(pick, max2row, allOdds[1]);
     addPicks(pick, max3row, allOdds[2]);
-    for (const [name, odds] of pick.entries()) {
+
+    // Merge player names with the same odds sources
+    const entries: [string, string[]][] = [...pick.entries()];
+    for (let i = entries.length - 1; i >= 0; i--) {
+      const [name_i, odds_i] = entries[i];
+      for (let j = 0; j < i; j++) {
+        const [name_j, odds_j] = entries[j];
+        if (isSameArray(odds_i, odds_j)) {
+          // Merge i into j, and delete i
+          entries.splice(i, 1);
+          const mergedName = `${name_j}, ${name_i}`;
+          entries[j] = [mergedName, odds_j];
+          break;
+        }
+      }
+    }
+
+    for (const [name, odds] of entries) {
       if (odds.length === allOdds.length) console.log(`${header}: ${name}`);
       else console.log(`${header}: ${name} (${odds.join(", ")})`);
     }
@@ -427,7 +412,7 @@ const logStats = () => {
   printRow("2", max1_2row, max2_2row, max3_2row);
   printRow("3", max1_3row, max2_3row, max3_3row);
 }
-  logStats();
+logStats();
 
 function App() {
 
@@ -442,13 +427,13 @@ function App() {
   });
 
   // Table data and sorting - regenerate when theme changes
-  const [rows1, setRows1] = useState(table1Rows);
+  const [rows1, _setRows1] = useState(table1Rows);
   const sortedRows1 = [...rows1];
 
-  const [rows2, setRows2] = useState(table2Rows);
+  const [rows2, _setRows2] = useState(table2Rows);
   const sortedRows2 = [...rows2];
 
-  const [rows3, setRows3] = useState(table3Rows);
+  const [rows3, _setRows3] = useState(table3Rows);
   const sortedRows3 = [...rows3];
 
   // Update theme when system preference changes

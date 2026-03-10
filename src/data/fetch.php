@@ -1,6 +1,6 @@
 <?php
 $live = true;
-$secure = true;
+$secure = false;
 
 if ($live && $secure) {
     session_start();
@@ -36,6 +36,10 @@ if ($live && $secure) {
 echo '<h1>Data Downloader</h1>';
 
 $ch = curl_init();
+
+$timezone = new DateTimeZone('America/New_York');
+$endOfDay = new DateTime('tomorrow midnight', $timezone);
+$endOfDay = $endOfDay->getTimestamp();
 
 /*
 
@@ -99,25 +103,28 @@ if ($live) {
 
     curl_reset($ch);
 
-    // 2. Set options
-    curl_setopt($ch, CURLOPT_URL, $draftkings); // Set the URL
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true); // Return the response as a string instead of outputting it directly
+    curl_setopt($ch, CURLOPT_URL, $draftkings);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 
-    // 3. Execute the cURL request
     $response = curl_exec($ch);
 
-    // Check for errors
-    if ($response === false) {
-        echo 'cURL Error: ' . curl_error($ch);
+    if ($response === false) die();
+
+    $data = json_decode($response, false);
+    $data = $data->selections;
+    $map = [];
+
+    foreach ($data as $selection) {
+        $map[] = [
+            "name" => $selection->participants[0]->seoIdentifier,
+            "odds" => $selection->trueOdds
+        ];
     }
 
-    // 4. Close the cURL session
-    // curl_close($ch);
-
+    $json_string = json_encode($map, JSON_UNESCAPED_UNICODE);
     $local_file = './draftkings.json';
-    if (file_put_contents($local_file, $response) === false) {
-        die('Error saving local JSON file.');
-    }
+    if (file_put_contents($local_file, $json_string) === false) die();
+
     echo "<br>Data has been written to $local_file.";
 }
 
@@ -134,7 +141,6 @@ if ($live) {
 
     curl_reset($ch);
 
-    // 2. Set options
     curl_setopt($ch, CURLOPT_URL, $fanduel);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'GET');
@@ -157,18 +163,39 @@ if ($live) {
         'x-sportsbook-region: ON',
     ]);
 
-    // 3. Execute the cURL request
     $response = curl_exec($ch);
 
-    // Check for errors
-    if ($response === false) {
-        echo 'cURL Error: ' . curl_error($ch);
+    if ($response === false) die();
+
+    $data = json_decode($response, false);
+    $data = $data->attachments;
+    $data = $data->markets;
+    $map = [];
+    foreach ($data as $market) {
+        if ($market->marketType !== 'ANY_TIME_GOAL_SCORER') continue;
+
+        $closingTime = DateTime::createFromFormat('Y-m-d\TH:i:s.ue', $market->marketTime);
+        $closingTime = $closingTime->getTimestamp();
+        if ($closingTime > $endOfDay) continue;
+
+        foreach ($market->runners as $runner) {
+            $num = $runner->winRunnerOdds->trueOdds->fractionalOdds->numerator;
+            $den = $runner->winRunnerOdds->trueOdds->fractionalOdds->denominator;
+            $trueOdds = $num / $den + 1;
+
+            $map[] = [
+                "name" => $runner->runnerName,
+                "odds" => $trueOdds
+            ];
+        }
     }
 
+    $json_string = json_encode($map, JSON_UNESCAPED_UNICODE);
     $local_file = './fanduel.json';
-    if (file_put_contents($local_file, $response) === false) {
-        die('Error saving local JSON file.');
-    }
+    if (file_put_contents($local_file, $json_string) === false) die();
+
+    if (file_put_contents('./fanduel2.json', $response) === false) die();
+
     echo "<br>Data has been written to $local_file.";
 }
 
@@ -181,56 +208,54 @@ if ($live) {
     echo '<h2>BetRivers</h2>';
     $remote_url_base = 'https://on.betrivers.ca/api/service/sportsbook/offering/propcentral/offers?groupId=1000093657&marketCategory=TO_SCORE&pageSize=20&cageCode=249&t=' . time() . '&pageNr=';
 
-    // Fetch the remote JSON data as a string
     $remote_url = $remote_url_base . '1';
     echo "{$remote_url}<br>";
-    $json_data = file_get_contents($remote_url); // Append page number to the URL
+    $json_data = file_get_contents($remote_url);
 
-    if ($json_data === false) {
-        die('Error fetching remote JSON file.');
+    if ($json_data === false) die();
+
+    $data_array = json_decode($json_data, false);
+    if (json_last_error() !== JSON_ERROR_NONE) die();
+
+    $map = [];
+    foreach ($data_array->items as $item) {
+        $closingTime = DateTime::createFromFormat('Y-m-d\TH:i:s.ue', $item->closingTime);
+        $closingTime = $closingTime->getTimestamp();
+
+        $map[] = [
+            "name" => $item->playerInfo->name,
+            "odds" => $item->outcomes[0]->odds
+        ];
     }
-
-    // To immediately use the JSON data within your PHP script, decode it into a PHP array or object
-    $data_array = json_decode($json_data, false); // true for an associative array
-    // var_dump($data_array->paging->totalPages); // Output the decoded data for verification
-    if (json_last_error() !== JSON_ERROR_NONE) {
-        die('Error decoding JSON: ' . json_last_error_msg());
-    }
-
-    $items = [$data_array->items];
 
     $pages = $data_array->paging->totalPages;
     echo "<br>{$pages} pages<br>";
     for ($i = 2; $i <= $pages; $i++) {
         $remote_url = $remote_url_base . $i;
-        $json_data = file_get_contents($remote_url); // Append page number to the URL
+        $json_data = file_get_contents($remote_url);
 
-        if ($json_data === false) {
-            die('Error fetching remote JSON file.');
+        if ($json_data === false) die();
+
+        $data_array = json_decode($json_data, false);
+        if (json_last_error() !== JSON_ERROR_NONE) die('Error decoding JSON: ' . json_last_error_msg());
+
+        foreach ($data_array->items as $item) {
+            $closingTime = DateTime::createFromFormat('Y-m-d\TH:i:s.ue', $item->closingTime);
+            $closingTime = $closingTime->getTimestamp();
+
+            $map[] = [
+                "name" => $item->playerInfo->name,
+                "odds" => $item->outcomes[0]->odds
+            ];
         }
-
-        $data_array = json_decode($json_data, false); // true for an associative array
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            die('Error decoding JSON: ' . json_last_error_msg());
-        }
-
-        $items[] = $data_array->items;
     }
 
+    $json_string = json_encode($map, JSON_UNESCAPED_UNICODE);
+    $local_file = './betrivers.json';
 
-    $merged_array = array_merge([], ...$items);
+    if (file_put_contents($local_file, $json_string, LOCK_EX) === false) die();
 
-    $json_string = json_encode($merged_array, JSON_UNESCAPED_UNICODE);
-
-    // Define the file path
-    $local_file = './betrivers.json'; // Update local file name for the current page
-
-    // 3. Write the JSON string to the file and handle errors
-    if (file_put_contents($local_file, $json_string, LOCK_EX) !== false) {
-        echo "<br>Data has been merged and written to $local_file.";
-    } else {
-        echo "Error occurred while writing to $local_file.";
-    }
+    echo "<br>Data has been merged and written to $local_file.";
 }
 
 /*
@@ -245,15 +270,13 @@ if ($live) {
     echo "{$remote_url}<br>";
     $data = file_get_contents($remote_url);
 
-    if ($data === false) {
-        die('Error fetching remote HTML file.');
-    }
+    if ($data === false) die();
 
     $start = strpos($data, 'const table_1_data');
-    if ($start === false) die('Parsing Error');
+    if ($start === false) die();
 
     $end = strpos($data, 'gridTimsPicks(');
-    if ($end === false) die('Parsing Error');
+    if ($end === false) die();
 
     $data = substr($data, $start, $end - $start);
 
@@ -262,9 +285,7 @@ if ($live) {
     $data = str_replace('const table_3_data = ', 'export const table_3_data = ', $data);
 
     $local_file = './5v5hockey.ts';
-    if (file_put_contents($local_file, $data, LOCK_EX) !== false) {
-        echo "<br>Data has been written to $local_file.";
-    } else {
-        echo "Error occurred while writing to $local_file.";
-    }
+    if (file_put_contents($local_file, $data, LOCK_EX) === false) die();
+
+    echo "<br>Data has been written to $local_file.";
 }
