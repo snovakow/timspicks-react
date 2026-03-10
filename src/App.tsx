@@ -74,15 +74,15 @@ const ggChance = (x: number): string => {
 }
 
 // Implied Odds
-const betChance = (x: number): number => {
-  if (x === 0) return 0;
+const betChance = (x: number | null): number | null => {
+  if (x === null) return null;
   if (x < 0) return -x / (100 - x);
   else return 100 / (x + 100);
 }
 
-const betChanceRounded = (x: number): string => {
+const betChanceRounded = (x: number | null): string => {
   const chance = betChance(x);
-  if (chance === 0) return "-";
+  if (chance === null) return "-";
   return rountdToPercent(chance, 2);
 }
 
@@ -104,13 +104,13 @@ const makeRows = (data: DataTimsHelper[]): RowKey[] => {
       logoDark: getLogo(item.team as Team, true),
       gg: gg,
       ggChance: ggChance(gg),
-      bet1: 0,
+      bet1: null,
       betChance1: "-",
-      bet2: 0,
+      bet2: null,
       betChance2: "-",
-      bet3: 0,
+      bet3: null,
       betChance3: "-",
-      bet5v5: 0,
+      bet5v5: null,
       betChance5v5: "-",
     }
   });
@@ -338,13 +338,13 @@ const logStats = () => {
     let max = null;
     for (const row of rows) {
       const val = row[key];
-      if (val === 0) continue;
+      if (val === null) continue;
       if (!max) {
         max = [row];
         continue;
       }
       const maxrow = max[0];
-      const maxval = maxrow[key];
+      const maxval = maxrow[key]!;
       if (val > maxval) continue;
       if (val < maxval) max = [row];
       else max.push(row);
@@ -370,9 +370,9 @@ const logStats = () => {
   max1_3row = processRow('bet1', table3Rows);
   max2_3row = processRow('bet2', table3Rows);
   max3_3row = processRow('bet3', table3Rows);
-  if (!max1_1row || !max2_1row || !max3_1row) return;
-  if (!max1_2row || !max2_2row || !max3_2row) return;
-  if (!max1_3row || !max2_3row || !max3_3row) return;
+  if (max1_1row===null || max2_1row ===null|| max3_1row===null) return;
+  if (max1_2row===null || max2_2row ===null|| max3_2row===null) return;
+  if (max1_3row===null || max2_3row ===null|| max3_3row===null) return;
   const max1a = betChance(max1_1row[0].bet1);
   const max2a = betChance(max1_2row[0].bet1);
   const max3a = betChance(max1_3row[0].bet1);
@@ -382,6 +382,9 @@ const logStats = () => {
   const max1c = betChance(max3_1row[0].bet3);
   const max2c = betChance(max3_2row[0].bet3);
   const max3c = betChance(max3_3row[0].bet3);
+  if (max1a === null || max2a === null || max3a === null) return;
+  if (max1b === null || max2b === null || max3b === null) return;
+  if (max1c === null || max2c === null || max3c === null) return;
   console.log("Any:",
     "DraftKings: " + rountdToPercent(1 - (1 - max1a) * (1 - max2a) * (1 - max3a), 3),
     "FanDuel: " + rountdToPercent(1 - (1 - max1b) * (1 - max2b) * (1 - max3b), 3),

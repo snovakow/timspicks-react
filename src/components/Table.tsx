@@ -1,5 +1,5 @@
 type KeyNumber = "gg" | "bet1" | "bet2" | "bet3" | "bet5v5";
-type RowKeyNumber = Record<KeyNumber, number>;
+type RowKeyNumber = Record<KeyNumber, number | null>;
 
 type KeyString = "name";
 type RowKeyString = Record<KeyString, string>
@@ -63,10 +63,10 @@ export default function Table(props: {
                             </span>
                         </td>
                         <td>{chances ? row.ggChance : row.gg.toFixed(2)}</td>
-                        <td>{chances ? row.betChance1 : (row.bet1 || "-")}</td>
-                        <td>{chances ? row.betChance2 : (row.bet2 || "-")}</td>
-                        <td>{chances ? row.betChance3 : (row.bet3 || "-")}</td>
-                        <td>{chances ? row.betChance5v5 : (row.bet5v5 || "-")}</td>
+                        <td>{chances ? row.betChance1 : (row.bet1 === null ? "-" : row.bet1)}</td>
+                        <td>{chances ? row.betChance2 : (row.bet2 === null ? "-" : row.bet2)}</td>
+                        <td>{chances ? row.betChance3 : (row.bet3 === null ? "-" : row.bet3)}</td>
+                        <td>{chances ? row.betChance5v5 : (row.bet5v5 === null ? "-" : row.bet5v5.toFixed(2))}</td>
                     </tr>
                 ))}
             </tbody>
