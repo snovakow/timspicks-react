@@ -221,6 +221,7 @@ if ($live) {
     foreach ($data_array->items as $item) {
         $closingTime = DateTime::createFromFormat('Y-m-d\TH:i:s.ue', $item->closingTime);
         $closingTime = $closingTime->getTimestamp();
+        if ($closingTime > $endOfDay) continue;
 
         $map[] = [
             "name" => $item->playerInfo->name,
@@ -242,6 +243,7 @@ if ($live) {
         foreach ($data_array->items as $item) {
             $closingTime = DateTime::createFromFormat('Y-m-d\TH:i:s.ue', $item->closingTime);
             $closingTime = $closingTime->getTimestamp();
+            if ($closingTime > $endOfDay) continue;
 
             $map[] = [
                 "name" => $item->playerInfo->name,

@@ -53,15 +53,6 @@ nameMap4.set("Olli Maatta", "Olli Määttä");
 nameMap4.set("Matty Beniers", "Matthew Beniers");
 nameMap4.set("Tim Stützle", "Tim Stutzle");
 
-const columns: ColumnData[] = [
-  { key: "name", title: "Player" },
-  { key: "gg", title: "G/GP" },
-  { key: "bet1", title: "DraftKings" },
-  { key: "bet2", title: "FanDuel" },
-  { key: "bet3", title: "BetRivers" },
-  { key: "bet5v5", title: "5v5Hockey" },
-];
-
 const rountdToPercent = (num: number, places: number): string => {
   return (num * 100).toFixed(places) + "%";
 }
@@ -328,9 +319,9 @@ const logStats = () => {
   max1_3row = processRow('bet1', table3Rows);
   max2_3row = processRow('bet2', table3Rows);
   max3_3row = processRow('bet3', table3Rows);
-  if (max1_1row===null || max2_1row ===null|| max3_1row===null) return;
-  if (max1_2row===null || max2_2row ===null|| max3_2row===null) return;
-  if (max1_3row===null || max2_3row ===null|| max3_3row===null) return;
+  if (max1_1row === null || max2_1row === null || max3_1row === null) return;
+  if (max1_2row === null || max2_2row === null || max3_2row === null) return;
+  if (max1_3row === null || max2_3row === null || max3_3row === null) return;
   const max1a = betChance(max1_1row[0].bet1);
   const max2a = betChance(max1_2row[0].bet1);
   const max3a = betChance(max1_3row[0].bet1);
@@ -413,6 +404,15 @@ const logStats = () => {
   printRow("3", max1_3row, max2_3row, max3_3row);
 }
 logStats();
+
+const columns: ColumnData[] = [
+  { key: "name", title: "Player" },
+  { key: "gg", title: "G/GP" },
+  { key: "bet1", title: "DraftKings" },
+  { key: "bet2", title: "FanDuel" },
+  { key: "bet3", title: "BetRivers" },
+  { key: "bet5v5", title: "5v5Hockey" },
+];
 
 function App() {
 
