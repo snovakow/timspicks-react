@@ -113,6 +113,12 @@ const sortFunction = (sortConfig: SortConfig) => {
       const aVal = a[key];
       const bVal = b[key];
 
+      if (aVal === null) {
+        if (bVal === null) continue;
+        return 1;
+      }
+      if (bVal === null) return -1;
+
       if (typeof aVal === 'number' && typeof bVal === 'number') {
         if (aVal === 0) {
           if (bVal === 0) continue;
