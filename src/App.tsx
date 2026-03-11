@@ -45,6 +45,7 @@ nameMap3.set("Matt Boldy", "Matthew Boldy");
 nameMap3.set("Ondrej Palat", "Ondrej Palát");
 nameMap3.set("Shea Theodore", "Shea Théodore");
 nameMap3.set("Teuvo Teravainen", "Teuvo Teräväinen");
+nameMap3.set("Trevor van Riemsdyk", "Trevor Van Riemsdyk");
 nameMap3.set("Vasily Podkolzin", "Vasili Podkolzin");
 
 const nameMap4 = new Map<string, string>(nameMap);
