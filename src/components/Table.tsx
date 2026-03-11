@@ -1,19 +1,21 @@
-type KeyNumber = "gg" | "bet1" | "bet2" | "bet3" | "bet5v5";
-type RowKeyNumber = Record<KeyNumber, number | null>;
-
-type KeyString = "name";
-type RowKeyString = Record<KeyString, string>
-    & Record<"gg", number>
-    & Record<"logoLight", string>
-    & Record<"logoDark", string>
-    & Record<"ggChance", string>
-    & Record<"betChance1", string>
-    & Record<"betChance2", string>
-    & Record<"betChance3", string>
-    & Record<"betChance5v5", string>
-
-export type KeyType = KeyString | KeyNumber;
-export type RowKey = RowKeyString & RowKeyNumber;
+export type KeyType = "name" | "gg" | "bet1" | "bet2" | "bet3" | "bet5v5";
+export interface RowOdds {
+    name: string;
+    bet1: number | null;
+    bet2: number | null;
+    bet3: number | null;
+    betChance1: string;
+    betChance2: string;
+    betChance3: string;
+}
+export interface RowKey extends RowOdds {
+    logoLight: string;
+    logoDark: string;
+    gg: number;
+    bet5v5: number | null;
+    ggChance: string;
+    betChance5v5: string;
+}
 
 export interface ColumnData {
     key: KeyType;
@@ -26,9 +28,9 @@ export interface SortConfig {
     keyOrder: KeyType[];
 }
 
-export default function Table(props: {
+export function Table(props: {
     columns: ColumnData[],
-    sortedRows: RowKey[]
+    sortedRows: (RowOdds | RowOdds)[],
     requestSort: RequestSort,
     sortConfig: SortConfig,
     darkTheme: boolean,
