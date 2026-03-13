@@ -36,10 +36,10 @@ export const ggChance = (x: number): string => {
 }
 
 export interface OddsItem {
-    firstName: string; 
-    lastName: string; 
-    team: string; 
-    gamesPlayed: number; 
+    firstName: string;
+    lastName: string;
+    team: string;
+    gamesPlayed: number;
     goals: number;
 }
 export class PickOdds extends BaseOdds {
