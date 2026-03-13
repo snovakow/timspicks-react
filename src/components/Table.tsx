@@ -1,4 +1,3 @@
-import type { DataTimsHelper } from "../data/Data";
 import { getLogo, type Team } from "./logo";
 
 export type ColumnKeys = "name" | "bet1" | "bet2" | "bet3" | "gg" | "bet5v5";
@@ -31,14 +30,21 @@ export const ggChance = (x: number): string => {
     return rountdToPercent(chance, 2);
 }
 
-export class PickOdds extends PlayerOdds {
+export interface OddsItem {
+    firstName: string; 
+    lastName: string; 
+    team: string; 
+    gamesPlayed: number; 
+    goals: number;
+}
+export class PickOdds extends BaseOdds {
     logoLight: string;
     logoDark: string;
     gg: number;
     ggChance: string;
     bet5v5: number | null = null;
     betChance5v5: string = "-";
-    constructor(item: DataTimsHelper) {
+    constructor(item: OddsItem) {
         super(`${item.firstName} ${item.lastName}`);
 
         this.logoLight = getLogo(item.team as Team, false);

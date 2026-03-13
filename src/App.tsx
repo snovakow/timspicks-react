@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import './App.css';
 import * as Picks from './components/Table';
-import type { DataTimsHelper } from './data/Data';
 import playerData from './data/helper.json';
 import playerOddsDraftKings from './data/draftkings.json';
 import playerOddsFanDuel from './data/fanduel.json';
@@ -175,13 +174,11 @@ const makeSort = (sortConfig: Picks.SortConfig, setSortConfig: (config: Picks.So
 	};
 }
 
-const table1Data: DataTimsHelper[] = playerData.playerLists[0].players;
-const table2Data: DataTimsHelper[] = playerData.playerLists[1].players;
-const table3Data: DataTimsHelper[] = playerData.playerLists[2].players;
+const makeRows = (data: Picks.OddsItem[]): Picks.PickOdds[] => data.map((item): Picks.PickOdds => new Picks.PickOdds(item));
+const table1Rows = makeRows(playerData["1"]);
+const table2Rows = makeRows(playerData["2"]);
+const table3Rows = makeRows(playerData["3"]);
 
-const table1Rows = makeRows(table1Data);
-const table2Rows = makeRows(table2Data);
-const table3Rows = makeRows(table3Data);
 
 const betOddsFromMap = (row: Picks.PickOdds, map: Map<string, number>, buMap: Map<string, string>): number | undefined => {
 	const trueOdds = map.get(row.name);
