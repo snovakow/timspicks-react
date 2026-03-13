@@ -1,37 +1,26 @@
 <?php
 $live = true;
-$secure = true;
+$secure = false;
 $savesrc = false;
+$debug = false;
 
 if ($live && $secure) {
     session_start();
 
-    if (!isset($_SESSION['csrf_token'])) {
-        die();
-    }
+    if (!isset($_SESSION['csrf_token'])) die();
 
     $csrf_token = $_SESSION['csrf_token'];
     unset($_SESSION['csrf_token']);
 
-    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-        die();
-    }
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') die();
 
     $json_data = file_get_contents('php://input');
 
     $data = json_decode($json_data, true);
 
-    if (!isset($data['code']) || !isset($data['name'])) {
-        die();
-    }
-
-    if (!hash_equals($csrf_token, $data['csrf_token'])) {
-        die();
-    }
-
-    if (!hash_equals('snovakow', $data['name']) || !hash_equals('sept2376', $data['code'])) {
-        die();
-    }
+    if (!isset($data['code']) || !isset($data['name'])) die();
+    if (!hash_equals($csrf_token, $data['csrf_token'])) die();
+    if (!hash_equals('snovakow', $data['name']) || !hash_equals('sept2376', $data['code'])) die();
 }
 
 echo '<h1>Data Downloader</h1>';
@@ -53,7 +42,6 @@ if ($live) {
     $helper = 'https://api.hockeychallengehelper.com/api/picks';
     echo "{$helper}<br>";
 
-    // 2. Set options
     curl_setopt($ch, CURLOPT_URL, $helper);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'GET');
@@ -73,19 +61,37 @@ if ($live) {
         'user-agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36',
     ]);
 
-    // 3. Execute the cURL request
     $response = curl_exec($ch);
+    if ($response === false) echo 'cURL Error: ' . curl_error($ch);
 
-    // Check for errors
-    if ($response === false) {
-        echo 'cURL Error: ' . curl_error($ch);
+    if ($savesrc) file_put_contents('./src_helper.json', $response);
+
+    $json = json_decode($response, false);
+    $json = $json->playerLists;
+    $data = [];
+    $data["1"] = [];
+    $data["2"] = [];
+    $data["3"] = [];
+
+    foreach ($json as $item) {
+        if ($item->id == 1) $array = &$data["1"];
+        else if ($item->id == 2) $array = &$data["2"];
+        else $array = &$data["3"];
+        foreach ($item->players as $player) {
+            $array[] = [
+                "firstName" => $player->firstName,
+                "lastName" => $player->lastName,
+                "gamesPlayed" => $player->gamesPlayed,
+                "goals" => $player->goals,
+                "team" => $player->team
+            ];
+        }
     }
 
-    // 4. Close the cURL session
-    // curl_close($ch);
+    $json_string = json_encode($data, JSON_UNESCAPED_UNICODE);
 
     $local_file = './helper.json';
-    if (file_put_contents($local_file, $response) === false) {
+    if (file_put_contents($local_file, $json_string) === false) {
         die('Error saving local JSON file.');
     }
     echo "<br>Data has been written to $local_file.";
