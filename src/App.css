@@ -79,11 +79,11 @@ th {
 }
 
 .row-color {
-  background-color: light-dark(#e6f0fa, #23272f);
+  background-color: light-dark(rgba(0, 0, 0, 0.02), #23272f);
 }
 
 .row-color-alt {
-  background-color: light-dark(#f9f9f9, #181b20);
+  background-color: light-dark(transparent, #181b20);
 }
 
 td {
