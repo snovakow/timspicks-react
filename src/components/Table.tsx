@@ -1,5 +1,101 @@
 import { getLogo, type Team } from "./logo";
 
+export class TeamData {
+    place: string;
+    name: string;
+    code: Team;
+    logoLight: string;
+    logoDark: string;
+    constructor(data: any) {
+        this.place = data.placeName.default;
+        this.name = data.commonName.default;
+        this.code = data.abbrev;
+        this.logoLight = data.logo;
+        this.logoDark = data.darkLogo;
+    }
+}
+export class GameData {
+    link: string;
+    home: TeamData;
+    away: TeamData;
+    time: Date;
+    constructor(data: any) {
+        this.link = "https://www.nhl.com" + data.gameCenterLink;
+        this.home = new TeamData(data.homeTeam);
+        this.away = new TeamData(data.awayTeam);
+        this.time = new Date(data.startTimeUTC);
+    }
+}
+
+interface Name {
+	default: string;
+	[key: string]: string;
+}
+export class Player {
+	id: number;
+	firstName: Name;
+	lastName: Name;
+	link: string;
+	team: TeamData;
+	constructor(data: any, team: TeamData) {
+		this.id = data.id;
+		this.firstName = data.firstName;
+		this.lastName = data.lastName;
+		this.team = team;
+
+		const first = this.firstName.default.toLowerCase();
+		const last = this.lastName.default.toLowerCase();
+		this.link = `https://www.nhl.com/bluejackets/player/${first}-${last}-${this.id}`;
+	}
+}
+
+export function Basic(props: {
+    columns: string[],
+    games: GameData[],
+    darkTheme: boolean
+}) {
+    const { columns, games, darkTheme } = props;
+    return (
+        <table>
+            <thead>
+                <tr>
+                    {
+                        columns.map((title, index) => (
+                            <th key={index}>
+                                <span className='cell-container'>
+                                    <span className='theader-title'>{title}</span>
+                                </span>
+                            </th>
+                        ))
+                    }
+                </tr>
+            </thead>
+            <tbody>
+                {games.map((game, idx) => (
+                    <tr key={idx} className={idx % 2 === 0 ? 'row-color' : 'row-color-alt'}>
+                        <td>
+                            <span className='cell-container'>
+                                <img className='td-name-logo' src={darkTheme ? game.home.logoDark : game.home.logoLight} />
+                                {`${game.home.place} ${game.home.name}`}
+                            </span>
+                        </td>
+                        <td>
+                            <span className='cell-container'>
+                                <img className='td-name-logo' src={darkTheme ? game.away.logoDark : game.away.logoLight} />
+                                {`${game.away.place} ${game.away.name}`}
+                            </span>
+                        </td>
+                        <td>
+                            {game.time.toLocaleTimeString()}
+                        </td>
+                    </tr>
+                )
+                )}
+            </tbody>
+        </table>
+    )
+}
+
 export type ColumnKeys = "name" | "bet1" | "bet2" | "bet3" | "gg" | "bet5v5" | "pick";
 export interface ColumnData {
     key: ColumnKeys;

@@ -7,7 +7,6 @@ import playerOddsFanDuel from './data/fanduel.json';
 import playerOddsBetRivers from './data/betrivers.json';
 import gamesListing from './data/games.json';
 import { table_1_data as hockey5v5_1, table_2_data as hockey5v5_2, table_3_data as hockey5v5_3 } from './data/5v5hockey.ts';
-import type { Team } from './components/logo.ts';
 
 const nameMap = new Map<string, string>();
 nameMap.set("Alex Wennberg", "Alexander Wennberg"); // DraftKings, BetRivers
@@ -56,36 +55,24 @@ nameMap4.set("Olli Maatta", "Olli Määttä");
 nameMap4.set("Matty Beniers", "Matthew Beniers");
 nameMap4.set("Tim Stützle", "Tim Stutzle");
 
-class TeamData {
-	place: string;
-	name: string;
-	code: Team;
-	logoLight: string;
-	logoDark: string;
-	constructor(data: any) {
-		this.place = data.placeName.default;
-		this.name = data.commonName.default;
-		this.code = data.abbrev;
-		this.logoLight = data.logo;
-		this.logoDark = data.darkLogo;
-	}
-}
-class GameData {
-	link: string;
-	home: TeamData;
-	away: TeamData;
-	time: Date;
-	constructor(data: any) {
-		this.link = "https://www.nhl.com" + data.gameCenterLink;
-		this.home = new TeamData(data.homeTeam);
-		this.away = new TeamData(data.awayTeam);
-		this.time = new Date(data.startTimeUTC);
-	}
-}
+const gamesList: Picks.GameData[] = [];
+const playerList: Picks.Player[] = [];
+
 for (const data of gamesListing) {
-	const game = new GameData(data);
-	console.log(`${game.home.place} ${game.home.name} @ ${game.away.place} ${game.away.name}: ${game.time.toLocaleTimeString()}`);
+	const game = new Picks.GameData(data);
+	for (const item of data.homeTeam.players) {
+		const player = new Picks.Player(item, game.home);
+		playerList.push(player);
+	}
+	for (const item of data.awayTeam.players) {
+		const player = new Picks.Player(item, game.away);
+		playerList.push(player);
+	}
+	gamesList.push(game);
 }
+gamesList.sort((a: Picks.GameData, b: Picks.GameData): number => {
+	return a.time.getTime() - b.time.getTime();
+});
 
 // Implied Odds
 const betChance = (x: number | null): number | null => {
@@ -203,19 +190,28 @@ const compilePlayerList = () => {
 		assignOdds(player, item.odds, "bet3", "betChance3");
 	}
 
+	for (const item of playerList) {
+		const player = new Picks.PlayerOdds(`${item.firstName.default} ${item.lastName.default}`);
+		tablePlayers.push(player);
+		// if(item.lastName.default==="Suzuki") console.log(item);
+	}
+
 	const set1 = new Set<string>();
 	const set2 = new Set<string>();
 	const set3 = new Set<string>();
+	let c1=0;
 	for (const player of table1Rows) set1.add(player.name);
 	for (const player of table2Rows) set2.add(player.name);
 	for (const player of table3Rows) set3.add(player.name);
-	for (const player of allMap.values()) {
+	for (const player of tablePlayers) {
+		if (set1.has(player.name)) c1++;
 		if (set1.has(player.name)) player.pick = 1;
 		if (set2.has(player.name)) player.pick = 2;
 		if (set3.has(player.name)) player.pick = 3;
 	}
+	// console.log(c1);
+	// console.log(table1Rows);
 
-	tablePlayers.push(...allMap.values());
 	tablePlayers.sort((a, b) => a.name.localeCompare(b.name));
 }
 compilePlayerList();
@@ -592,6 +588,10 @@ function App() {
 				<button className={chances ? 'chances-on' : 'chances-off'} onClick={toggleHandler}>%</button>
 			</header>
 			<main className='content'>
+				<div className="table-container">
+					<h2>Games</h2>
+					<Picks.Basic columns={["Home", "Away", "Time"]} games={gamesList} darkTheme={false} />
+				</div>
 				<div className="table-container">
 					<h2>Pick #1</h2>
 					<Picks.Table columns={columns} sortedRows={sortedRows1} requestSort={requestSort1} sortConfig={sortConfig1} darkTheme={darkTheme} chances={chances} />
