@@ -48,14 +48,12 @@ button:focus-visible {
 
 table {
   border-collapse: collapse;
-  width: 100%;
+  border-color:  rgb(224,224,224);
+  border-style: solid;
 }
 
 th {
-  border: 1px solid #ccc;
   padding: 0.5em;
-  /* background-color: #1a1a1a; */
-  /* color: #fff; */
 }
 
 .sortable {
@@ -78,6 +76,10 @@ th {
   opacity: 0.1;
 }
 
+tr {
+  border-bottom: 1px solid rgb(224,224,224);
+}
+
 .row-color {
   background-color: light-dark(rgba(0, 0, 0, 0.02), #23272f);
 }
@@ -87,7 +89,6 @@ th {
 }
 
 td {
-  border: 1px solid #ccc;
   padding: 0.5em;
 }
 
