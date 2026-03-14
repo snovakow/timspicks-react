@@ -48,7 +48,7 @@ button:focus-visible {
 
 table {
   border-collapse: collapse;
-  border-color:  rgb(224,224,224);
+  border-color: rgb(224, 224, 224);
   border-style: solid;
 }
 
@@ -77,7 +77,7 @@ th {
 }
 
 tr {
-  border-bottom: 1px solid rgb(224,224,224);
+  border-bottom: 1px solid rgb(224, 224, 224);
 }
 
 .row-color {

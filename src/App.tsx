@@ -71,11 +71,11 @@ class TeamData {
 	}
 }
 class GameData {
-	link:string;
-	home:TeamData;
-	away:TeamData;
+	link: string;
+	home: TeamData;
+	away: TeamData;
 	time: Date;
-	constructor(data: any){
+	constructor(data: any) {
 		this.link = "https://www.nhl.com" + data.gameCenterLink;
 		this.home = new TeamData(data.homeTeam);
 		this.away = new TeamData(data.awayTeam);
