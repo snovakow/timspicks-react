@@ -49,6 +49,10 @@ export class PickOdds extends BaseOdds {
     ggChance: string;
     bet5v5: number | null = null;
     betChance5v5: string = "-";
+    highlight1 = false;
+    highlight2 = false;
+    highlight3 = false;
+    highlight5v5 = false;
     constructor(item: OddsItem) {
         super(`${item.firstName} ${item.lastName}`);
 
@@ -105,10 +109,18 @@ export function Table(props: {
                                 </span>
                             </td>
                             {picks && (<td>{chances ? row.ggChance : row.gg.toFixed(2)}</td>)}
-                            <td>{chances ? row.betChance1 : (row.bet1 === null ? "-" : row.bet1)}</td>
-                            <td>{chances ? row.betChance2 : (row.bet2 === null ? "-" : row.bet2)}</td>
-                            <td>{chances ? row.betChance3 : (row.bet3 === null ? "-" : row.bet3)}</td>
-                            {picks && (<td>{chances ? row.betChance5v5 : (row.bet5v5 === null ? "-" : row.bet5v5.toFixed(2))}</td>)}
+                            <td className={picks && row.highlight1 ? "highlight" : undefined}>
+                                {chances ? row.betChance1 : (row.bet1 === null ? "-" : row.bet1)}
+                            </td>
+                            <td className={picks && row.highlight2 ? "highlight" : undefined}>
+                                {chances ? row.betChance2 : (row.bet2 === null ? "-" : row.bet2)}
+                            </td>
+                            <td className={picks && row.highlight3 ? "highlight" : undefined}>
+                                {chances ? row.betChance3 : (row.bet3 === null ? "-" : row.bet3)}
+                            </td>
+                            {picks && (<td className={picks && row.highlight5v5 ? "highlight" : undefined}>
+                                {chances ? row.betChance5v5 : (row.bet5v5 === null ? "-" : row.bet5v5.toFixed(2))}
+                            </td>)}
                             {!picks && (<td>{(row.pick === 0 ? "-" : row.pick)}</td>)}
                         </tr>
                     )

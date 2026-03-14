@@ -488,6 +488,48 @@ const columnsPlayer: Picks.ColumnData[] = [
 	{ key: "pick", title: "Pick", sort: false },
 ];
 
+type processKeys = 'bet1' | 'bet2' | 'bet3' | 'bet5v5';
+const processMax = (row: Picks.PickOdds, max: Picks.PickOdds[], key: processKeys, reverse?: boolean) => {
+	const rowVal = row[key];
+	if (rowVal === null) return;
+
+	if (max.length === 0) {
+		max.push(row);
+		return;
+	}
+
+	const topBet = max[0][key]!;
+	if (rowVal === topBet) {
+		max.push(row);
+	} else {
+		if (reverse) {
+			if (rowVal > topBet) max.splice(0, max.length, row);
+		} else {
+			if (rowVal < topBet) max.splice(0, max.length, row);
+		}
+	}
+}
+const processMaxArray = (array: Picks.PickOdds[]) => {
+	const max1: Picks.PickOdds[] = [];
+	const max2: Picks.PickOdds[] = [];
+	const max3: Picks.PickOdds[] = [];
+	const max5v5: Picks.PickOdds[] = [];
+	for (const row of array) {
+		row.highlight1 = false;
+		row.highlight2 = false;
+		row.highlight3 = false;
+		row.highlight5v5 = false;
+		processMax(row, max1, 'bet1');
+		processMax(row, max2, 'bet2');
+		processMax(row, max3, 'bet3');
+		processMax(row, max5v5, 'bet5v5', true);
+	}
+	for (const row of max1) row.highlight1 = true;
+	for (const row of max2) row.highlight2 = true;
+	for (const row of max3) row.highlight3 = true;
+	for (const row of max5v5) row.highlight5v5 = true;
+}
+
 function App() {
 
 	const [chances, setChances] = useState(false);
@@ -537,6 +579,10 @@ function App() {
 	const requestSort2: Picks.RequestSort = makeSort(sortConfig2, setSortConfig2);
 	const requestSort3: Picks.RequestSort = makeSort(sortConfig3, setSortConfig3);
 	const requestSortPlayer: Picks.RequestSort = makeSort(sortConfigPlayer, setSortConfigPlayer);
+
+	processMaxArray(sortedRows1);
+	processMaxArray(sortedRows2);
+	processMaxArray(sortedRows3);
 
 	return (
 		<>
