@@ -27,27 +27,7 @@ export class GameData {
     }
 }
 
-interface Name {
-	default: string;
-	[key: string]: string;
-}
-export class Player {
-	id: number;
-	firstName: Name;
-	lastName: Name;
-	link: string;
-	team: TeamData;
-	constructor(data: any, team: TeamData) {
-		this.id = data.id;
-		this.firstName = data.firstName;
-		this.lastName = data.lastName;
-		this.team = team;
-
-		const first = this.firstName.default.toLowerCase();
-		const last = this.lastName.default.toLowerCase();
-		this.link = `https://www.nhl.com/bluejackets/player/${first}-${last}-${this.id}`;
-	}
-}
+const timeFormat: Intl.DateTimeFormatOptions = { hour: '2-digit', minute: '2-digit' };
 
 export function Basic(props: {
     columns: string[],
@@ -86,7 +66,7 @@ export function Basic(props: {
                             </span>
                         </td>
                         <td>
-                            {game.time.toLocaleTimeString()}
+                            {game.time.toLocaleTimeString([], timeFormat)}
                         </td>
                     </tr>
                 )
@@ -96,28 +76,65 @@ export function Basic(props: {
     )
 }
 
-export type ColumnKeys = "name" | "bet1" | "bet2" | "bet3" | "gg" | "bet5v5" | "pick";
-export interface ColumnData {
-    key: ColumnKeys;
-    title: string;
-    sort: boolean;
+interface Name {
+    default: string;
+    [key: string]: string;
 }
+export class Player {
+    playerId: number;
+    firstName: Name;
+    lastName: Name;
+    link: string;
 
-class BaseOdds {
-    name: string;
+    team: TeamData;
+    logoLight: string;
+    logoDark: string;
+    gameTime: Date;
+
+    fullName: string;
     bet1: number | null = null;
     bet2: number | null = null;
     bet3: number | null = null;
     betChance1: string = "-";
     betChance2: string = "-";
     betChance3: string = "-";
-    constructor(name: string) {
-        this.name = name;
+
+    pick: 0 | 1 | 2 | 3 = 0;
+
+    constructor(data: any, team: TeamData, gameTime: Date) {
+        this.playerId = data.playerId;
+
+        this.firstName = data.firstName;
+        this.lastName = data.lastName;
+        this.team = team;
+        this.gameTime = gameTime;
+
+        this.logoLight = this.team.logoLight;
+        this.logoDark = this.team.logoDark;
+
+        const first = this.firstName.default.toLowerCase();
+        const last = this.lastName.default.toLowerCase();
+        this.link = `https://www.nhl.com/bluejackets/player/${first}-${last}-${this.playerId}`;
+
+        this.fullName = `${this.firstName.default} ${this.lastName.default}`;
     }
 }
 
-export class PlayerOdds extends BaseOdds {
-    pick: number = 0;
+export type ColumnKeys = "fullName" | "bet1" | "bet2" | "bet3" | "gg" | "bet5v5" | "pick" | "gameTime";
+export interface ColumnData {
+    key: ColumnKeys;
+    title: string;
+    sort: boolean;
+}
+
+export interface OddsItem {
+    playerId: number;
+    firstName: string;
+    lastName: string;
+    team: string;
+
+    gamesPlayed: number;
+    goals: number;
 }
 
 export const rountdToPercent = (num: number, places: number): string => {
@@ -131,14 +148,18 @@ export const ggChance = (x: number): string => {
     return rountdToPercent(chance, 2);
 }
 
-export interface OddsItem {
+export class PickOdds {
+    playerId: number;
     firstName: string;
     lastName: string;
-    team: string;
-    gamesPlayed: number;
-    goals: number;
-}
-export class PickOdds extends BaseOdds {
+    fullName: string;
+    bet1: number | null = null;
+    bet2: number | null = null;
+    bet3: number | null = null;
+    betChance1: string = "-";
+    betChance2: string = "-";
+    betChance3: string = "-";
+
     logoLight: string;
     logoDark: string;
     gg: number;
@@ -150,7 +171,12 @@ export class PickOdds extends BaseOdds {
     highlight3 = false;
     highlight5v5 = false;
     constructor(item: OddsItem) {
-        super(`${item.firstName} ${item.lastName}`);
+        this.playerId = item.playerId;
+        if (this.playerId < 0) this.playerId = -this.playerId;
+
+        this.firstName = item.firstName;
+        this.lastName = item.lastName;
+        this.fullName = `${item.firstName} ${item.lastName}`;
 
         this.logoLight = getLogo(item.team as Team, false);
         this.logoDark = getLogo(item.team as Team, true);
@@ -167,7 +193,7 @@ export interface SortConfig {
 
 export function Table(props: {
     columns: ColumnData[],
-    sortedRows: (PlayerOdds | PickOdds)[],
+    sortedRows: (Player | PickOdds)[],
     requestSort: RequestSort,
     sortConfig: SortConfig,
     darkTheme: boolean,

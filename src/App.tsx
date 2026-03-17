@@ -10,7 +10,7 @@ import { table_1_data as hockey5v5_1, table_2_data as hockey5v5_2, table_3_data 
 
 const nameMap = new Map<string, string>();
 nameMap.set("Alex Wennberg", "Alexander Wennberg"); // DraftKings, BetRivers
-nameMap.set("Alexis Lafrenière", "Alexis Lafreniere"); // DraftKings, FanDuel
+nameMap.set("Alexis Lafrenière", "Alexis Lafreniere"); // DraftKings, FanDuel, DUP
 nameMap.set("Freddy Gaudreau", "Frederick Gaudreau");
 nameMap.set("Joshua Norris", "Josh Norris");
 nameMap.set("Martin Fehérváry", "Martin Fehervary");
@@ -31,6 +31,7 @@ nameMap1.set("Tim Stützle", "Tim Stuetzle");
 nameMap1.set("Zachary Bolduc", "Zack Bolduc");
 
 nameMap2.set("Elias Pettersson", "Elias Pettersson #40");
+nameMap2.set("Yegor Chinakhov", "Egor Chinakhov");
 
 nameMap3.set("Aliaksei Protas", "Alexei Protas");
 nameMap3.set("Artem Zub", "Artyom Zub");
@@ -38,22 +39,17 @@ nameMap3.set("Carl Grundstrom", "Carl Grundström");
 nameMap3.set("Dmitry Orlov", "Dimitri Orlov");
 nameMap3.set("Elias Pettersson", "Elias Pettersson (1998)");
 nameMap3.set("J.J. Moser", "Janis Jérôme Moser");
-nameMap3.set("JJ Peterka", "John-Jason Peterka");
-nameMap3.set("J.T. Compher", "JT Compher");
+nameMap3.set("JJ Peterka", "John-Jason Peterka"); // DUP
+nameMap3.set("J.T. Compher", "JT Compher"); // DUP
 nameMap3.set("Jake Middleton", "Jacob Middleton");
 nameMap3.set("Josh Morrissey", "Joshua Morrissey");
 nameMap3.set("Matt Boldy", "Matthew Boldy");
 nameMap3.set("Ondrej Palat", "Ondrej Palát");
 nameMap3.set("Shea Theodore", "Shea Théodore");
 nameMap3.set("Teuvo Teravainen", "Teuvo Teräväinen");
-nameMap3.set("Tommy Novak", "Thomas Novak");
+nameMap3.set("Tommy Novak", "Thomas Novak"); // DUP
 nameMap3.set("Trevor van Riemsdyk", "Trevor Van Riemsdyk");
 nameMap3.set("Vasily Podkolzin", "Vasili Podkolzin");
-
-const nameMap4 = new Map<string, string>(nameMap);
-nameMap4.set("Olli Maatta", "Olli Määttä");
-nameMap4.set("Matty Beniers", "Matthew Beniers");
-nameMap4.set("Tim Stützle", "Tim Stutzle");
 
 const gamesList: Picks.GameData[] = [];
 const playerList: Picks.Player[] = [];
@@ -61,11 +57,11 @@ const playerList: Picks.Player[] = [];
 for (const data of gamesListing) {
 	const game = new Picks.GameData(data);
 	for (const item of data.homeTeam.players) {
-		const player = new Picks.Player(item, game.home);
+		const player = new Picks.Player(item, game.home, game.time);
 		playerList.push(player);
 	}
 	for (const item of data.awayTeam.players) {
-		const player = new Picks.Player(item, game.away);
+		const player = new Picks.Player(item, game.away, game.time);
 		playerList.push(player);
 	}
 	gamesList.push(game);
@@ -98,7 +94,7 @@ const trueOddsToAmerican = (x: number): number => {
 
 type betKeys = "bet1" | "bet2" | "bet3";
 type betChanceKey = "betChance1" | "betChance2" | "betChance3";
-const assignOdds = (row: Picks.PlayerOdds | Picks.PickOdds, trueOdds: number, betKey: betKeys, betChanceKey: betChanceKey): void => {
+const assignOdds = (row: Picks.Player | Picks.PickOdds, trueOdds: number, betKey: betKeys, betChanceKey: betChanceKey): void => {
 	const odds = trueOddsToAmerican(trueOdds);
 	row[betKey] = odds;
 	row[betChanceKey] = betChanceRounded(odds);
@@ -129,6 +125,11 @@ const sortFunction = (sortConfig: Picks.SortConfig) => {
 				}
 			}
 
+			if (aVal instanceof Date && bVal instanceof Date) {
+				const diff = aVal.getTime() - bVal.getTime();
+				if (diff !== 0) return diff;
+			}
+
 			if (typeof aVal === 'string' && typeof bVal === 'string') {
 				const comparison = aVal.localeCompare(bVal, undefined, { sensitivity: 'base' });
 				if (comparison !== 0) return comparison;
@@ -155,7 +156,6 @@ const table1Rows = makeRows(playerData["1"]);
 const table2Rows = makeRows(playerData["2"]);
 const table3Rows = makeRows(playerData["3"]);
 
-const tablePlayers: Picks.PlayerOdds[] = [];
 const compilePlayerList = () => {
 	const reverse1 = new Map<string, string>();
 	const reverse2 = new Map<string, string>();
@@ -164,50 +164,145 @@ const compilePlayerList = () => {
 	for (const [key, value] of nameMap2.entries()) reverse2.set(value, key);
 	for (const [key, value] of nameMap3.entries()) reverse3.set(value, key);
 
-	const allMap: Map<string, Picks.PlayerOdds> = new Map();
+	const map1 = new Map<number, Picks.PickOdds>();
+	const map2 = new Map<number, Picks.PickOdds>();
+	const map3 = new Map<number, Picks.PickOdds>();
+	let c1 = 0;
+	let c2 = 0;
+	let c3 = 0;
+	for (const player of table1Rows) map1.set(player.playerId, player);
+	for (const player of table2Rows) map2.set(player.playerId, player);
+	for (const player of table3Rows) map3.set(player.playerId, player);
+	for (const player of playerList) {
+		const player1 = map1.get(player.playerId);
+		if (player1) {
+			player.pick = 1;
+			c1++;
+		}
+		const player2 = map2.get(player.playerId);
+		if (player2) {
+			player.pick = 2;
+			c2++;
+		}
+		const player3 = map3.get(player.playerId);
+		if (player3) {
+			player.pick = 3;
+			c3++;
+		}
+		// if (set1.has(player.fullName)) player.pick = 1;
+		// if (set2.has(player.fullName)) player.pick = 2;
+		// if (set3.has(player.fullName)) player.pick = 3;
+	}
+
+	const bet1 = new Map<string, number>();
 	for (const item of playerOddsDraftKings) {
-		const name = reverse1.get(item.name) ?? item.name;
-		const player = new Picks.PlayerOdds(name);
-		assignOdds(player, item.odds, "bet1", "betChance1");
-		allMap.set(name, player);
+		const label = item.name;
+		const trueOdds = item.odds;
+		bet1.set(label, trueOdds);
 	}
+	const bet2 = new Map<string, number>();
 	for (const item of playerOddsFanDuel) {
-		const name = reverse2.get(item.name) ?? item.name;
-		let player = allMap.get(name);
-		if (!player) {
-			player = new Picks.PlayerOdds(name);
-			allMap.set(name, player);
-		}
-		assignOdds(player, item.odds, "bet2", "betChance2");
+		const label = item.name;
+		const trueOdds = item.odds;
+		bet2.set(label, trueOdds);
 	}
+	const bet3 = new Map<string, number>();
 	for (const item of playerOddsBetRivers) {
-		const name = reverse3.get(item.name) ?? item.name;
-		let player = allMap.get(name);
-		if (!player) {
-			player = new Picks.PlayerOdds(name);
-			allMap.set(name, player);
+		const label = item.name;
+		const trueOdds = item.odds;
+		bet3.set(label, trueOdds);
+	}
+
+	type betKey = "bet1" | "bet2" | "bet3";
+	type betChanceKey = "betChance1" | "betChance2" | "betChance3";
+	const nameFind = (player: Picks.Player, map: Map<string, number>, betKey: betKey, betChanceKey: betChanceKey) => {
+		let decimal = map.get(player.fullName);
+		/*
+			DraftKings FanDuel
+
+			function removeAccents(name: string): string {
+				return name.normalize('NFD').replace(/\p{Diacritic}/gu, '');
+			}
+
+			Olli Määttä
+			Alexis Lafrenière
+			Oskar Bäck
+		*/
+		if (decimal === undefined) {
+			if (player.fullName === "Olli Määttä") {
+				decimal = map.get("Olli Maatta"); // DraftKings FanDuel alt
+			}
 		}
-		assignOdds(player, item.odds, "bet3", "betChance3");
-	}
+		if (decimal === undefined) {
+			if (player.fullName === "Alexis Lafrenière") {
+				decimal = map.get("Alexis Lafreniere"); // DraftKings FanDuel
+			}
+		}
+		if (decimal === undefined) {
+			if (player.fullName === "Oskar Bäck") {
+				decimal = map.get("Oskar Back"); // DraftKings FanDuel
+			}
+		}
+		if (decimal === undefined) {
+			if (player.fullName === "Matt Coronato") {
+				decimal = map.get("Matthew Coronato"); // BetRivers
+			}
+		}
+		if (decimal === undefined) {
+			if (player.fullName === "JJ Peterka") {
+				decimal = map.get("John-Jason Peterka"); // BetRivers
+			}
+		}
+		if (decimal === undefined) {
+			if (player.fullName === "Arseny Gritsyuk") {
+				decimal = map.get("Arseni Gritsyuk"); // BetRivers
+			}
+		}
+		if (decimal === undefined) {
+			if (player.fullName === "J.T. Compher") {
+				decimal = map.get("JT Compher"); // BetRivers
+			}
+		}
+		if (decimal === undefined) {
+			if (player.fullName === "Ben Kindel") {
+				decimal = map.get("Benjamin Kindel"); // BetRivers
+			}
+		}
+		if (decimal === undefined) {
+			if (player.fullName === "Tommy Novak") {
+				decimal = map.get("Thomas Novak"); // BetRivers
+			}
+		}
+		if (decimal === undefined) {
+			if (player.fullName === "Lenni Hameenaho") {
+				decimal = map.get("Lenni Hämeenaho"); // BetRivers
+			}
+		}
+		if (decimal === undefined) {
+			if (player.fullName === "Martin Pospisil") {
+				decimal = map.get("Martin Pospíšil"); // BetRivers alt
+			}
+		}
+		if (decimal === undefined) {
+			if (player.fullName === "Egor Chinakhov") {
+				decimal = map.get("Yegor Chinakhov"); // DraftKings BetRivers
+			}
+		}
 
-	for (const item of playerList) {
-		const player = new Picks.PlayerOdds(`${item.firstName.default} ${item.lastName.default}`);
-		tablePlayers.push(player);
-		// if(item.lastName.default==="Suzuki") console.log(item);
-	}
 
-	const set1 = new Set<string>();
-	const set2 = new Set<string>();
-	const set3 = new Set<string>();
-	let c1=0;
-	for (const player of table1Rows) set1.add(player.name);
-	for (const player of table2Rows) set2.add(player.name);
-	for (const player of table3Rows) set3.add(player.name);
-	for (const player of tablePlayers) {
-		if (set1.has(player.name)) c1++;
-		if (set1.has(player.name)) player.pick = 1;
-		if (set2.has(player.name)) player.pick = 2;
-		if (set3.has(player.name)) player.pick = 3;
+		if (decimal !== undefined) {
+			const odds = trueOddsToAmerican(decimal);
+			player[betKey] = odds;
+			player[betChanceKey] = betChanceRounded(odds);
+		} else {
+			// console.log(player);
+		}
+
+	};
+	for (const player of playerList) {
+		nameFind(player, bet1, "bet1", "betChance1");
+		nameFind(player, bet2, "bet2", "betChance2");
+		nameFind(player, bet3, "bet3", "betChance3");
 	}
 	// console.log(c1);
 	// console.log(table1Rows);
@@ -217,19 +312,19 @@ const compilePlayerList = () => {
 compilePlayerList();
 
 const betOddsFromMap = (row: Picks.PickOdds, map: Map<string, number>, buMap: Map<string, string>): number | undefined => {
-	const trueOdds = map.get(row.name);
+	const trueOdds = map.get(row.fullName);
 	if (trueOdds === undefined) {
-		const name = buMap.get(row.name);
+		const name = buMap.get(row.fullName);
 		if (name !== undefined) return map.get(name);
 	}
 	return trueOdds;
 }
 
-const processJSON = (json: any[]) => {
+const processOddsDraftKings = () => {
 	const map = new Map<string, number>();
 
 	// const arr = [];
-	for (const item of json) {
+	for (const item of playerOddsDraftKings) {
 		const label = item.name;
 		const trueOdds = item.odds;
 
@@ -237,28 +332,29 @@ const processJSON = (json: any[]) => {
 		// arr.push({ label, trueOdds, seoIdentifier: participant.seoIdentifier });
 		map.set(label, trueOdds);
 	}
+
 	// arr.sort((a, b) => { return a.label.localeCompare(b.label); });
 	// console.log(arr);
 
 	const err: string[] = [];
 	for (const row of table1Rows) {
 		const odds = betOddsFromMap(row, map, nameMap1);
-		if (odds === undefined) err.push(row.name);
+		if (odds === undefined) err.push(row.fullName);
 		else assignOdds(row, odds, "bet1", "betChance1");
 	}
 	for (const row of table2Rows) {
 		const odds = betOddsFromMap(row, map, nameMap1);
-		if (odds === undefined) err.push(row.name);
+		if (odds === undefined) err.push(row.fullName);
 		else assignOdds(row, odds, "bet1", "betChance1");
 	}
 	for (const row of table3Rows) {
 		const odds = betOddsFromMap(row, map, nameMap1);
-		if (odds === undefined) err.push(row.name);
+		if (odds === undefined) err.push(row.fullName);
 		else assignOdds(row, odds, "bet1", "betChance1");
 	}
 	if (err.length > 0) console.log("DraftKings", err);
 }
-processJSON(playerOddsDraftKings);
+processOddsDraftKings();
 
 const processOddsFanDuel = () => {
 	const map = new Map<string, number>();
@@ -272,17 +368,17 @@ const processOddsFanDuel = () => {
 	const err: string[] = [];
 	for (const row of table1Rows) {
 		const odds = betOddsFromMap(row, map, nameMap2);
-		if (odds === undefined) err.push(row.name);
+		if (odds === undefined) err.push(row.fullName);
 		else assignOdds(row, odds, "bet2", "betChance2");
 	}
 	for (const row of table2Rows) {
 		const odds = betOddsFromMap(row, map, nameMap2);
-		if (odds === undefined) err.push(row.name);
+		if (odds === undefined) err.push(row.fullName);
 		else assignOdds(row, odds, "bet2", "betChance2");
 	}
 	for (const row of table3Rows) {
 		const odds = betOddsFromMap(row, map, nameMap2);
-		if (odds === undefined) err.push(row.name);
+		if (odds === undefined) err.push(row.fullName);
 		else assignOdds(row, odds, "bet2", "betChance2");
 	}
 	if (err.length > 0) console.log("FanDuel", err);
@@ -300,17 +396,17 @@ const processOddsBetRivers = () => {
 	const err: string[] = [];
 	for (const row of table1Rows) {
 		const odds = betOddsFromMap(row, map, nameMap3);
-		if (odds === undefined) err.push(row.name);
+		if (odds === undefined) err.push(row.fullName);
 		else assignOdds(row, odds, "bet3", "betChance3");
 	}
 	for (const row of table2Rows) {
 		const odds = betOddsFromMap(row, map, nameMap3);
-		if (odds === undefined) err.push(row.name);
+		if (odds === undefined) err.push(row.fullName);
 		else assignOdds(row, odds, "bet3", "betChance3");
 	}
 	for (const row of table3Rows) {
 		const odds = betOddsFromMap(row, map, nameMap3);
-		if (odds === undefined) err.push(row.name);
+		if (odds === undefined) err.push(row.fullName);
 		else assignOdds(row, odds, "bet3", "betChance3");
 	}
 	if (err.length > 0) console.log("BetRivers", err);
@@ -318,21 +414,17 @@ const processOddsBetRivers = () => {
 processOddsBetRivers();
 
 const processOdds5v5Hockey = () => {
-	const map1 = new Map<string, number>();
+	const map = new Map<number, number>();
 	for (const item of [...hockey5v5_1, ...hockey5v5_2, ...hockey5v5_3]) {
-		map1.set(item.player_name, item.projection_goals); // item.predicted_probability
+		map.set(item.player_nhl_id, item.projection_goals);
 	}
 
-	const err: string[] = [];
 	for (const row of [...table1Rows, ...table2Rows, ...table3Rows]) {
-		const odds = betOddsFromMap(row, map1, nameMap4);
-		if (odds === undefined) err.push(row.name);
-		else {
-			row.bet5v5 = odds;
-			row.betChance5v5 = Picks.ggChance(odds);
-		}
+		const odds = map.get(row.playerId);
+		if (odds === undefined) continue;
+		row.bet5v5 = odds;
+		row.betChance5v5 = Picks.ggChance(odds);
 	}
-	// if (err.length > 0) console.log("5v5Hockey", err);
 }
 processOdds5v5Hockey();
 
@@ -424,7 +516,7 @@ const logStats = () => {
 	}
 	const addPicks = (pick: Map<string, string[]>, rows: Picks.PickOdds[], title: string): void => {
 		for (const row of rows) {
-			const name = row.name;
+			const name = row.fullName;
 			if (!pick.has(name)) pick.set(name, []);
 			const odds = pick.get(name)!;
 			odds.push(title);
@@ -468,7 +560,7 @@ const logStats = () => {
 logStats();
 
 const columns: Picks.ColumnData[] = [
-	{ key: "name", title: "Player", sort: true },
+	{ key: "fullName", title: "Player", sort: true },
 	{ key: "gg", title: "G/GP", sort: true },
 	{ key: "bet1", title: "DraftKings", sort: true },
 	{ key: "bet2", title: "FanDuel", sort: true },
@@ -477,11 +569,12 @@ const columns: Picks.ColumnData[] = [
 ];
 
 const columnsPlayer: Picks.ColumnData[] = [
-	{ key: "name", title: "Player", sort: true },
+	{ key: "fullName", title: "Player", sort: true },
 	{ key: "bet1", title: "DraftKings", sort: true },
 	{ key: "bet2", title: "FanDuel", sort: true },
 	{ key: "bet3", title: "BetRivers", sort: true },
 	{ key: "pick", title: "Pick", sort: false },
+	{ key: "gameTime", title: "Start", sort: true },
 ];
 
 type processKeys = 'bet1' | 'bet2' | 'bet3' | 'bet5v5';
@@ -548,7 +641,7 @@ function App() {
 	const [rows3, _setRows3] = useState(table3Rows);
 	const sortedRows3 = [...rows3];
 
-	const [rowsPlayer, _setRowsPlayer] = useState(tablePlayers);
+	const [rowsPlayer, _setRowsPlayer] = useState(playerList);
 	const sortedRowsPlayer = [...rowsPlayer];
 
 	// Update theme when system preference changes
