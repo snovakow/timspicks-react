@@ -8,48 +8,50 @@ import playerOddsBetRivers from './data/betrivers.json';
 import gamesListing from './data/games.json';
 import { table_1_data as hockey5v5_1, table_2_data as hockey5v5_2, table_3_data as hockey5v5_3 } from './data/5v5hockey.ts';
 
-const nameMap = new Map<string, string>();
-nameMap.set("Alex Wennberg", "Alexander Wennberg"); // DraftKings, BetRivers
-nameMap.set("Alexis Lafrenière", "Alexis Lafreniere"); // DraftKings, FanDuel, DUP
-nameMap.set("Freddy Gaudreau", "Frederick Gaudreau");
-nameMap.set("Joshua Norris", "Josh Norris");
-nameMap.set("Martin Fehérváry", "Martin Fehervary");
-nameMap.set("Michael Matheson", "Mike Matheson"); // DraftKings, FanDuel
-nameMap.set("Nicholas Suzuki", "Nick Suzuki");
-nameMap.set("Sebastian Aho", "Sebastian Aho (CAR)"); // FanDuel, BetRivers
+const oddsNameMap = new Map<string, string>();
+oddsNameMap.set("Alexander Wennberg", "Alex Wennberg"); // FanDuel
+oddsNameMap.set("Alexis Lafrenière", "Alexis Lafreniere"); // DraftKings FanDuel
+oddsNameMap.set("Aliaksei Protas", "Alexei Protas"); // BetRivers (lang)
+oddsNameMap.set("Arseny Gritsyuk", "Arseni Gritsyuk"); // BetRivers
+oddsNameMap.set("Artem Zub", "Artyom Zub"); // BetRivers
+oddsNameMap.set("Axel Sandin-Pellikka", "Axel Sandin Pellikka"); // DraftKings
+oddsNameMap.set("Ben Kindel", "Benjamin Kindel"); // BetRivers
+oddsNameMap.set("Carl Grundstrom", "Carl Grundström"); // BetRivers (lang)
+oddsNameMap.set("Dmitry Orlov", "Dimitri Orlov"); // BetRivers
+oddsNameMap.set("Egor Chinakhov", "Yegor Chinakhov"); // DraftKings BetRivers
+oddsNameMap.set("J.J. Moser", "Janis Jérôme Moser"); // BetRivers
+oddsNameMap.set("J.T. Compher", "JT Compher"); // BetRivers
+oddsNameMap.set("Jake Middleton", "Jacob Middleton"); // BetRivers (lang)
+oddsNameMap.set("JJ Peterka", "John-Jason Peterka"); // BetRivers
+oddsNameMap.set("Josh Morrissey", "Joshua Morrissey"); // BetRivers
+oddsNameMap.set("Lenni Hameenaho", "Lenni Hämeenaho"); // BetRivers
+oddsNameMap.set("Liam Ohgren", "Liam Öhgren"); // BetRivers (lang)
+oddsNameMap.set("Martin Pospisil", "Martin Pospíšil"); // BetRivers (lang)
+oddsNameMap.set("Matt Coronato", "Matthew Coronato"); // BetRivers
+oddsNameMap.set("Matt Savoie", "Matthew Savoie"); // BetRivers
+oddsNameMap.set("Olli Määttä", "Olli Maatta"); // DraftKings FanDuel (lang)
+oddsNameMap.set("Oskar Bäck", "Oskar Back"); // DraftKings FanDuel
+oddsNameMap.set("Martin Fehérváry", "Martin Fehervary");
+oddsNameMap.set("Matt Boldy", "Matthew Boldy"); // BetRivers
+oddsNameMap.set("Mike Matheson", "Michael Matheson"); // BetRivers
+oddsNameMap.set("Mitch Marner", "Mitchell Marner"); // FanDuel BetRivers (lang)
+oddsNameMap.set("Oliver Bjorkstrand", "Oliver Björkstrand"); // BetRivers
+oddsNameMap.set("Ondrej Palat", "Ondrej Palát"); // BetRivers (lang mix and match)
+oddsNameMap.set("Sebastian Aho", "Sebastian Aho (CAR)"); // FanDuel, BetRivers
+oddsNameMap.set("Shea Theodore", "Shea Théodore"); // BetRivers
+oddsNameMap.set("Simon Holmstrom", "Simon Holmström"); // BetRivers (lang)
+oddsNameMap.set("Teuvo Teravainen", "Teuvo Teräväinen"); // BetRivers (lang)
+oddsNameMap.set("Tim Stützle", "Tim Stuetzle"); // DraftKings
+oddsNameMap.set("Tommy Novak", "Thomas Novak"); // BetRivers (lang)
+oddsNameMap.set("Trevor van Riemsdyk", "Trevor Van Riemsdyk"); // BetRivers
+oddsNameMap.set("Vasily Podkolzin", "Vasili Podkolzin"); // BetRivers (lang)
+oddsNameMap.set("Zachary Bolduc", "Zack Bolduc"); // DraftKings
 
-nameMap.set("Alex Kerfoot", "Alexander Kerfoot"); // DraftKings, FanDuel, BetRivers Unknown
-nameMap.set("Alexei Toropchenko", "Alexey Toropchenko"); // DraftKings, FanDuel, BetRivers Unknown
-
-const nameMap1 = new Map<string, string>(nameMap);
-const nameMap2 = new Map<string, string>(nameMap);
-const nameMap3 = new Map<string, string>(nameMap);
-
-nameMap1.set("Axel Sandin-Pellikka", "Axel Sandin Pellikka");
-nameMap1.set("Mitchell Marner", "Mitch Marner");
-nameMap1.set("Tim Stützle", "Tim Stuetzle");
-nameMap1.set("Zachary Bolduc", "Zack Bolduc");
-
-nameMap2.set("Elias Pettersson", "Elias Pettersson #40");
-nameMap2.set("Yegor Chinakhov", "Egor Chinakhov");
-
-nameMap3.set("Aliaksei Protas", "Alexei Protas");
-nameMap3.set("Artem Zub", "Artyom Zub");
-nameMap3.set("Carl Grundstrom", "Carl Grundström");
-nameMap3.set("Dmitry Orlov", "Dimitri Orlov");
-nameMap3.set("Elias Pettersson", "Elias Pettersson (1998)");
-nameMap3.set("J.J. Moser", "Janis Jérôme Moser");
-nameMap3.set("JJ Peterka", "John-Jason Peterka"); // DUP
-nameMap3.set("J.T. Compher", "JT Compher"); // DUP
-nameMap3.set("Jake Middleton", "Jacob Middleton");
-nameMap3.set("Josh Morrissey", "Joshua Morrissey");
-nameMap3.set("Matt Boldy", "Matthew Boldy");
-nameMap3.set("Ondrej Palat", "Ondrej Palát");
-nameMap3.set("Shea Theodore", "Shea Théodore");
-nameMap3.set("Teuvo Teravainen", "Teuvo Teräväinen");
-nameMap3.set("Tommy Novak", "Thomas Novak"); // DUP
-nameMap3.set("Trevor van Riemsdyk", "Trevor Van Riemsdyk");
-nameMap3.set("Vasily Podkolzin", "Vasili Podkolzin");
+oddsNameMap.set("Charle-Edouard D'Astous", "Charles-Edouard D'Astous"); // BetRivers
+oddsNameMap.set("Ethan Del Mastro", "Ethan del Mastro"); // FanDuel
+oddsNameMap.set("Nick Paul", "Nicholas Paul"); // FanDuel
+// oddsNameMap.set("Aatu Räty", "Aatu Raty"); // 
+oddsNameMap.set("", ""); // 
 
 const gamesList: Picks.GameData[] = [];
 const playerList: Picks.Player[] = [];
@@ -90,14 +92,6 @@ const trueOddsToAmerican = (x: number): number => {
 	} else {
 		return Math.round(100 / (1 - x));
 	}
-}
-
-type betKeys = "bet1" | "bet2" | "bet3";
-type betChanceKey = "betChance1" | "betChance2" | "betChance3";
-const assignOdds = (row: Picks.Player | Picks.PickOdds, trueOdds: number, betKey: betKeys, betChanceKey: betChanceKey): void => {
-	const odds = trueOddsToAmerican(trueOdds);
-	row[betKey] = odds;
-	row[betChanceKey] = betChanceRounded(odds);
 }
 
 const sortFunction = (sortConfig: Picks.SortConfig) => {
@@ -165,118 +159,99 @@ const compilePlayerList = () => {
 	for (const player of table3Rows) map3.set(player.playerId, player);
 	for (const player of playerList) {
 		const player1 = map1.get(player.playerId);
-		if (player1) player.pick = 1;
+		if (player1) {
+			player.pick = 1;
+			player1.fullName = player.fullName;
+			player1.firstName = player.firstName.default;
+			player1.lastName = player.lastName.default;
+		}
 		const player2 = map2.get(player.playerId);
-		if (player2) player.pick = 2;
+		if (player2) {
+			player.pick = 2;
+			player2.fullName = player.fullName;
+			player2.firstName = player.firstName.default;
+			player2.lastName = player.lastName.default;
+		}
 		const player3 = map3.get(player.playerId);
-		if (player3) player.pick = 3;
+		if (player3) {
+			player.pick = 3;
+			player3.fullName = player.fullName;
+			player3.firstName = player.firstName.default;
+			player3.lastName = player.lastName.default;
+		}
+	}
+
+	const removeAccents = (name: string): string => {
+		return name.normalize('NFD').replace(/\p{Diacritic}/gu, '');
 	}
 
 	type betKey = "bet1" | "bet2" | "bet3";
 	type betChanceKey = "betChance1" | "betChance2" | "betChance3";
-	const nameFind = (player: Picks.Player, map: Map<string, number>, betKey: betKey, betChanceKey: betChanceKey) => {
-		let decimal = map.get(player.fullName);
-		/*
-			DraftKings FanDuel
+	const nameFind = (player: Picks.Player, oddsMap: Map<string, number>, betKey: betKey, betChanceKey: betChanceKey) => {
+		const process = (name: string | undefined): boolean => {
+			if (name === undefined) return false;
+			const decimal = oddsMap.get(name);
+			if (decimal === undefined) return false;
 
-			function removeAccents(name: string): string {
-				return name.normalize('NFD').replace(/\p{Diacritic}/gu, '');
-			}
-
-			Olli Määttä
-			Alexis Lafrenière
-			Oskar Bäck
-		*/
-		if (decimal === undefined) {
-			if (player.fullName === "Olli Määttä") {
-				decimal = map.get("Olli Maatta"); // DraftKings FanDuel alt
-			}
-		}
-		if (decimal === undefined) {
-			if (player.fullName === "Alexis Lafrenière") {
-				decimal = map.get("Alexis Lafreniere"); // DraftKings FanDuel
-			}
-		}
-		if (decimal === undefined) {
-			if (player.fullName === "Oskar Bäck") {
-				decimal = map.get("Oskar Back"); // DraftKings FanDuel
-			}
-		}
-		if (decimal === undefined) {
-			if (player.fullName === "Matt Coronato") {
-				decimal = map.get("Matthew Coronato"); // BetRivers
-			}
-		}
-		if (decimal === undefined) {
-			if (player.fullName === "JJ Peterka") {
-				decimal = map.get("John-Jason Peterka"); // BetRivers
-			}
-		}
-		if (decimal === undefined) {
-			if (player.fullName === "Arseny Gritsyuk") {
-				decimal = map.get("Arseni Gritsyuk"); // BetRivers
-			}
-		}
-		if (decimal === undefined) {
-			if (player.fullName === "J.T. Compher") {
-				decimal = map.get("JT Compher"); // BetRivers
-			}
-		}
-		if (decimal === undefined) {
-			if (player.fullName === "Ben Kindel") {
-				decimal = map.get("Benjamin Kindel"); // BetRivers
-			}
-		}
-		if (decimal === undefined) {
-			if (player.fullName === "Tommy Novak") {
-				decimal = map.get("Thomas Novak"); // BetRivers
-			}
-		}
-		if (decimal === undefined) {
-			if (player.fullName === "Lenni Hameenaho") {
-				decimal = map.get("Lenni Hämeenaho"); // BetRivers
-			}
-		}
-		if (decimal === undefined) {
-			if (player.fullName === "Martin Pospisil") {
-				decimal = map.get("Martin Pospíšil"); // BetRivers alt
-			}
-		}
-		if (decimal === undefined) {
-			if (player.fullName === "Egor Chinakhov") {
-				decimal = map.get("Yegor Chinakhov"); // DraftKings BetRivers
-			}
-		}
-		if (decimal === undefined) {
-			if (player.fullName === "Elias Pettersson") {
-				if (player.playerId === 8480012) {
-					if (betKey === 'bet2') decimal = map.get("Elias Pettersson #40"); // FanDuel
-					if (betKey === 'bet3') decimal = map.get("Elias Pettersson (1998)"); // BetRivers
-				}
-				if (player.playerId === 8483678) {
-					if (betKey === 'bet1') decimal = map.get("Elias-Nils Pettersson"); // DraftKings
-					if (betKey === 'bet2') decimal = map.get("Elias Pettersson #25"); // FanDuel
-					if (betKey === 'bet3') decimal = map.get("Elias Pettersson (2004)"); // BetRivers
-				}
-			}
-		}
-
-		if (decimal !== undefined) {
 			const odds = trueOddsToAmerican(decimal);
 			player[betKey] = odds;
 			player[betChanceKey] = betChanceRounded(odds);
-		} else {
-			// console.log(player);
+			return true;
+		};
+
+		if (process(player.fullName)) return;
+		if (process(oddsNameMap.get(player.fullName))) return;
+
+		const baseName = removeAccents(player.fullName);
+		if (process(baseName)) return;
+		if (player.fullName === "Elias Pettersson") {
+			if (player.playerId === 8480012) {
+				if (betKey === 'bet2' && process("Elias Pettersson #40")) return; // FanDuel
+				if (betKey === 'bet3' && process("Elias Pettersson (1998)")) return; // BetRivers
+			}
+			if (player.playerId === 8483678) {
+				if (betKey === 'bet1' && process("Elias-Nils Pettersson")) return; // DraftKings
+				if (betKey === 'bet2' && process("Elias Pettersson #25")) return; // FanDuel
+				if (betKey === 'bet3' && process("Elias Pettersson (2004)")) return; // BetRivers
+			}
 		}
 
+		const firstLang: Set<string> = new Set();
+		for (const lang in player.firstName) {
+			if (lang === "default") continue;
+
+			const first = player.firstName[lang];
+			const last = player.lastName[lang] ?? player.lastName.default;
+			const name = `${first} ${last}`;
+
+			if (process(name)) return;
+
+			firstLang.add(lang);
+		}
+		for (const lang in player.lastName) {
+			if (lang === "default") continue;
+			if (firstLang.has(lang)) continue;
+
+			const first = player.firstName.default;
+			const last = player.lastName[lang];
+			const name = `${first} ${last}`;
+			if (process(name)) return;
+		}
 	};
 
 	const bet1 = new Map<string, number>();
-	for (const item of playerOddsDraftKings) bet1.set(item.name, item.odds);
 	const bet2 = new Map<string, number>();
-	for (const item of playerOddsFanDuel) bet2.set(item.name, item.odds);
 	const bet3 = new Map<string, number>();
-	for (const item of playerOddsBetRivers) bet3.set(item.name, item.odds);
+	const mapNames = (
+		item: { name: string; odds: number },
+		betMap: Map<string, number>
+	): void => {
+		betMap.set(item.name, item.odds);
+		betMap.set(removeAccents(item.name), item.odds);
+	}
+	for (const item of playerOddsDraftKings) mapNames(item, bet1);
+	for (const item of playerOddsFanDuel) mapNames(item, bet2);
+	for (const item of playerOddsBetRivers) mapNames(item, bet3);
 	for (const player of playerList) {
 		nameFind(player, bet1, "bet1", "betChance1");
 		nameFind(player, bet2, "bet2", "betChance2");
@@ -287,111 +262,36 @@ const compilePlayerList = () => {
 }
 compilePlayerList();
 
-const betOddsFromMap = (row: Picks.PickOdds, map: Map<string, number>, buMap: Map<string, string>): number | undefined => {
-	const trueOdds = map.get(row.fullName);
-	if (trueOdds === undefined) {
-		const name = buMap.get(row.fullName);
-		if (name !== undefined) return map.get(name);
-	}
-	return trueOdds;
-}
-
-const processOddsDraftKings = () => {
-	const map = new Map<string, number>();
-
-	for (const item of playerOddsDraftKings) map.set(item.name, item.odds);
-
-	const err: string[] = [];
-	for (const row of table1Rows) {
-		const odds = betOddsFromMap(row, map, nameMap1);
-		if (odds === undefined) err.push(row.fullName);
-		else assignOdds(row, odds, "bet1", "betChance1");
-	}
-	for (const row of table2Rows) {
-		const odds = betOddsFromMap(row, map, nameMap1);
-		if (odds === undefined) err.push(row.fullName);
-		else assignOdds(row, odds, "bet1", "betChance1");
-	}
-	for (const row of table3Rows) {
-		const odds = betOddsFromMap(row, map, nameMap1);
-		if (odds === undefined) err.push(row.fullName);
-		else assignOdds(row, odds, "bet1", "betChance1");
-	}
-	if (err.length > 0) console.log("DraftKings", err);
-}
-processOddsDraftKings();
-
-const processOddsFanDuel = () => {
-	const map = new Map<string, number>();
-
-	for (const item of playerOddsFanDuel) {
-		const label = item.name;
-		const trueOdds = item.odds;
-		map.set(label, trueOdds);
-	}
-
-	const err: string[] = [];
-	for (const row of table1Rows) {
-		const odds = betOddsFromMap(row, map, nameMap2);
-		if (odds === undefined) err.push(row.fullName);
-		else assignOdds(row, odds, "bet2", "betChance2");
-	}
-	for (const row of table2Rows) {
-		const odds = betOddsFromMap(row, map, nameMap2);
-		if (odds === undefined) err.push(row.fullName);
-		else assignOdds(row, odds, "bet2", "betChance2");
-	}
-	for (const row of table3Rows) {
-		const odds = betOddsFromMap(row, map, nameMap2);
-		if (odds === undefined) err.push(row.fullName);
-		else assignOdds(row, odds, "bet2", "betChance2");
-	}
-	if (err.length > 0) console.log("FanDuel", err);
-}
-processOddsFanDuel();
-
-const processOddsBetRivers = () => {
-	const map = new Map<string, number>();
-	for (const item of playerOddsBetRivers) {
-		const label = item.name;
-		const trueOdds = item.odds;
-		map.set(label, trueOdds);
-	}
-
-	const err: string[] = [];
-	for (const row of table1Rows) {
-		const odds = betOddsFromMap(row, map, nameMap3);
-		if (odds === undefined) err.push(row.fullName);
-		else assignOdds(row, odds, "bet3", "betChance3");
-	}
-	for (const row of table2Rows) {
-		const odds = betOddsFromMap(row, map, nameMap3);
-		if (odds === undefined) err.push(row.fullName);
-		else assignOdds(row, odds, "bet3", "betChance3");
-	}
-	for (const row of table3Rows) {
-		const odds = betOddsFromMap(row, map, nameMap3);
-		if (odds === undefined) err.push(row.fullName);
-		else assignOdds(row, odds, "bet3", "betChance3");
-	}
-	if (err.length > 0) console.log("BetRivers", err);
-}
-processOddsBetRivers();
-
-const processOdds5v5Hockey = () => {
+const processOdds = () => {
 	const map = new Map<number, number>();
 	for (const item of [...hockey5v5_1, ...hockey5v5_2, ...hockey5v5_3]) {
 		map.set(item.player_nhl_id, item.projection_goals);
 	}
 
+	const mapAll = new Map<number, Picks.Player>();
+	for (const player of playerList) {
+		mapAll.set(player.playerId, player);
+	}
+
 	for (const row of [...table1Rows, ...table2Rows, ...table3Rows]) {
 		const odds = map.get(row.playerId);
-		if (odds === undefined) continue;
-		row.bet5v5 = odds;
-		row.betChance5v5 = Picks.ggChance(odds);
+		if (odds !== undefined) {
+			row.bet5v5 = odds;
+			row.betChance5v5 = Picks.ggChance(odds);
+		}
+
+		const player = mapAll.get(row.playerId);
+		if (!player) continue;
+		row.bet1 = player.bet1;
+		row.bet2 = player.bet2;
+		row.bet3 = player.bet3;
+		row.betChance1 = player.betChance1;
+		row.betChance2 = player.betChance2;
+		row.betChance3 = player.betChance3;
 	}
+
 }
-processOdds5v5Hockey();
+processOdds();
 
 const logStats = () => {
 	const processRow = (key: 'bet1' | 'bet2' | 'bet3', rows: Picks.PickOdds[]): Picks.PickOdds[] | null => {
@@ -461,9 +361,9 @@ const logStats = () => {
 		}
 	}
 
-	logs1.push("(70-74) 79.1 80.793");
-	logs2.push("(33-36) 38-39.7 42.054");
-	logs3.push("(3-4) 5.5 7.259");
+	logs1.push("(70-74) 79.1  80.793 81.813");
+	logs2.push("(33-36) 38-40 42.054 43.073");
+	logs3.push("(3-4)   5.5    7.259  7.771");
 
 	console.log(...logs1);
 	console.log(...logs2);
