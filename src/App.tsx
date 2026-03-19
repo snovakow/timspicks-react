@@ -2,13 +2,14 @@ import { useState, useEffect } from 'react';
 import './App.css';
 import * as Picks from './components/Table';
 import playerData from './data/helper.json';
-import playerOddsDraftKings from './data/draftkings.json';
-import playerOddsFanDuel from './data/fanduel.json';
-import playerOddsBetRivers from './data/betrivers.json';
+import playerOddsDraftKings from './data/bet1.json';
+import playerOddsFanDuel from './data/bet2.json';
+import playerOddsBetRivers from './data/bet3.json';
 import gamesListing from './data/games.json';
-import { table_1_data as hockey5v5_1, table_2_data as hockey5v5_2, table_3_data as hockey5v5_3 } from './data/5v5hockey.ts';
+import { table_1_data as hockey5v5_1, table_2_data as hockey5v5_2, table_3_data as hockey5v5_3 } from './data/bet5v5.ts';
 
 const oddsNameMap = new Map<string, string>();
+oddsNameMap.set("Aatu Räty", "Aatu Raty");
 oddsNameMap.set("Alexander Wennberg", "Alex Wennberg"); // FanDuel
 oddsNameMap.set("Alexis Lafrenière", "Alexis Lafreniere"); // DraftKings FanDuel
 oddsNameMap.set("Aliaksei Protas", "Alexei Protas"); // BetRivers (lang)
@@ -17,8 +18,10 @@ oddsNameMap.set("Artem Zub", "Artyom Zub"); // BetRivers
 oddsNameMap.set("Axel Sandin-Pellikka", "Axel Sandin Pellikka"); // DraftKings
 oddsNameMap.set("Ben Kindel", "Benjamin Kindel"); // BetRivers
 oddsNameMap.set("Carl Grundstrom", "Carl Grundström"); // BetRivers (lang)
+oddsNameMap.set("Charle-Edouard D'Astous", "Charles-Edouard D'Astous"); // BetRivers
 oddsNameMap.set("Dmitry Orlov", "Dimitri Orlov"); // BetRivers
 oddsNameMap.set("Egor Chinakhov", "Yegor Chinakhov"); // DraftKings BetRivers
+oddsNameMap.set("Ethan Del Mastro", "Ethan del Mastro"); // FanDuel
 oddsNameMap.set("J.J. Moser", "Janis Jérôme Moser"); // BetRivers
 oddsNameMap.set("J.T. Compher", "JT Compher"); // BetRivers
 oddsNameMap.set("Jake Middleton", "Jacob Middleton"); // BetRivers (lang)
@@ -26,17 +29,18 @@ oddsNameMap.set("JJ Peterka", "John-Jason Peterka"); // BetRivers
 oddsNameMap.set("Josh Morrissey", "Joshua Morrissey"); // BetRivers
 oddsNameMap.set("Lenni Hameenaho", "Lenni Hämeenaho"); // BetRivers
 oddsNameMap.set("Liam Ohgren", "Liam Öhgren"); // BetRivers (lang)
+oddsNameMap.set("Martin Fehérváry", "Martin Fehervary");
 oddsNameMap.set("Martin Pospisil", "Martin Pospíšil"); // BetRivers (lang)
+oddsNameMap.set("Matt Boldy", "Matthew Boldy"); // BetRivers
 oddsNameMap.set("Matt Coronato", "Matthew Coronato"); // BetRivers
 oddsNameMap.set("Matt Savoie", "Matthew Savoie"); // BetRivers
-oddsNameMap.set("Olli Määttä", "Olli Maatta"); // DraftKings FanDuel (lang)
-oddsNameMap.set("Oskar Bäck", "Oskar Back"); // DraftKings FanDuel
-oddsNameMap.set("Martin Fehérváry", "Martin Fehervary");
-oddsNameMap.set("Matt Boldy", "Matthew Boldy"); // BetRivers
 oddsNameMap.set("Mike Matheson", "Michael Matheson"); // BetRivers
 oddsNameMap.set("Mitch Marner", "Mitchell Marner"); // FanDuel BetRivers (lang)
+oddsNameMap.set("Nick Paul", "Nicholas Paul"); // FanDuel
 oddsNameMap.set("Oliver Bjorkstrand", "Oliver Björkstrand"); // BetRivers
+oddsNameMap.set("Olli Määttä", "Olli Maatta"); // DraftKings FanDuel (lang)
 oddsNameMap.set("Ondrej Palat", "Ondrej Palát"); // BetRivers (lang mix and match)
+oddsNameMap.set("Oskar Bäck", "Oskar Back"); // DraftKings FanDuel
 oddsNameMap.set("Sebastian Aho", "Sebastian Aho (CAR)"); // FanDuel, BetRivers
 oddsNameMap.set("Shea Theodore", "Shea Théodore"); // BetRivers
 oddsNameMap.set("Simon Holmstrom", "Simon Holmström"); // BetRivers (lang)
@@ -46,12 +50,6 @@ oddsNameMap.set("Tommy Novak", "Thomas Novak"); // BetRivers (lang)
 oddsNameMap.set("Trevor van Riemsdyk", "Trevor Van Riemsdyk"); // BetRivers
 oddsNameMap.set("Vasily Podkolzin", "Vasili Podkolzin"); // BetRivers (lang)
 oddsNameMap.set("Zachary Bolduc", "Zack Bolduc"); // DraftKings
-
-oddsNameMap.set("Charle-Edouard D'Astous", "Charles-Edouard D'Astous"); // BetRivers
-oddsNameMap.set("Ethan Del Mastro", "Ethan del Mastro"); // FanDuel
-oddsNameMap.set("Nick Paul", "Nicholas Paul"); // FanDuel
-// oddsNameMap.set("Aatu Räty", "Aatu Raty"); // 
-oddsNameMap.set("", ""); // 
 
 const gamesList: Picks.GameData[] = [];
 const playerList: Picks.Player[] = [];
@@ -204,6 +202,7 @@ const compilePlayerList = () => {
 
 		const baseName = removeAccents(player.fullName);
 		if (process(baseName)) return;
+
 		if (player.fullName === "Elias Pettersson") {
 			if (player.playerId === 8480012) {
 				if (betKey === 'bet2' && process("Elias Pettersson #40")) return; // FanDuel
@@ -561,7 +560,7 @@ function App() {
 					<h2>Pick #3</h2>
 					<Picks.Table columns={columns} sortedRows={sortedRows3} requestSort={requestSort3} sortConfig={sortConfig3} darkTheme={darkTheme} chances={chances} />
 				</div>
-				<div className="table-container">
+				<div className="table-container fitSizeTable4">
 					<h2>Players</h2>
 					<Picks.Table columns={columnsPlayer} sortedRows={sortedRowsPlayer} requestSort={requestSortPlayer} sortConfig={sortConfigPlayer} darkTheme={darkTheme} chances={chances} />
 				</div>
