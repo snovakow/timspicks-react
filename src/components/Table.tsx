@@ -95,9 +95,11 @@ export class Player {
     bet1: number | null = null;
     bet2: number | null = null;
     bet3: number | null = null;
+    bet4: number | null = null;
     betChance1: string = "-";
     betChance2: string = "-";
     betChance3: string = "-";
+    betChance4: string = "-";
 
     pick: 0 | 1 | 2 | 3 = 0;
 
@@ -120,7 +122,7 @@ export class Player {
     }
 }
 
-export type ColumnKeys = "fullName" | "bet1" | "bet2" | "bet3" | "gg" | "bet5v5" | "pick" | "gameTime";
+export type ColumnKeys = "fullName" | "bet1" | "bet2" | "bet3" | "bet4" | "gg" | "bet5v5" | "pick" | "gameTime";
 export interface ColumnData {
     key: ColumnKeys;
     title: string;
@@ -156,9 +158,11 @@ export class PickOdds {
     bet1: number | null = null;
     bet2: number | null = null;
     bet3: number | null = null;
+    bet4: number | null = null;
     betChance1: string = "-";
     betChance2: string = "-";
     betChance3: string = "-";
+    betChance4: string = "-";
 
     logoLight: string;
     logoDark: string;
@@ -169,6 +173,7 @@ export class PickOdds {
     highlight1 = false;
     highlight2 = false;
     highlight3 = false;
+    highlight4 = false;
     highlight5v5 = false;
     constructor(item: OddsItem) {
         this.playerId = item.playerId;
@@ -239,6 +244,9 @@ export function Table(props: {
                             </td>
                             <td className={picks && row.highlight3 ? "highlight" : undefined}>
                                 {chances ? row.betChance3 : (row.bet3 === null ? "-" : row.bet3)}
+                            </td>
+                            <td className={picks && row.highlight4 ? "highlight" : undefined}>
+                                {chances ? row.betChance4 : (row.bet4 === null ? "-" : row.bet4)}
                             </td>
                             {picks && (<td className={picks && row.highlight5v5 ? "highlight" : undefined}>
                                 {chances ? row.betChance5v5 : (row.bet5v5 === null ? "-" : row.bet5v5.toFixed(2))}
