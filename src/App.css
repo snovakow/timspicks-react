@@ -28,6 +28,12 @@ button:hover {
   border-color: #646cff;
 }
 
+.button {
+  font-size: 1em;
+  width: 1.5em;
+  justify-content: center;
+}
+
 .chances-on {
   color: #000;
 }

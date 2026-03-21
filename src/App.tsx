@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import './App.css';
 import * as Picks from './components/Table';
+import Popup from './components/Popup';
 
 const fetchData = async (src: string) => {
 	const response = await fetch(src + "?t=" + new Date().getTime());
@@ -337,6 +338,7 @@ const processOdds = () => {
 }
 processOdds();
 
+const dataStats: string[] = [];
 const logStats = () => {
 	const processRow = (key: 'bet1' | 'bet2' | 'bet3' | 'bet4', rows: Picks.PickOdds[]): Picks.PickOdds[] | null => {
 		let max = null;
@@ -427,6 +429,7 @@ const logStats = () => {
 	console.log(...logs1);
 	console.log(...logs2);
 	console.log(...logs3);
+	dataStats.push(logs1.join(" "), logs2.join(" "), logs3.join(" "));
 
 	const isSameArray = (arr1: string[], arr2: string[]): boolean => {
 		if (arr1.length !== arr2.length) return false;
@@ -446,15 +449,27 @@ const logStats = () => {
 			odds.push(title);
 		}
 	}
-	const printRow = (header: string, max1row: Picks.PickOdds[] | null, max2row: Picks.PickOdds[] | null, max3row: Picks.PickOdds[] | null) => {
+	const addLogout = (log: string) => {
+		console.log(log);
+		dataStats.push(log);
+	}
+	const printRow = (
+		header: string,
+		max1row: Picks.PickOdds[] | null,
+		max2row: Picks.PickOdds[] | null,
+		max3row: Picks.PickOdds[] | null,
+		max4row: Picks.PickOdds[] | null
+	) => {
 		const pick = new Map<string, string[]>();
 		const allOdds = [];
 		if (max1row) allOdds.push("DraftKings");
 		if (max2row) allOdds.push("FanDuel");
-		if (max3row) allOdds.push("BetRivers");
+		if (max3row) allOdds.push("BetMGM");
+		if (max4row) allOdds.push("BetRivers");
 		if (max1row) addPicks(pick, max1row, allOdds[0]);
 		if (max2row) addPicks(pick, max2row, allOdds[1]);
 		if (max3row) addPicks(pick, max3row, allOdds[2]);
+		if (max4row) addPicks(pick, max4row, allOdds[3]);
 
 		// Merge player names with the same odds sources
 		const entries: [string, string[]][] = [...pick.entries()];
@@ -473,13 +488,45 @@ const logStats = () => {
 		}
 
 		for (const [name, odds] of entries) {
-			if (odds.length === allOdds.length) console.log(`${header}: ${name}`);
-			else console.log(`${header}: ${name} (${odds.join(", ")})`);
+			if (odds.length === allOdds.length) addLogout(`${header}: ${name}`);
+			else addLogout(`${header}: ${name} (${odds.join(", ")})`);
 		}
 	}
-	printRow("1", max1_1row, max2_1row, max3_1row);
-	printRow("2", max1_2row, max2_2row, max3_2row);
-	printRow("3", max1_3row, max2_3row, max3_3row);
+	printRow("1", max1_1row, max2_1row, max3_1row, max4_1row);
+	printRow("2", max1_2row, max2_2row, max3_2row, max4_2row);
+	printRow("3", max1_3row, max2_3row, max3_3row, max4_3row);
+
+	const calulateAvg = (rows: Picks.PickOdds[]): [number, string[]] => {
+		let avgMax = 0;
+		let avgPlayers: string[] = [];
+		for (const row of rows) {
+			let avg = 0;
+			let count = 0;
+			const bet1 = betChance(row.bet1);
+			if (bet1 !== null) { avg += bet1; count++; }
+			const bet2 = betChance(row.bet2);
+			if (bet2 !== null) { avg += bet2; count++; }
+			const bet3 = betChance(row.bet3);
+			if (bet3 !== null) { avg += bet3; count++; }
+			const bet4 = betChance(row.bet4);
+			if (bet4 !== null) { avg += bet4; count++; }
+			if (count === 0) continue;
+			avg /= count;
+			if (avg > avgMax) {
+				avgMax = avg;
+				avgPlayers = [row.fullName];
+			} else if (avg === avgMax) {
+				avgPlayers.push(row.fullName);
+			}
+		}
+		return [avgMax, avgPlayers];
+	}
+	const [avg1, avgPlayers1] = calulateAvg(table1Rows);
+	const [avg2, avgPlayers2] = calulateAvg(table2Rows);
+	const [avg3, avgPlayers3] = calulateAvg(table3Rows);
+	addLogout(`Pick 1: ${Picks.rountdToPercent(avg1, 3)} - ${avgPlayers1.join(", ")}`);
+	addLogout(`Pick 2: ${Picks.rountdToPercent(avg2, 3)} - ${avgPlayers2.join(", ")}`);
+	addLogout(`Pick 3: ${Picks.rountdToPercent(avg3, 3)} - ${avgPlayers3.join(", ")}`);
 }
 logStats();
 
@@ -549,7 +596,11 @@ const processMaxArray = (array: Picks.PickOdds[]) => {
 	for (const row of max5v5) row.highlight5v5 = true;
 }
 
+for (const i in dataStats) dataStats[i] = dataStats[i].replaceAll(' ', '\u00A0');
+
 function App() {
+	const [showPopup, setShowPopup] = useState(false);
+
 	const [chances, setChances] = useState(false);
 	const toggleHandler = () => {
 		setChances(prev => !prev); // Flips the state to the opposite value
@@ -604,11 +655,20 @@ function App() {
 	return (
 		<>
 			<header className='header satisfy-regular'>
-				<span></span>
+				<button className={chances ? 'button chances-on' : 'button chances-off'} onClick={toggleHandler}>%</button>
 				Tims Hockey Challenge Picks
-				<button className={chances ? 'chances-on' : 'chances-off'} onClick={toggleHandler}>%</button>
+				<button className="button" onClick={() => setShowPopup(true)}>?</button>
 			</header>
 			<main className='content'>
+				<Popup showPopUp={showPopup} closePopUp={() => setShowPopup(false)}>
+					<h2>Stats</h2>
+					{
+						dataStats.map((title, index) => (
+							<div key={index}>{title}</div>
+						))
+					}
+				</Popup>
+
 				<div className="table-container">
 					<h2>Games</h2>
 					<Picks.Basic columns={["Home", "Away", "Time"]} games={gamesList} darkTheme={false} />
