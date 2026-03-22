@@ -339,7 +339,7 @@ const processOdds = () => {
 }
 processOdds();
 
-const dataStats: string[] = [];
+const dataStats: string[][] = [];
 const logStats = () => {
 	const processRow = (key: 'bet1' | 'bet2' | 'bet3' | 'bet4', rows: Picks.PickOdds[]): Picks.PickOdds[] | null => {
 		let max = null;
@@ -432,7 +432,7 @@ const logStats = () => {
 	console.log(...logs1);
 	console.log(...logs2);
 	console.log(...logs3);
-	dataStats.push(logs1.join(" "), logs2.join(" "), logs3.join(" "));
+	dataStats.push([logs1.join(" "), logs2.join(" "), logs3.join(" ")]);
 
 	const isSameArray = (arr1: string[], arr2: string[]): boolean => {
 		if (arr1.length !== arr2.length) return false;
@@ -452,9 +452,10 @@ const logStats = () => {
 			odds.push(title);
 		}
 	}
-	const addLogout = (log: string) => {
+	const addLogout = (log: string, section: number) => {
 		console.log(log);
-		dataStats.push(log);
+		if (!dataStats[section]) dataStats[section] = [];
+		dataStats[section].push(log);
 	}
 	const printRow = (
 		header: string,
@@ -491,8 +492,8 @@ const logStats = () => {
 		}
 
 		for (const [name, odds] of entries) {
-			if (odds.length === allOdds.length) addLogout(`${header}: ${name}`);
-			else addLogout(`${header}: ${name} (${odds.join(", ")})`);
+			if (odds.length === allOdds.length) addLogout(`${header}: ${name}`, 1);
+			else addLogout(`${header}: ${name} (${odds.join(", ")})`, 1);
 		}
 	}
 	printRow("1", max1_1row, max2_1row, max3_1row, max4_1row);
@@ -527,9 +528,9 @@ const logStats = () => {
 	const [avg1, avgPlayers1] = calulateAvg(table1Rows);
 	const [avg2, avgPlayers2] = calulateAvg(table2Rows);
 	const [avg3, avgPlayers3] = calulateAvg(table3Rows);
-	addLogout(`Pick 1: ${Picks.rountdToPercent(avg1, precision)} - ${avgPlayers1.join(", ")}`);
-	addLogout(`Pick 2: ${Picks.rountdToPercent(avg2, precision)} - ${avgPlayers2.join(", ")}`);
-	addLogout(`Pick 3: ${Picks.rountdToPercent(avg3, precision)} - ${avgPlayers3.join(", ")}`);
+	addLogout(`Pick 1: ${Picks.rountdToPercent(avg1, precision)} - ${avgPlayers1.join(", ")}`, 2);
+	addLogout(`Pick 2: ${Picks.rountdToPercent(avg2, precision)} - ${avgPlayers2.join(", ")}`, 2);
+	addLogout(`Pick 3: ${Picks.rountdToPercent(avg3, precision)} - ${avgPlayers3.join(", ")}`, 2);
 }
 logStats();
 
@@ -599,7 +600,10 @@ const processMaxArray = (array: Picks.PickOdds[]) => {
 	for (const row of max5v5) row.highlight5v5 = true;
 }
 
-for (const i in dataStats) dataStats[i] = dataStats[i].replaceAll(' ', '\u00A0');
+for (const i in dataStats) {
+	const stat = dataStats[i];
+	for (const j in stat) stat[j] = stat[j].replaceAll(' ', '\u00A0');
+}
 
 function App() {
 	const [showPopup, setShowPopup] = useState(false);
@@ -666,8 +670,12 @@ function App() {
 				<Popup showPopUp={showPopup} closePopUp={() => setShowPopup(false)}>
 					<h2>Stats</h2>
 					{
-						dataStats.map((title, index) => (
-							<div key={index}>{title}</div>
+						dataStats.map((stat, i) => (
+							<div key={i} className='popup-section'>
+								{stat.map((title, j) => (
+									<div key={j}>{title}</div>
+								))}
+							</div>
 						))
 					}
 				</Popup>

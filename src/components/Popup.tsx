@@ -18,7 +18,9 @@ function Popup({ showPopUp, closePopUp, children }: PopupProps) {
                 <button className="close-button" onClick={closePopUp}>
                     &times; {/* HTML entity for 'times' (X) */}
                 </button>
-                {children}
+                <div className="popup-body">
+                    {children}
+                </div>
             </div>
         </div>
     );

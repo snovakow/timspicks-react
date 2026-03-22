@@ -1,14 +1,15 @@
 .popup-overlay {
   position: fixed;
-  top: 0;
-  left: 0;
+  top: 4.875rem;
   right: 0;
   bottom: 0;
+  left: 0;
   background: rgba(0, 0, 0, 0.7);
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 1000;
+  box-sizing: border-box;
 }
 
 .popup-content {
@@ -17,16 +18,35 @@
   background: white;
   padding: 20px;
   border-radius: 5px;
-  /* max-width: 500px; */
-  text-align: left;
-  width: 90%;
+  max-width: 90%;
+  max-height: calc(100% - 40px);
+  box-sizing: border-box;
   position: relative;
+  overflow: hidden;
+}
+
+.popup-body {
+  max-height: calc(100% - 40px);
+  overflow: auto;
+  overflow-wrap: anywhere;
+}
+
+.popup-section {
+  width: fit-content;
+  text-align: left;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.popup-section:not(:last-child) {
+  margin-bottom: 1rem;
 }
 
 .close-button {
   position: absolute;
   top: 10px;
   right: 10px;
+  z-index: 1;
   background: none;
   border: none;
   font-size: 1.5rem;
