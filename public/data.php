@@ -19,19 +19,21 @@ $csrfToken = $_SESSION['csrf_token'];
 </head>
 
 <body>
-    <select id="option">
-        <option value="" disabled selected>Option</option>
-        <option value="picks">Picks</option>
-        <option value="odds">Odds</option>
-        <option value="picks,odds">Picks + Odds</option>
-        <option value="games">Games</option>
-        <option value="picks,odds,games">All</option>
-    </select>
+    <div id="form">
+        <select id="option">
+            <option value="" disabled selected>Option</option>
+            <option value="picks">Picks</option>
+            <option value="odds">Odds</option>
+            <option value="picks,odds">Picks + Odds</option>
+            <option value="games">Games</option>
+            <option value="picks,odds,games">All</option>
+        </select>
+        <input type="text" id="name" />
+        <input type="password" id="input" />
+        <button id="button">Submit</button>
+    </div>
 
-    <input type="text" id="name" />
-    <input type="password" id="input" />
-    <button id="button">Submit</button>
-    <p id="response"></p>
+    <div id="response"></div>
 
     <script>
         const button = document.getElementById('button');
