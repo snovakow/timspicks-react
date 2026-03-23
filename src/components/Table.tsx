@@ -66,7 +66,7 @@ export function Basic(props: {
                             {game.time.toLocaleTimeString([], timeFormat)}
                         </td>
                         <td>
-                            <a href={game.link} target="_blank">🔗</a>
+                            <a href={game.link} target="_blank" rel="noopener noreferrer">🔗</a>
                         </td>
                     </tr>
                 )
@@ -116,7 +116,8 @@ export class Player {
 
         const first = this.firstName.default.toLowerCase();
         const last = this.lastName.default.toLowerCase();
-        this.link = `https://www.nhl.com/bluejackets/player/${first}-${last}-${this.playerId}`;
+        const linkteam = this.team.name.toLowerCase();
+        this.link = `https://www.nhl.com/${linkteam}/player/${first}-${last}-${this.playerId}`;
 
         this.fullName = `${this.firstName.default} ${this.lastName.default}`;
     }
@@ -134,6 +135,7 @@ export interface OddsItem {
     firstName: string;
     lastName: string;
     team: string;
+    link: string;
 
     gamesPlayed: number;
     goals: number;
@@ -155,6 +157,7 @@ export class PickOdds {
     firstName: string;
     lastName: string;
     fullName: string;
+    link: string;
     bet1: number | null = null;
     bet2: number | null = null;
     bet3: number | null = null;
@@ -179,6 +182,7 @@ export class PickOdds {
         this.firstName = item.firstName;
         this.lastName = item.lastName;
         this.fullName = `${item.firstName} ${item.lastName}`;
+        this.link = item.link;
 
         this.logoLight = getLogo(item.team as Team, false);
         this.logoDark = getLogo(item.team as Team, true);
@@ -209,6 +213,7 @@ export function Table(props: {
                     {
                         columns.map(item => (
                             <th key={item.key}
+                                colSpan={item.key === "fullName" ? 2 : 1}
                                 className={item.sort ? 'sortable' : undefined}
                                 onClick={item.sort ? () => requestSort(item.key) : undefined}>
                                 <span className='cell-container'>
@@ -232,6 +237,10 @@ export function Table(props: {
                                     {row.fullName}
                                 </span>
                             </td>
+                            <td>
+                                <a href={row.link} target="_blank" rel="noopener noreferrer">🔗</a>
+                            </td>
+
                             {picks && (<td>{chances ? row.ggChance : row.gg.toFixed(2)}</td>)}
                             <td className={picks && row.highlight1 ? "highlight" : undefined}>
                                 {chances ? row.betChance1 : (row.bet1 === null ? "-" : row.bet1)}

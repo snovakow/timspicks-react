@@ -185,6 +185,7 @@ const compilePlayerList = () => {
 			player1.fullName = player.fullName;
 			player1.firstName = player.firstName.default;
 			player1.lastName = player.lastName.default;
+			player1.link = player.link;
 		}
 		const player2 = map2.get(player.playerId);
 		if (player2) {
@@ -192,6 +193,7 @@ const compilePlayerList = () => {
 			player2.fullName = player.fullName;
 			player2.firstName = player.firstName.default;
 			player2.lastName = player.lastName.default;
+			player2.link = player.link;
 		}
 		const player3 = map3.get(player.playerId);
 		if (player3) {
@@ -199,6 +201,7 @@ const compilePlayerList = () => {
 			player3.fullName = player.fullName;
 			player3.firstName = player.firstName.default;
 			player3.lastName = player.lastName.default;
+			player3.link = player.link;
 		}
 	}
 
