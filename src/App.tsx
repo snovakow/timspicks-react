@@ -465,15 +465,23 @@ const logStats = () => {
 		max4row: Picks.PickOdds[] | null
 	) => {
 		const pick = new Map<string, string[]>();
-		const allOdds = [];
-		if (max1row) allOdds.push("DraftKings");
-		if (max2row) allOdds.push("FanDuel");
-		if (max3row) allOdds.push("BetMGM");
-		if (max4row) allOdds.push("BetRivers");
-		if (max1row) addPicks(pick, max1row, allOdds[0]);
-		if (max2row) addPicks(pick, max2row, allOdds[1]);
-		if (max3row) addPicks(pick, max3row, allOdds[2]);
-		if (max4row) addPicks(pick, max4row, allOdds[3]);
+		let allOdds = 0;
+		if (max1row) {
+			allOdds++;
+			addPicks(pick, max1row, "DraftKings");
+		}
+		if (max2row) {
+			allOdds++;
+			addPicks(pick, max2row, "FanDuel");
+		}
+		if (max3row) {
+			allOdds++;
+			addPicks(pick, max3row, "BetMGM");
+		}
+		if (max4row) {
+			allOdds++;
+			addPicks(pick, max4row, "BetRivers");
+		}
 
 		// Merge player names with the same odds sources
 		const entries: [string, string[]][] = [...pick.entries()];
@@ -492,7 +500,7 @@ const logStats = () => {
 		}
 
 		for (const [name, odds] of entries) {
-			if (odds.length === allOdds.length) addLogout(`${header}: ${name}`, 1);
+			if (odds.length === allOdds) addLogout(`${header}: ${name}`, 1);
 			else addLogout(`${header}: ${name} (${odds.join(", ")})`, 1);
 		}
 	}
