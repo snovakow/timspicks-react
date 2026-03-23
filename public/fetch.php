@@ -619,36 +619,4 @@ if ($live && isset($_GET['odds'])) {
 	echo "<br>Data has been merged and written to $local_file";
 }
 
-/*
-
-   5v5Hockey
-
-*/
-if ($live && isset($_GET['odds'])) {
-	echo '<h2>5v5Hockey</h2>';
-	$remote_url = 'https://5v5hockey.com/ai-betting/tims-picks/';
-
-	echo "{$remote_url}<br>";
-	$data = file_get_contents($remote_url);
-
-	if ($data === false) die();
-
-	if ($savesrc) file_put_contents('./data/src_bet5v5.txt', $data);
-
-	$start = strpos($data, 'const table_1_data');
-	if ($start === false) die();
-
-	$end = strpos($data, 'gridTimsPicks(');
-	if ($end === false) die();
-
-	$data = substr($data, $start, $end - $start);
-
-	$data .= 'return { table_1_data, table_2_data, table_3_data };';
-
-	$local_file = './data/bet5v5.txt';
-	if (file_put_contents($local_file, $data, LOCK_EX) === false) die();
-
-	echo "<br>Data has been written to $local_file";
-}
-
 die("<br><br>Complete!");
