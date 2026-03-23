@@ -64,6 +64,7 @@ oddsNameMap.set("Charle-Edouard D'Astous", "Charles-Edouard D'Astous"); // BetRi
 oddsNameMap.set("Dmitry Orlov", "Dimitri Orlov"); // BetRivers
 oddsNameMap.set("Egor Chinakhov", "Yegor Chinakhov"); // DraftKings BetRivers
 oddsNameMap.set("Ethan Del Mastro", "Ethan del Mastro"); // FanDuel
+oddsNameMap.set("Gabe Perreault", "Gabriel Perreault"); // BetMGM
 oddsNameMap.set("J.J. Moser", "Janis Jérôme Moser"); // BetRivers
 oddsNameMap.set("J.T. Compher", "JT Compher"); // BetRivers
 oddsNameMap.set("Jake Middleton", "Jacob Middleton"); // BetRivers (lang)
