@@ -124,7 +124,7 @@ export class Player {
     }
 }
 
-export type ColumnKeys = "fullName" | "bet1" | "bet2" | "bet3" | "bet4" | "gg" | "bet5v5" | "pick" | "gameTime";
+export type ColumnKeys = "fullName" | "bet1" | "bet2" | "bet3" | "bet4" | "gg" | "pick" | "gameTime";
 export interface ColumnData {
     key: ColumnKeys;
     title: string;
@@ -170,13 +170,10 @@ export class PickOdds {
     logoDark: string;
     gg: number;
     ggChance: string;
-    bet5v5: number | null = null;
-    betChance5v5: string = "-";
     highlight1 = false;
     highlight2 = false;
     highlight3 = false;
     highlight4 = false;
-    highlight5v5 = false;
     constructor(item: OddsItem) {
         this.playerId = item.playerId;
         if (this.playerId < 0) this.playerId = -this.playerId;
@@ -250,9 +247,6 @@ export function Table(props: {
                             <td className={picks && row.highlight4 ? "highlight" : undefined}>
                                 {chances ? row.betChance4 : (row.bet4 === null ? "-" : row.bet4)}
                             </td>
-                            {picks && (<td className={picks && row.highlight5v5 ? "highlight" : undefined}>
-                                {chances ? row.betChance5v5 : (row.bet5v5 === null ? "-" : row.bet5v5.toFixed(2))}
-                            </td>)}
                             {!picks && (<td>{(row.pick === 0 ? "-" : row.pick)}</td>)}
                             {!picks && (<td className="cell-container">{row.gameTime.toLocaleTimeString([], timeFormat)}</td>)}
                         </tr>

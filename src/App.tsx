@@ -27,27 +27,6 @@ const playerOddsFanDuel = await loadData('./data/bet2.json');
 const playerOddsBetMGM = await loadData('./data/bet3.json');
 const playerOddsBetRivers = await loadData('./data/bet4.json');
 
-const loadEmbed = async (src: string) => {
-	try {
-		const response = await fetchData(src);
-		const text = await response.text();
-		return new Function(text)();
-	} catch (error) {
-		// console.log(error);
-		return {
-			table_1_data: [],
-			table_2_data: [],
-			table_3_data: [],
-		}
-	}
-}
-
-const {
-	table_1_data: hockey5v5_1,
-	table_2_data: hockey5v5_2,
-	table_3_data: hockey5v5_3
-} = await loadEmbed('./data/bet5v5.txt');
-
 const oddsNameMap = new Map<string, string>();
 oddsNameMap.set("Aatu Räty", "Aatu Raty");
 oddsNameMap.set("Alex DeBrincat", "Alex Debrincat"); // BetMGM
@@ -156,7 +135,7 @@ const sortFunction = (sortConfig: Picks.SortConfig) => {
 				if (bVal === 0) return -1;
 
 				if (aVal !== bVal) {
-					if (key === 'gg' || key === 'bet5v5') return bVal - aVal;
+					if (key === 'gg') return bVal - aVal;
 					else return aVal - bVal;
 				}
 			}
@@ -310,23 +289,12 @@ const compilePlayerList = () => {
 compilePlayerList();
 
 const processOdds = () => {
-	const map = new Map<number, number>();
-	for (const item of [...hockey5v5_1, ...hockey5v5_2, ...hockey5v5_3]) {
-		map.set(item.player_nhl_id, item.projection_goals);
-	}
-
 	const mapAll = new Map<number, Picks.Player>();
 	for (const player of playerList) {
 		mapAll.set(player.playerId, player);
 	}
 
 	for (const row of [...table1Rows, ...table2Rows, ...table3Rows]) {
-		const odds = map.get(row.playerId);
-		if (odds !== undefined) {
-			row.bet5v5 = odds;
-			row.betChance5v5 = Picks.ggChance(odds);
-		}
-
 		const player = mapAll.get(row.playerId);
 		if (!player) continue;
 		row.bet1 = player.bet1;
@@ -550,7 +518,6 @@ const columns: Picks.ColumnData[] = [
 	{ key: "bet2", title: "FanDuel", sort: true },
 	{ key: "bet3", title: "BetMGM", sort: true },
 	{ key: "bet4", title: "BetRivers", sort: true },
-	{ key: "bet5v5", title: "5v5Hockey", sort: true },
 ];
 
 const columnsPlayer: Picks.ColumnData[] = [
@@ -563,7 +530,7 @@ const columnsPlayer: Picks.ColumnData[] = [
 	{ key: "gameTime", title: "Start", sort: true },
 ];
 
-type processKeys = 'bet1' | 'bet2' | 'bet3' | 'bet4' | 'bet5v5';
+type processKeys = 'bet1' | 'bet2' | 'bet3' | 'bet4';
 const processMax = (row: Picks.PickOdds, max: Picks.PickOdds[], key: processKeys, reverse?: boolean) => {
 	const rowVal = row[key];
 	if (rowVal === null) return;
@@ -589,24 +556,20 @@ const processMaxArray = (array: Picks.PickOdds[]) => {
 	const max2: Picks.PickOdds[] = [];
 	const max3: Picks.PickOdds[] = [];
 	const max4: Picks.PickOdds[] = [];
-	const max5v5: Picks.PickOdds[] = [];
 	for (const row of array) {
 		row.highlight1 = false;
 		row.highlight2 = false;
 		row.highlight3 = false;
 		row.highlight4 = false;
-		row.highlight5v5 = false;
 		processMax(row, max1, 'bet1');
 		processMax(row, max2, 'bet2');
 		processMax(row, max3, 'bet3');
 		processMax(row, max4, 'bet4');
-		processMax(row, max5v5, 'bet5v5', true);
 	}
 	for (const row of max1) row.highlight1 = true;
 	for (const row of max2) row.highlight2 = true;
 	for (const row of max3) row.highlight3 = true;
 	for (const row of max4) row.highlight4 = true;
-	for (const row of max5v5) row.highlight5v5 = true;
 }
 
 for (const i in dataStats) {
