@@ -426,9 +426,9 @@ const logStats = () => {
 		}
 	}
 
-	logs1.push("(70-74) 79.1  80.79 81.81");
-	logs2.push("(33-36) 38-40 42.05 43.07");
-	logs3.push("(3-4)   5.5    7.26  7.77");
+	logs1.push("(70-74) 79.1  80.8 81.8");
+	logs2.push("(33-36) 38-40 42.1 43.1");
+	logs3.push("(3-4)   5.5    7.3  7.8");
 
 	console.log(...logs1);
 	console.log(...logs2);
