@@ -138,7 +138,8 @@ export class Player {
 
         const first = this.firstName.default.toLowerCase();
         const last = this.lastName.default.toLowerCase();
-        const linkteam = this.team.name.toLowerCase();
+        const linkteam = this.team.name.toLowerCase().replace(/\s/g, "");
+
         this.link = `https://www.nhl.com/${linkteam}/player/${first}-${last}-${this.playerId}`;
 
         this.fullName = `${this.firstName.default} ${this.lastName.default}`;
