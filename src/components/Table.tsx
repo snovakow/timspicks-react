@@ -136,7 +136,7 @@ export interface OddsItem {
     goals: number;
 }
 
-export const rountdToPercent = (num: number, places: number): string => {
+export const roundToPercent = (num: number, places: number): string => {
     return (num * 100).toFixed(places) + "%";
 }
 
@@ -144,7 +144,7 @@ export const rountdToPercent = (num: number, places: number): string => {
 // Chance of at least one goal: 1 − e^(−μ)
 export const ggChance = (x: number): string => {
     const chance = 1 - Math.exp(-x);
-    return rountdToPercent(chance, precision);
+    return roundToPercent(chance, precision);
 }
 
 export class PickOdds {
