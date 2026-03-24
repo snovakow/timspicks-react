@@ -262,7 +262,7 @@ if ($live && isset($_GET['odds'])) {
 	foreach ($data as $selection) {
 		if ($selection->outcomeType !== "ToScoreAnyTime") continue;
 		$map[] = [
-			"name" => $selection->participants[0]->seoIdentifier,
+			"name" => $selection->participants[0]->seoIdentifier ?? $selection->participants[0]->name,
 			"odds" => $selection->trueOdds
 		];
 	}
