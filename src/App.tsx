@@ -2,6 +2,10 @@ import { useState, useEffect } from 'react';
 import './App.css';
 import * as Picks from './components/Table';
 import Popup from './components/Popup';
+import logo1 from './images/sb-logo-16-draftkings.svg';
+import logo2 from './images/sb-logo-16-fanduel.svg';
+import logo3 from './images/sb-logo-16-mgm.svg';
+import logo4 from './images/sb-logo-16-betrivers.svg';
 
 const precision = Picks.precision;
 
