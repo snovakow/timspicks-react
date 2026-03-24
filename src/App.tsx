@@ -9,6 +9,9 @@ import logo4 from './images/sb-logo-16-betrivers.svg';
 
 const precision = Picks.precision;
 
+const roundToPercent = (num: number, places: number): string => {
+	return (num * 100).toFixed(places) + "%";
+};
 
 type Sportsbook = {
 	key: "bet1" | "bet2" | "bet3" | "bet4";
@@ -121,7 +124,7 @@ const betChance = (x: number | null): number | null => {
 const betChanceRounded = (x: number | null): string => {
 	const chance = betChance(x);
 	if (chance === null) return "-";
-	return Picks.roundToPercent(chance, precision);
+	return roundToPercent(chance, precision);
 }
 
 const trueOddsToAmerican = (x: number): number => {
@@ -134,10 +137,12 @@ const trueOddsToAmerican = (x: number): number => {
 }
 
 const sortFunction = (sortConfig: Picks.SortConfig) => {
-	return (a: any, b: any): number => {
+	return (a: Picks.PickOdds | Picks.Player, b: Picks.PickOdds | Picks.Player): number => {
+		const aPlayer = a instanceof Picks.PickOdds ? a.player : a;
+		const bPlayer = b instanceof Picks.PickOdds ? b.player : b;
 		for (const key of sortConfig.keyOrder) {
-			const aVal = a[key];
-			const bVal = b[key];
+			const aVal = key === 'gg' ? (a as Picks.PickOdds)[key] : aPlayer[key];
+			const bVal = key === 'gg' ? (b as Picks.PickOdds)[key] : bPlayer[key];
 
 			if (aVal === null) {
 				if (bVal === null) continue;
@@ -345,9 +350,9 @@ const logStats = () => {
 		const max2a = betChance(max1_2row[0].bet1);
 		const max3a = betChance(max1_3row[0].bet1);
 		if (max1a !== null && max2a !== null && max3a !== null) {
-			logs1.push("DraftKings: " + Picks.roundToPercent(1 - (1 - max1a) * (1 - max2a) * (1 - max3a), precision));
-			logs2.push("DraftKings: " + Picks.roundToPercent((max1a + max2a + max3a) / 3, precision));
-			logs3.push("DraftKings:  " + Picks.roundToPercent(max1a * max2a * max3a, precision));
+			logs1.push("DraftKings: " + roundToPercent(1 - (1 - max1a) * (1 - max2a) * (1 - max3a), precision));
+			logs2.push("DraftKings: " + roundToPercent((max1a + max2a + max3a) / 3, precision));
+			logs3.push("DraftKings:  " + roundToPercent(max1a * max2a * max3a, precision));
 		}
 	}
 
@@ -356,9 +361,9 @@ const logStats = () => {
 		const max2b = betChance(max2_2row[0].bet2);
 		const max3b = betChance(max2_3row[0].bet2);
 		if (max1b !== null && max2b !== null && max3b !== null) {
-			logs1.push("FanDuel: " + Picks.roundToPercent(1 - (1 - max1b) * (1 - max2b) * (1 - max3b), precision));
-			logs2.push("FanDuel: " + Picks.roundToPercent((max1b + max2b + max3b) / 3, precision));
-			logs3.push("FanDuel:  " + Picks.roundToPercent(max1b * max2b * max3b, precision));
+			logs1.push("FanDuel: " + roundToPercent(1 - (1 - max1b) * (1 - max2b) * (1 - max3b), precision));
+			logs2.push("FanDuel: " + roundToPercent((max1b + max2b + max3b) / 3, precision));
+			logs3.push("FanDuel:  " + roundToPercent(max1b * max2b * max3b, precision));
 		}
 	}
 
@@ -367,9 +372,9 @@ const logStats = () => {
 		const max2c = betChance(max3_2row[0].bet3);
 		const max3c = betChance(max3_3row[0].bet3);
 		if (max1c !== null && max2c !== null && max3c !== null) {
-			logs1.push("BetMGM: " + Picks.roundToPercent(1 - (1 - max1c) * (1 - max2c) * (1 - max3c), precision));
-			logs2.push("BetMGM: " + Picks.roundToPercent((max1c + max2c + max3c) / 3, precision));
-			logs3.push("BetMGM:  " + Picks.roundToPercent(max1c * max2c * max3c, precision));
+			logs1.push("BetMGM: " + roundToPercent(1 - (1 - max1c) * (1 - max2c) * (1 - max3c), precision));
+			logs2.push("BetMGM: " + roundToPercent((max1c + max2c + max3c) / 3, precision));
+			logs3.push("BetMGM:  " + roundToPercent(max1c * max2c * max3c, precision));
 		}
 	}
 
@@ -378,9 +383,9 @@ const logStats = () => {
 		const max2d = betChance(max4_2row[0].bet4);
 		const max3d = betChance(max4_3row[0].bet4);
 		if (max1d !== null && max2d !== null && max3d !== null) {
-			logs1.push("BetRivers: " + Picks.roundToPercent(1 - (1 - max1d) * (1 - max2d) * (1 - max3d), precision));
-			logs2.push("BetRivers: " + Picks.roundToPercent((max1d + max2d + max3d) / 3, precision));
-			logs3.push("BetRivers:  " + Picks.roundToPercent(max1d * max2d * max3d, precision));
+			logs1.push("BetRivers: " + roundToPercent(1 - (1 - max1d) * (1 - max2d) * (1 - max3d), precision));
+			logs2.push("BetRivers: " + roundToPercent((max1d + max2d + max3d) / 3, precision));
+			logs3.push("BetRivers:  " + roundToPercent(max1d * max2d * max3d, precision));
 		}
 	}
 
@@ -496,9 +501,9 @@ const logStats = () => {
 	const [avg1, avgPlayers1] = calulateAvg(table1Rows);
 	const [avg2, avgPlayers2] = calulateAvg(table2Rows);
 	const [avg3, avgPlayers3] = calulateAvg(table3Rows);
-	addLogout(`Pick 1: ${Picks.roundToPercent(avg1, precision)} - ${avgPlayers1.join(", ")}`, 2);
-	addLogout(`Pick 2: ${Picks.roundToPercent(avg2, precision)} - ${avgPlayers2.join(", ")}`, 2);
-	addLogout(`Pick 3: ${Picks.roundToPercent(avg3, precision)} - ${avgPlayers3.join(", ")}`, 2);
+	addLogout(`Pick 1: ${roundToPercent(avg1, precision)} - ${avgPlayers1.join(", ")}`, 2);
+	addLogout(`Pick 2: ${roundToPercent(avg2, precision)} - ${avgPlayers2.join(", ")}`, 2);
+	addLogout(`Pick 3: ${roundToPercent(avg3, precision)} - ${avgPlayers3.join(", ")}`, 2);
 }
 logStats();
 
@@ -578,16 +583,16 @@ function App() {
 	};
 
 	// Table data and sorting - regenerate when theme changes
-	const [rows1, _setRows1] = useState(table1Rows);
+	const [rows1] = useState(table1Rows);
 	const sortedRows1 = [...rows1];
 
-	const [rows2, _setRows2] = useState(table2Rows);
+	const [rows2] = useState(table2Rows);
 	const sortedRows2 = [...rows2];
 
-	const [rows3, _setRows3] = useState(table3Rows);
+	const [rows3] = useState(table3Rows);
 	const sortedRows3 = [...rows3];
 
-	const [rowsPlayer, _setRowsPlayer] = useState(playerList);
+	const [rowsPlayer] = useState(playerList);
 	const sortedRowsPlayer = [...rowsPlayer];
 
 	// Theme state

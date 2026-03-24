@@ -2,13 +2,39 @@ import { type Team } from "./logo";
 
 export const precision = 1;
 
+interface LocalizedText {
+    default: string;
+    [key: string]: string;
+}
+
+interface TeamInput {
+    placeName: LocalizedText;
+    commonName: LocalizedText;
+    abbrev: Team;
+    logo: string;
+    darkLogo: string;
+}
+
+interface GameInput {
+    gameCenterLink: string;
+    homeTeam: TeamInput;
+    awayTeam: TeamInput;
+    startTimeUTC: string;
+}
+
+interface PlayerInput {
+    playerId: number;
+    firstName: LocalizedText;
+    lastName: LocalizedText;
+}
+
 export class TeamData {
     place: string;
     name: string;
     code: Team;
     logoLight: string;
     logoDark: string;
-    constructor(data: any) {
+    constructor(data: TeamInput) {
         this.place = data.placeName.default;
         this.name = data.commonName.default;
         this.code = data.abbrev;
@@ -21,7 +47,7 @@ export class GameData {
     home: TeamData;
     away: TeamData;
     time: Date;
-    constructor(data: any) {
+    constructor(data: GameInput) {
         this.link = "https://www.nhl.com" + data.gameCenterLink;
         this.home = new TeamData(data.homeTeam);
         this.away = new TeamData(data.awayTeam);
@@ -76,14 +102,10 @@ export function Basic(props: {
     )
 }
 
-interface Name {
-    default: string;
-    [key: string]: string;
-}
 export class Player {
     playerId: number;
-    firstName: Name;
-    lastName: Name;
+    firstName: LocalizedText;
+    lastName: LocalizedText;
     link: string;
 
     team: TeamData;
@@ -103,7 +125,7 @@ export class Player {
 
     pick: 0 | 1 | 2 | 3 = 0;
 
-    constructor(data: any, team: TeamData, gameTime: Date) {
+    constructor(data: PlayerInput, team: TeamData, gameTime: Date) {
         this.playerId = data.playerId;
 
         this.firstName = data.firstName;
@@ -137,15 +159,11 @@ export interface OddsItem {
     goals: number;
 }
 
-export const roundToPercent = (num: number, places: number): string => {
-    return (num * 100).toFixed(places) + "%";
-}
-
 // Poisson distribution chance of 0 goals: e^(−μ)
 // Chance of at least one goal: 1 − e^(−μ)
-export const ggChance = (x: number): string => {
+const ggChance = (x: number): string => {
     const chance = 1 - Math.exp(-x);
-    return roundToPercent(chance, precision);
+    return (chance * 100).toFixed(precision) + "%";
 }
 
 export class PickOdds {
