@@ -612,7 +612,7 @@ function App() {
 		<>
 			<header className='header'>
 				<button className="button" onClick={() => setShowPopup(!showPopup)}>?</button>
-				Tims Hockey Picks
+				<span className="header-title">Tims Hockey Picks</span>
 				<button className={chances ? 'button chances-on' : 'button chances-off'} onClick={toggleHandler}>%</button>
 			</header>
 			<main className='content'>

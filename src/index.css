@@ -59,6 +59,19 @@ header {
   text-shadow: light-dark(hsl(351, 84%, 100%), hsl(351, 84%, 43%)) 0px 0px 0.1em;
 }
 
+.header-title {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: clamp(1rem, 6vw, 1em);
+}
+
+header > .button {
+  flex: 0 0 auto;
+}
+
 body {
   margin: 0;
   min-width: 320px;
