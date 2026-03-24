@@ -166,45 +166,35 @@ const makeSort = (sortConfig: Picks.SortConfig, setSortConfig: (config: Picks.So
 	};
 }
 
-const makeRows = (data: Picks.OddsItem[]): Picks.PickOdds[] => data.map((item): Picks.PickOdds => new Picks.PickOdds(item));
-const table1Rows = makeRows(playerData["1"]);
-const table2Rows = makeRows(playerData["2"]);
-const table3Rows = makeRows(playerData["3"]);
-
-const compilePlayerList = () => {
-	const map1 = new Map<number, Picks.PickOdds>();
-	const map2 = new Map<number, Picks.PickOdds>();
-	const map3 = new Map<number, Picks.PickOdds>();
-	for (const player of table1Rows) map1.set(player.playerId, player);
-	for (const player of table2Rows) map2.set(player.playerId, player);
-	for (const player of table3Rows) map3.set(player.playerId, player);
+const mapPlayers = () => {
+	const playerMap = new Map<number, Picks.Player>();
 	for (const player of playerList) {
-		const player1 = map1.get(player.playerId);
-		if (player1) {
-			player.pick = 1;
-			player1.fullName = player.fullName;
-			player1.firstName = player.firstName.default;
-			player1.lastName = player.lastName.default;
-			player1.link = player.link;
-		}
-		const player2 = map2.get(player.playerId);
-		if (player2) {
-			player.pick = 2;
-			player2.fullName = player.fullName;
-			player2.firstName = player.firstName.default;
-			player2.lastName = player.lastName.default;
-			player2.link = player.link;
-		}
-		const player3 = map3.get(player.playerId);
-		if (player3) {
-			player.pick = 3;
-			player3.fullName = player.fullName;
-			player3.firstName = player.firstName.default;
-			player3.lastName = player.lastName.default;
-			player3.link = player.link;
-		}
+		playerMap.set(player.playerId, player);
 	}
 
+	const makeRows = (data: Picks.OddsItem[], pick: 1 | 2 | 3): Picks.PickOdds[] => {
+		const row: Picks.PickOdds[] = [];
+		for (const item of data) {
+			const playerId = item.playerId < 0 ? -item.playerId : item.playerId;
+			const player = playerMap.get(playerId);
+			if (!player) {
+				console.warn(`Player not found for odds data:`, item);
+				continue;
+			}
+			player.pick = pick;
+			row.push(new Picks.PickOdds(player, item));
+		}
+		return row;
+	}
+
+	const table1Rows = makeRows(playerData["1"], 1);
+	const table2Rows = makeRows(playerData["2"], 2);
+	const table3Rows = makeRows(playerData["3"], 3);
+	return { table1Rows, table2Rows, table3Rows };
+}
+const { table1Rows, table2Rows, table3Rows } = mapPlayers();
+
+const compilePlayerList = () => {
 	const removeAccentsNormalize = (name: string): string => {
 		return name.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLocaleLowerCase();
 	}
@@ -291,44 +281,23 @@ const compilePlayerList = () => {
 }
 compilePlayerList();
 
-const processOdds = () => {
-	const mapAll = new Map<number, Picks.Player>();
-	for (const player of playerList) {
-		mapAll.set(player.playerId, player);
-	}
-
-	for (const row of [...table1Rows, ...table2Rows, ...table3Rows]) {
-		const player = mapAll.get(row.playerId);
-		if (!player) continue;
-		row.bet1 = player.bet1;
-		row.bet2 = player.bet2;
-		row.bet3 = player.bet3;
-		row.bet4 = player.bet4;
-		row.betChance1 = player.betChance1;
-		row.betChance2 = player.betChance2;
-		row.betChance3 = player.betChance3;
-		row.betChance4 = player.betChance4;
-	}
-
-}
-processOdds();
-
 const dataStats: string[][] = [];
 const logStats = () => {
-	const processRow = (key: 'bet1' | 'bet2' | 'bet3' | 'bet4', rows: Picks.PickOdds[]): Picks.PickOdds[] | null => {
-		let max = null;
+	const processRow = (key: 'bet1' | 'bet2' | 'bet3' | 'bet4', rows: Picks.PickOdds[]): Picks.Player[] | null => {
+		let max: Picks.Player[] | null = null;
 		for (const row of rows) {
-			const val = row[key];
+			const player = row.player;
+			const val = player[key];
 			if (val === null) continue;
 			if (!max) {
-				max = [row];
+				max = [player];
 				continue;
 			}
 			const maxrow = max[0];
 			const maxval = maxrow[key]!;
 			if (val > maxval) continue;
-			if (val < maxval) max = [row];
-			else max.push(row);
+			if (val < maxval) max = [player];
+			else max.push(player);
 		}
 		return max;
 	};
@@ -397,9 +366,9 @@ const logStats = () => {
 		}
 	}
 
-	logs1.push("(70-74) 79.1  80.8 81.8");
+	logs1.push("(70-74)  79.1 80.8 81.8");
 	logs2.push("(33-36) 38-40 42.1 43.1");
-	logs3.push("(3-4)   5.5    7.3  7.8");
+	logs3.push("(3-4)     5.5  7.3  7.8");
 
 	console.log(...logs1);
 	console.log(...logs2);
@@ -416,7 +385,7 @@ const logStats = () => {
 		}
 		return true;
 	}
-	const addPicks = (pick: Map<string, string[]>, rows: Picks.PickOdds[], title: string): void => {
+	const addPicks = (pick: Map<string, string[]>, rows: Picks.Player[], title: string): void => {
 		for (const row of rows) {
 			const name = row.fullName;
 			if (!pick.has(name)) pick.set(name, []);
@@ -431,10 +400,10 @@ const logStats = () => {
 	}
 	const printRow = (
 		header: string,
-		max1row: Picks.PickOdds[] | null,
-		max2row: Picks.PickOdds[] | null,
-		max3row: Picks.PickOdds[] | null,
-		max4row: Picks.PickOdds[] | null
+		max1row: Picks.Player[] | null,
+		max2row: Picks.Player[] | null,
+		max3row: Picks.Player[] | null,
+		max4row: Picks.Player[] | null
 	) => {
 		const pick = new Map<string, string[]>();
 		let allOdds = 0;
@@ -484,23 +453,24 @@ const logStats = () => {
 		let avgMax = 0;
 		let avgPlayers: string[] = [];
 		for (const row of rows) {
+			const player = row.player;
 			let avg = 0;
 			let count = 0;
-			const bet1 = betChance(row.bet1);
+			const bet1 = betChance(player.bet1);
 			if (bet1 !== null) { avg += bet1; count++; }
-			const bet2 = betChance(row.bet2);
+			const bet2 = betChance(player.bet2);
 			if (bet2 !== null) { avg += bet2; count++; }
-			const bet3 = betChance(row.bet3);
+			const bet3 = betChance(player.bet3);
 			if (bet3 !== null) { avg += bet3; count++; }
-			const bet4 = betChance(row.bet4);
+			const bet4 = betChance(player.bet4);
 			if (bet4 !== null) { avg += bet4; count++; }
 			if (count === 0) continue;
 			avg /= count;
 			if (avg > avgMax) {
 				avgMax = avg;
-				avgPlayers = [row.fullName];
+				avgPlayers = [player.fullName];
 			} else if (avg === avgMax) {
-				avgPlayers.push(row.fullName);
+				avgPlayers.push(player.fullName);
 			}
 		}
 		return [avgMax, avgPlayers];
@@ -535,7 +505,7 @@ const columnsPlayer: Picks.ColumnData[] = [
 
 type processKeys = 'bet1' | 'bet2' | 'bet3' | 'bet4';
 const processMax = (row: Picks.PickOdds, max: Picks.PickOdds[], key: processKeys, reverse?: boolean) => {
-	const rowVal = row[key];
+	const rowVal = row.player[key];
 	if (rowVal === null) return;
 
 	if (max.length === 0) {
@@ -543,7 +513,7 @@ const processMax = (row: Picks.PickOdds, max: Picks.PickOdds[], key: processKeys
 		return;
 	}
 
-	const topBet = max[0][key]!;
+	const topBet = max[0].player[key]!;
 	if (rowVal === topBet) {
 		max.push(row);
 	} else {

@@ -1,4 +1,4 @@
-import { getLogo, type Team } from "./logo";
+import { type Team } from "./logo";
 
 export const precision = 1;
 
@@ -132,11 +132,6 @@ export interface ColumnData {
 
 export interface OddsItem {
     playerId: number;
-    firstName: string;
-    lastName: string;
-    team: string;
-    link: string;
-
     gamesPlayed: number;
     goals: number;
 }
@@ -153,39 +148,17 @@ export const ggChance = (x: number): string => {
 }
 
 export class PickOdds {
-    playerId: number;
-    firstName: string;
-    lastName: string;
-    fullName: string;
-    link: string;
-    bet1: number | null = null;
-    bet2: number | null = null;
-    bet3: number | null = null;
-    bet4: number | null = null;
-    betChance1: string = "-";
-    betChance2: string = "-";
-    betChance3: string = "-";
-    betChance4: string = "-";
+    player: Player;
 
-    logoLight: string;
-    logoDark: string;
     gg: number;
     ggChance: string;
     highlight1 = false;
     highlight2 = false;
     highlight3 = false;
     highlight4 = false;
-    constructor(item: OddsItem) {
-        this.playerId = item.playerId;
-        if (this.playerId < 0) this.playerId = -this.playerId;
+    constructor(player: Player, item: OddsItem) {
+        this.player = player;
 
-        this.firstName = item.firstName;
-        this.lastName = item.lastName;
-        this.fullName = `${item.firstName} ${item.lastName}`;
-        this.link = item.link;
-
-        this.logoLight = getLogo(item.team as Team, false);
-        this.logoDark = getLogo(item.team as Team, true);
         this.gg = item.gamesPlayed > 0 ? item.goals / item.gamesPlayed : 0;
         this.ggChance = ggChance(this.gg);
     }
@@ -229,30 +202,31 @@ export function Table(props: {
             <tbody>
                 {sortedRows.map((row, idx) => {
                     const picks = row instanceof PickOdds;
+                    const player = picks ? row.player : row;
                     return (
                         <tr key={idx} className={idx % 2 === 0 ? 'row-color' : 'row-color-alt'}>
                             <td>
                                 <span className='cell-container'>
-                                    <img className='td-name-logo' src={darkTheme ? row.logoDark : row.logoLight} />
-                                    {row.fullName}
+                                    <img className='td-name-logo' src={darkTheme ? player.logoDark : player.logoLight} />
+                                    {player.fullName}
                                 </span>
                             </td>
                             <td>
-                                <a href={row.link} target="_blank" rel="noopener noreferrer">🔗</a>
+                                <a href={player.link} target="_blank" rel="noopener noreferrer">🔗</a>
                             </td>
 
                             {picks && (<td>{chances ? row.ggChance : row.gg.toFixed(2)}</td>)}
                             <td className={picks && row.highlight1 ? "highlight" : undefined}>
-                                {chances ? row.betChance1 : (row.bet1 === null ? "-" : row.bet1)}
+                                {chances ? player.betChance1 : (player.bet1 === null ? "-" : player.bet1)}
                             </td>
                             <td className={picks && row.highlight2 ? "highlight" : undefined}>
-                                {chances ? row.betChance2 : (row.bet2 === null ? "-" : row.bet2)}
+                                {chances ? player.betChance2 : (player.bet2 === null ? "-" : player.bet2)}
                             </td>
                             <td className={picks && row.highlight3 ? "highlight" : undefined}>
-                                {chances ? row.betChance3 : (row.bet3 === null ? "-" : row.bet3)}
+                                {chances ? player.betChance3 : (player.bet3 === null ? "-" : player.bet3)}
                             </td>
                             <td className={picks && row.highlight4 ? "highlight" : undefined}>
-                                {chances ? row.betChance4 : (row.bet4 === null ? "-" : row.bet4)}
+                                {chances ? player.betChance4 : (player.bet4 === null ? "-" : player.bet4)}
                             </td>
                             {!picks && (<td>{(row.pick === 0 ? "-" : row.pick)}</td>)}
                             {!picks && (<td className="cell-container">{row.gameTime.toLocaleTimeString([], timeFormat)}</td>)}
