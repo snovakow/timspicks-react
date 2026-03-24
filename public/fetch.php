@@ -50,7 +50,10 @@ if ($live && isset($_GET['players']) && isset($_GET['team'])) {
 	}
 
 	$filename = 'players_' . $code . '.json';
-	file_put_contents('./players/' . $filename, $response);
+	$filepath = './players/' . $filename;
+	if (file_put_contents($filepath, $response) === false) {
+		die('Error saving ' . $filepath . '<br>');
+	}
 
 	die($filename . '<br>');
 }
