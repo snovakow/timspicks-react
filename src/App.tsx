@@ -108,7 +108,9 @@ for (const data of gamesListing) {
 	gamesList.push(game);
 }
 gamesList.sort((a: Picks.GameData, b: Picks.GameData): number => {
-	return a.time.getTime() - b.time.getTime();
+	const time = a.time.getTime() - b.time.getTime();
+	if (time !== 0) return time;
+	return a.away.name.localeCompare(b.away.name);
 });
 
 // Implied Odds
