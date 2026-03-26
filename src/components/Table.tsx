@@ -1,6 +1,7 @@
 import { type Team } from "./logo";
 import { roundToPercent } from "../utility";
 import "./Table.css";
+import { useEffect, useRef, useState } from "react";
 
 export const precision = 1;
 
@@ -64,14 +65,124 @@ export function Basic(props: {
     darkTheme: boolean
 }) {
     const { games, darkTheme } = props;
+    const tableRef = useRef<HTMLTableElement>(null);
+
+    const [shortNames, setShortNames] = useState(false);
+    const [awayShrinkPx, setAwayShrinkPx] = useState(0);
+    const shortNamesRef = useRef(false);
+    const longModeWidthRef = useRef<number | null>(null);
+    // Snapshot of widths taken at shrink-enter time; keeps diff stable so ResizeObserver doesn't cycle
+    const shrinkNaturalTableWidthRef = useRef<number | null>(null);
+    const shrinkNaturalSpanWidthRef = useRef<number | null>(null);
+
+    useEffect(() => {
+        const ENTER_TOLERANCE_PX = 0;
+        const EXIT_HYSTERESIS_PX = 0;
+
+        const checkOverflow = () => {
+            const table = tableRef.current;
+            if (!table) return;
+            const parent = table.parentElement;
+            if (!parent) return;
+
+            const tableWidth = table.scrollWidth;
+            const availableWidth = parent.clientWidth;
+
+            // --- Short-names toggle (first fallback) ---
+            if (!shortNamesRef.current) {
+                if (tableWidth >= availableWidth - ENTER_TOLERANCE_PX) {
+                    longModeWidthRef.current = tableWidth;
+                    shortNamesRef.current = true;
+                    setShortNames(true);
+                    // Reset shrink snapshots; content is changing
+                    shrinkNaturalTableWidthRef.current = null;
+                    shrinkNaturalSpanWidthRef.current = null;
+                    setAwayShrinkPx(0);
+                } else {
+                    longModeWidthRef.current = null;
+                }
+                return; // Shrink only activates once in short-names mode
+            }
+
+            const requiredLongWidth = longModeWidthRef.current ?? tableWidth;
+            if (availableWidth > requiredLongWidth + EXIT_HYSTERESIS_PX) {
+                longModeWidthRef.current = null;
+                shortNamesRef.current = false;
+                setShortNames(false);
+                shrinkNaturalTableWidthRef.current = null;
+                shrinkNaturalSpanWidthRef.current = null;
+                setAwayShrinkPx(0);
+                return;
+            }
+
+            // --- Away-span shrink (second fallback, only in short-names mode) ---
+            // Use the SNAPSHOT natural table width (not current) so the diff doesn't
+            // collapse to 0 after we shrink, which would cause an oscillation cycle.
+            if (shrinkNaturalTableWidthRef.current === null) {
+                // Not yet shrunk: measure and snapshot if overflowing
+                const diff = tableWidth - availableWidth;
+                if (diff > 0) {
+                    shrinkNaturalTableWidthRef.current = tableWidth;
+                    const awaySpans = table.querySelectorAll<HTMLElement>('.away-name-span');
+                    let maxSpanWidth = 0;
+                    awaySpans.forEach(s => { if (s.scrollWidth > maxSpanWidth) maxSpanWidth = s.scrollWidth; });
+                    shrinkNaturalSpanWidthRef.current = maxSpanWidth;
+                    setAwayShrinkPx(diff);
+                } else {
+                    setAwayShrinkPx((prev) => (prev === 0 ? prev : 0));
+                }
+            } else {
+                // Already shrunk: compute diff from NATURAL width so re-layout doesn't reset us
+                const naturalTableWidth = shrinkNaturalTableWidthRef.current;
+                const diff = naturalTableWidth - availableWidth;
+                if (availableWidth > naturalTableWidth + EXIT_HYSTERESIS_PX) {
+                    // Parent grew enough — exit shrink mode
+                    shrinkNaturalTableWidthRef.current = null;
+                    shrinkNaturalSpanWidthRef.current = null;
+                    setAwayShrinkPx(0);
+                } else {
+                    setAwayShrinkPx((prev) => (prev === diff ? prev : diff));
+                }
+            }
+        };
+
+        checkOverflow();
+        const observer = new ResizeObserver(checkOverflow);
+        if (tableRef.current) observer.observe(tableRef.current);
+        if (tableRef.current?.parentElement) observer.observe(tableRef.current.parentElement);
+        window.addEventListener('resize', checkOverflow);
+
+        return () => {
+            observer.disconnect();
+            window.removeEventListener('resize', checkOverflow);
+        };
+    }, [games.length]);
+
+    const teamName = (place: string, name: string) => shortNames ? name : `${place} ${name}`;
+
     return (
-        <table>
+        <table ref={tableRef}>
             <tbody>
                 {games.map((game, idx) => (
                     <tr key={idx} className={idx % 2 === 0 ? 'row-color' : 'row-color-alt'}>
                         <td>
                             <span className='cell-container right-align'>
-                                {`${game.away.place} ${game.away.name}`}
+                                <span
+                                    className='away-name-span'
+                                    style={{
+                                        display: 'block',
+                                        overflow: 'hidden',
+                                        textOverflow: 'ellipsis',
+                                        whiteSpace: 'nowrap',
+                                        // Absolute pixel width shrinks the column in auto table layout
+                                        // (overflow:hidden + explicit width bounds max-content contribution)
+                                        ...(awayShrinkPx > 0 && shrinkNaturalSpanWidthRef.current !== null ? {
+                                            width: `${Math.max(0, shrinkNaturalSpanWidthRef.current - awayShrinkPx)}px`
+                                        } : {})
+                                    }}
+                                >
+                                    {teamName(game.away.place, game.away.name)}
+                                </span>
                                 <img
                                     className='td-name-logo'
                                     src={darkTheme ? game.away.logoDark : game.away.logoLight}
@@ -87,7 +198,7 @@ export function Basic(props: {
                                     src={darkTheme ? game.home.logoDark : game.home.logoLight}
                                     onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                                 />
-                                {`${game.home.place} ${game.home.name}`}
+                                {teamName(game.home.place, game.home.name)}
                             </span>
                         </td>
                         <td className="cell-container">
@@ -97,11 +208,10 @@ export function Basic(props: {
                             <a href={game.link} target="_blank" rel="noopener noreferrer">🔗</a>
                         </td>
                     </tr>
-                )
-                )}
+                ))}
             </tbody>
         </table>
-    )
+    );
 }
 
 export class Player {
@@ -120,10 +230,12 @@ export class Player {
     bet2: number | null = null;
     bet3: number | null = null;
     bet4: number | null = null;
+    betAvg: number | null = null;
     betChance1: string = "-";
     betChance2: string = "-";
     betChance3: string = "-";
     betChance4: string = "-";
+    betChanceAvg: string = "-";
 
     pick: 0 | 1 | 2 | 3 = 0;
 
@@ -148,7 +260,7 @@ export class Player {
     }
 }
 
-export type ColumnKeys = "fullName" | "bet1" | "bet2" | "bet3" | "bet4" | "gg" | "pick" | "gameTime";
+export type ColumnKeys = "fullName" | "bet1" | "bet2" | "bet3" | "bet4" | "betAvg" | "gg" | "pick" | "gameTime";
 export interface ColumnData {
     key: ColumnKeys;
     title: string;
@@ -178,6 +290,7 @@ export class PickOdds {
     highlight2 = false;
     highlight3 = false;
     highlight4 = false;
+    highlightAvg = false;
     constructor(player: Player, item: OddsItem) {
         this.player = player;
 
@@ -251,16 +364,19 @@ export function Table(props: {
 
                             {picks && (<td>{chances ? row.ggChance : row.gg.toFixed(2)}</td>)}
                             <td className={picks && row.highlight1 ? "highlight" : undefined}>
-                                {chances ? player.betChance1 : (player.bet1 === null ? "-" : player.bet1)}
+                                {chances ? player.betChance1 : (player.bet1 ?? "-")}
                             </td>
                             <td className={picks && row.highlight2 ? "highlight" : undefined}>
-                                {chances ? player.betChance2 : (player.bet2 === null ? "-" : player.bet2)}
+                                {chances ? player.betChance2 : (player.bet2 ?? "-")}
                             </td>
                             <td className={picks && row.highlight3 ? "highlight" : undefined}>
-                                {chances ? player.betChance3 : (player.bet3 === null ? "-" : player.bet3)}
+                                {chances ? player.betChance3 : (player.bet3 ?? "-")}
                             </td>
                             <td className={picks && row.highlight4 ? "highlight" : undefined}>
-                                {chances ? player.betChance4 : (player.bet4 === null ? "-" : player.bet4)}
+                                {chances ? player.betChance4 : (player.bet4 ?? "-")}
+                            </td>
+                            <td className={picks && row.highlightAvg ? "highlight" : undefined}>
+                                {player.betChanceAvg}
                             </td>
                             {!picks && (<td>{(row.pick === 0 ? "-" : row.pick)}</td>)}
                             {!picks && (<td className="cell-container">{row.gameTime?.toLocaleTimeString([], timeFormat)}</td>)}
