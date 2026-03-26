@@ -16,7 +16,6 @@ button {
   border: 1px solid transparent;
   font-size: 1em;
   font-weight: 900;
-  font-family: inherit;
   background-color: #fff;
   cursor: pointer;
   font-family: sans-serif;
@@ -45,8 +44,3 @@ button:hover {
 .chances-off {
   color: #ddd;
 }
-
-/* button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
-} */
