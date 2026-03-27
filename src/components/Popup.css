@@ -54,3 +54,7 @@
   overflow-x: hidden;
   flex: 1;
 }
+
+.popup-section:not(:last-child) {
+  margin-bottom: 1rem;
+}
