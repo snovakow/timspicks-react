@@ -14,7 +14,6 @@ button {
 
   display: inline-flex;
   align-items: center;
-  /* Centers based on text height, ignoring descenders */
 
   transition: border-color 0.25s;
 }
