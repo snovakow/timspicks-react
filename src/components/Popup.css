@@ -55,6 +55,14 @@
   flex: 1;
 }
 
+.popup-section {
+  width: fit-content;
+  max-width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+  text-align: left;
+}
+
 .popup-section:not(:last-child) {
   margin-bottom: 1rem;
 }
