@@ -7,6 +7,7 @@ import logo1 from './images/sb-logo-16-draftkings.svg';
 import logo2 from './images/sb-logo-16-fanduel.svg';
 import logo3 from './images/sb-logo-16-mgm.svg';
 import logo4 from './images/sb-logo-16-betrivers.svg';
+import type { Team } from './components/logo';
 
 const precision = Picks.precision;
 
@@ -315,7 +316,14 @@ const compilePlayerList = () => {
 }
 compilePlayerList();
 
-const dataStats: string[][] = [];
+type LogStatAlign = "left" | "center";
+interface LogStat {
+	align: LogStatAlign;
+	lines: string[];
+	break: boolean;
+}
+const dataStats: LogStat[] = [];
+
 const logStats = () => {
 	interface Avg {
 		avg: number;
@@ -362,10 +370,28 @@ const logStats = () => {
 
 	let logSection = 0;
 
-	const addLogout = (log: string) => {
-		console.log(log);
-		if (!dataStats[logSection]) dataStats[logSection] = [];
-		dataStats[logSection].push(log);
+	let dataStatsPrev: LogStat | null = null;
+	const addLog = (line: string, align: LogStatAlign = "left") => {
+		console.log(line);
+		if (dataStatsPrev) {
+			const current = dataStats[logSection];
+			if (current) {
+				if (current.align === align) {
+					current.lines.push(line);
+				} else {
+					dataStatsPrev = { align, lines: [line], break: false };
+					logSection++;
+					dataStats[logSection] = dataStatsPrev;
+				}
+			} else {
+				dataStatsPrev.break = true;
+				dataStatsPrev = { align, lines: [line], break: false };
+				dataStats[logSection] = dataStatsPrev;
+			}
+		} else {
+			dataStatsPrev = { align, lines: [line], break: false };
+			dataStats[logSection] = dataStatsPrev;
+		}
 	}
 
 	const printName = (player: Picks.Player) => `${player.fullName} (${player.team.code})`;
@@ -374,11 +400,9 @@ const logStats = () => {
 		return players.players.map(player => printName(player)).join(", ");
 	}
 
-	if (max1row) addLogout(`1: ${roundToPercent(max1row.avg, precision)} - ${names(max1row)}`);
-	if (max2row) addLogout(`2: ${roundToPercent(max2row.avg, precision)} - ${names(max2row)}`);
-	if (max3row) addLogout(`3: ${roundToPercent(max3row.avg, precision)} - ${names(max3row)}`);
-
-	logSection++;
+	if (max1row) addLog(`1: ${roundToPercent(max1row.avg, precision)} - ${names(max1row)}`);
+	if (max2row) addLog(`2: ${roundToPercent(max2row.avg, precision)} - ${names(max2row)}`);
+	if (max3row) addLog(`3: ${roundToPercent(max3row.avg, precision)} - ${names(max3row)}`);
 
 	const calcAny = (max1: number, max2: number, max3: number): number => {
 		return 1 - (1 - max1) * (1 - max2) * (1 - max3);
@@ -395,10 +419,7 @@ const logStats = () => {
 	const any = roundToPercent(calcAny(max1row.avg, max2row.avg, max3row.avg), precision);
 	const avg = roundToPercent(calcAvg(max1row.avg, max2row.avg, max3row.avg), precision);
 	const all = roundToPercent(calcAll(max1row.avg, max2row.avg, max3row.avg), precision);
-	addLogout(`Any: ${any} - Avg: ${avg} - All: ${all}`);
-	logSection++;
-
-	addLogout("Any: (70-74 81.8) - Avg: (33-36 43.1) - All: (3-4 7.8)");
+	addLog(`Any: ${any} - Avg: ${avg} - All: ${all}`, "center");
 	logSection++;
 
 	let unique = true;
@@ -540,8 +561,8 @@ const processMaxArray = (array: Picks.PickOdds[]) => {
 
 for (const stat of dataStats) {
 	if (stat === undefined) continue;
-	stat.forEach((value, i) => {
-		if (typeof value === 'string') stat[i] = value.replaceAll(' ', '\u00A0');
+	stat.lines.forEach((line, index) => {
+		stat.lines[index] = line.replace(/ /g, '\u00A0');
 	});
 }
 
@@ -609,9 +630,10 @@ function App() {
 				<Popup showPopUp={showPopup} closePopUp={() => setShowPopup(false)}>
 					{
 						dataStats.map((stat, i) => (
-							<div key={i} className='popup-section'>
-								{stat.map((title, j) => (
-									<div key={j}>{title}</div>
+							<div key={i} className={`popup-section${stat.break ? ' popup-section-break' : ''}`}
+								style={{ textAlign: stat.align }}>
+								{stat.lines.map((line, j) => (
+									<div key={j}>{line}</div>
 								))}
 							</div>
 						))

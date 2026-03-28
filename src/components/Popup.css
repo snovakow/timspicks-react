@@ -60,9 +60,8 @@
   max-width: 100%;
   margin-left: auto;
   margin-right: auto;
-  text-align: left;
 }
 
-.popup-section:not(:last-child) {
+.popup-section-break {
   margin-bottom: 1rem;
 }
