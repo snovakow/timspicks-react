@@ -20,7 +20,7 @@ function Popup({ showPopUp, closePopUp, children }: PopupProps) {
 
         // Calculate scrollbar width to prevent layout shift
         const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
-        
+
         // Prevent background scrolling by disabling body overflow
         document.body.style.overflow = 'hidden';
         // Reserve space for scrollbar gutter
