@@ -69,6 +69,7 @@ export function Basic(props: {
 
     const [shortNames, setShortNames] = useState(false);
     const [awayShrinkPx, setAwayShrinkPx] = useState(0);
+    const [awayNaturalSpanWidth, setAwayNaturalSpanWidth] = useState<number | null>(null);
     const shortNamesRef = useRef(false);
     const longModeWidthRef = useRef<number | null>(null);
     // Snapshot of widths taken at shrink-enter time; keeps diff stable so ResizeObserver doesn't cycle
@@ -85,7 +86,8 @@ export function Basic(props: {
             const parent = table.parentElement;
             if (!parent) return;
 
-            const tableWidth = Math.max(table.offsetWidth, table.scrollWidth);
+            const extra = table.offsetWidth - table.clientWidth
+            const tableWidth = table.scrollWidth + extra;
             const availableWidth = parent.clientWidth;
 
             // --- Short-names toggle (first fallback) ---
@@ -97,6 +99,7 @@ export function Basic(props: {
                     // Reset shrink snapshots; content is changing
                     shrinkNaturalTableWidthRef.current = null;
                     shrinkNaturalSpanWidthRef.current = null;
+                    setAwayNaturalSpanWidth(null);
                     setAwayShrinkPx(0);
                 } else {
                     longModeWidthRef.current = null;
@@ -111,6 +114,7 @@ export function Basic(props: {
                 setShortNames(false);
                 shrinkNaturalTableWidthRef.current = null;
                 shrinkNaturalSpanWidthRef.current = null;
+                setAwayNaturalSpanWidth(null);
                 setAwayShrinkPx(0);
                 return;
             }
@@ -127,8 +131,10 @@ export function Basic(props: {
                     let maxSpanWidth = 0;
                     awaySpans.forEach(s => { if (s.scrollWidth > maxSpanWidth) maxSpanWidth = s.scrollWidth; });
                     shrinkNaturalSpanWidthRef.current = maxSpanWidth;
+                    setAwayNaturalSpanWidth(maxSpanWidth);
                     setAwayShrinkPx(diff);
                 } else {
+                    setAwayNaturalSpanWidth(null);
                     setAwayShrinkPx((prev) => (prev === 0 ? prev : 0));
                 }
             } else {
@@ -139,6 +145,7 @@ export function Basic(props: {
                     // Parent grew enough — exit shrink mode
                     shrinkNaturalTableWidthRef.current = null;
                     shrinkNaturalSpanWidthRef.current = null;
+                    setAwayNaturalSpanWidth(null);
                     setAwayShrinkPx(0);
                 } else {
                     setAwayShrinkPx((prev) => (prev === diff ? prev : diff));
@@ -176,8 +183,8 @@ export function Basic(props: {
                                         whiteSpace: 'nowrap',
                                         // Absolute pixel width shrinks the column in auto table layout
                                         // (overflow:hidden + explicit width bounds max-content contribution)
-                                        ...(awayShrinkPx > 0 && shrinkNaturalSpanWidthRef.current !== null ? {
-                                            width: `${Math.max(0, shrinkNaturalSpanWidthRef.current - awayShrinkPx)}px`
+                                        ...(awayShrinkPx > 0 && awayNaturalSpanWidth !== null ? {
+                                            width: `${Math.max(0, awayNaturalSpanWidth - awayShrinkPx)}px`
                                         } : {})
                                     }}
                                 >
