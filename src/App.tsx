@@ -561,11 +561,10 @@ const logStats = (betKey: 'bet1' | 'bet2' | 'bet3' | 'bet4' | 'betAvg') => {
 	}
 }
 
-const addLogTitle = (title: string) => {
-	addLog(title, "center", true);
-	logSection++;
-}
-
+// const addLogTitle = (title: string) => {
+// 	addLog(title, "center", true);
+// 	logSection++;
+// }
 // addLogTitle("Average");
 logStats('betAvg');
 // for (const book of sportsbooks) {
