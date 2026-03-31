@@ -642,11 +642,6 @@ const processMaxArray = (array: Picks.PickOdds[]) => {
 function App() {
 	const [showPopup, setShowPopup] = useState(false);
 
-	const [chances, setChances] = useState(true);
-	const toggleHandler = () => {
-		setChances(prev => !prev);
-	};
-
 	const [rows1] = useState(table1Rows);
 	const sortedRows1 = [...rows1];
 
@@ -695,11 +690,10 @@ function App() {
 	return (
 		<>
 			<header>
-				<span className="header-title">Tims Hockey Picks Tims Hockey Picks Tims Hockey Picks</span>
+				<span className="header-title">Tims Hockey Picks</span>
 				<button className="button" onClick={() => setShowPopup(!showPopup)}>
 					<img src={stats} alt="?" />
 				</button>
-				{/* <button className={chances ? 'button chances-on' : 'button chances-off'} onClick={toggleHandler}>%</button> */}
 			</header>
 			<main className='content'>
 				<Popup showPopUp={showPopup} closePopUp={() => setShowPopup(false)}>
@@ -736,19 +730,19 @@ function App() {
 				</div>
 				<div className="table-container">
 					<h2>Pick #1</h2>
-					<Picks.Table columns={columns} sortedRows={sortedRows1} requestSort={requestSort1} sortConfig={sortConfig1} darkTheme={darkTheme} chances={chances} />
+					<Picks.Table columns={columns} sortedRows={sortedRows1} requestSort={requestSort1} sortConfig={sortConfig1} darkTheme={darkTheme} />
 				</div>
 				<div className="table-container">
 					<h2>Pick #2</h2>
-					<Picks.Table columns={columns} sortedRows={sortedRows2} requestSort={requestSort2} sortConfig={sortConfig2} darkTheme={darkTheme} chances={chances} />
+					<Picks.Table columns={columns} sortedRows={sortedRows2} requestSort={requestSort2} sortConfig={sortConfig2} darkTheme={darkTheme} />
 				</div>
 				<div className="table-container">
 					<h2>Pick #3</h2>
-					<Picks.Table columns={columns} sortedRows={sortedRows3} requestSort={requestSort3} sortConfig={sortConfig3} darkTheme={darkTheme} chances={chances} />
+					<Picks.Table columns={columns} sortedRows={sortedRows3} requestSort={requestSort3} sortConfig={sortConfig3} darkTheme={darkTheme} />
 				</div>
 				<div className="table-container">
 					<h2>Players</h2>
-					<Picks.Table columns={columnsPlayer} sortedRows={sortedRowsPlayer} requestSort={requestSortPlayer} sortConfig={sortConfigPlayer} darkTheme={darkTheme} chances={chances} />
+					<Picks.Table columns={columnsPlayer} sortedRows={sortedRowsPlayer} requestSort={requestSortPlayer} sortConfig={sortConfigPlayer} darkTheme={darkTheme} />
 				</div>
 			</main>
 		</>

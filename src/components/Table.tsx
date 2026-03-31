@@ -205,10 +205,9 @@ export function Table(props: {
 	sortedRows: (Player | PickOdds)[],
 	requestSort: RequestSort,
 	sortConfig: SortConfig,
-	darkTheme: boolean,
-	chances: boolean
+	darkTheme: boolean
 }) {
-	const { columns, sortedRows, requestSort, sortConfig, darkTheme, chances } = props;
+	const { columns, sortedRows, requestSort, sortConfig, darkTheme } = props;
 	return (
 		<table>
 			<thead>
@@ -257,21 +256,21 @@ export function Table(props: {
 								<td><a href={player.link} target="_blank" rel="noopener noreferrer">🔗</a></td>
 							)}
 
-							{picks && (<td>{chances ? row.ggChance : row.gg.toFixed(2)}</td>)}
+							{picks && (<td>{row.ggChance}</td>)}
 							<td className={picks && row.highlight1 ? "highlight" : undefined}>
-								{chances ? player.betChance1 : (player.bet1 ?? "-")}
+								{player.betChance1}
 							</td>
 							<td className={picks && row.highlight2 ? "highlight" : undefined}>
-								{chances ? player.betChance2 : (player.bet2 ?? "-")}
+								{player.betChance2}
 							</td>
 							<td className={picks && row.highlight3 ? "highlight" : undefined}>
-								{chances ? player.betChance3 : (player.bet3 ?? "-")}
+								{player.betChance3}
 							</td>
 							<td className={picks && row.highlight4 ? "highlight" : undefined}>
-								{chances ? player.betChance4 : (player.bet4 ?? "-")}
+								{player.betChance4}
 							</td>
 							<td className={picks && row.highlightAvg ? "highlight" : undefined}>
-								{chances ? player.betChanceAvg : (player.betAvg ? Math.round(player.betAvg) : "-")}
+								{player.betChanceAvg}
 							</td>
 							{!picks && (<td>{(row.pick === 0 ? "-" : row.pick)}</td>)}
 							{!picks && (<td className="cell-container">{row.gameTime?.toLocaleTimeString([], timeFormat)}</td>)}

@@ -27,11 +27,3 @@ button:hover {
   height: 1em;
   justify-content: center;
 }
-
-.chances-on {
-  color: #000;
-}
-
-.chances-off {
-  color: #ddd;
-}
