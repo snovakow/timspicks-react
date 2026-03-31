@@ -7,6 +7,7 @@ import logo1 from './images/sb-logo-16-draftkings.svg';
 import logo2 from './images/sb-logo-16-fanduel.svg';
 import logo3 from './images/sb-logo-16-mgm.svg';
 import logo4 from './images/sb-logo-16-betrivers.svg';
+import stats from './images/leaderboard.svg';
 import type { Team } from './components/logo';
 
 const precision = Picks.precision;
@@ -694,7 +695,9 @@ function App() {
 	return (
 		<>
 			<header>
-				<button className="button" onClick={() => setShowPopup(!showPopup)}>?</button>
+				<button className="button" onClick={() => setShowPopup(!showPopup)}>
+					<img src={stats} alt="?" />
+				</button>
 				<span className="header-title">Tims Hockey Picks</span>
 				<button className={chances ? 'button chances-on' : 'button chances-off'} onClick={toggleHandler}>%</button>
 			</header>
