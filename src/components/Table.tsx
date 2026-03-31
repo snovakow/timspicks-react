@@ -1,7 +1,6 @@
 import { type Team } from "./logo";
 import { roundToPercent } from "../utility";
 import "./Table.css";
-import { useEffect, useRef, useState } from "react";
 
 export const precision = 1;
 
