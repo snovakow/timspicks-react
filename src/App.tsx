@@ -8,6 +8,7 @@ import logo2 from './images/sb-logo-16-fanduel.svg';
 import logo3 from './images/sb-logo-16-mgm.svg';
 import logo4 from './images/sb-logo-16-betrivers.svg';
 import iconStats from './images/leaderboard_24dp_000000_FILL0_wght400_GRAD0_opsz24.svg';
+import iconInfo from './images/info_i_24dp_000000_FILL0_wght400_GRAD0_opsz24.svg';
 import type { Team } from './components/logo';
 
 const precision = Picks.precision;
@@ -351,7 +352,7 @@ const compilePlayerList = () => {
 			const peerAvg = peerTotals[key].sum / peerTotals[key].count;
 			if (bookAvg === 0) continue;
 			scales[key] = peerAvg / bookAvg;
-			// console.log(`De-vig [${key}]: scale=${scales[key].toFixed(4)} from ${bookTotals[key].count} players`);
+			console.log(`De-vig [${key}]: scale=${scales[key].toFixed(4)} from ${bookTotals[key].count} players`);
 		}
 
 		for (const key of betKeys) {
@@ -796,6 +797,7 @@ applyAllStatsHighlights();
 function App() {
 	const [showPopup, setShowPopup] = useState({ visible: false, title: 'Stats', key: 'betAvg' });
 	const [popupStats, setPopupStats] = useState<LogStat[]>(() => cloneLogStats(statsCache.betAvg.stats));
+	const [showInfo, setShowInfo] = useState(false);
 	const [showNumbers, setShowNumbers] = useState(false);
 
 	const closePopup = () => {
@@ -852,23 +854,51 @@ function App() {
 	return (
 		<>
 			<header>
+				<div className='toolBar' style={{ justifySelf: 'start' }}>
+					<button className="button"
+						onClick={
+							() => setShowInfo(v => !v)
+						}>
+						<img src={iconInfo} alt="i" />
+					</button>
+					<button className="button"
+						onClick={
+							() => {
+								if (showPopup.visible) closePopup();
+								else openStatsPopup('betAvg', 'Stats');
+							}
+						}>
+						<img src={iconStats} alt="?" />
+					</button>
+				</div>
 				<span className="header-title">Tims Hockey Picks</span>
-				<button className="button"
-					onClick={() => setShowNumbers(v => !v)}
-					aria-label="Toggle display">
-					{showNumbers ? '%' : '+/-'}
-				</button>
-				<button className="button"
-					onClick={
-						() => {
-							if (showPopup.visible) closePopup();
-							else openStatsPopup('betAvg', 'Stats');
-						}
-					}>
-					<img src={stats} alt="?" />
-				</button>
+				<div className='toolBar' style={{ justifySelf: 'end' }}>
+					<button className="button"
+						onClick={() => setShowNumbers(v => !v)}
+						aria-label="Toggle display">
+						{showNumbers ? '%' : '#'}
+					</button>
+				</div>
 			</header>
 			<main className='content'>
+				<Popup title="Info" showPopUp={showInfo} closePopUp={() => setShowInfo(false)}>
+					<div className="popup-section" style={{ textAlign: 'left', lineHeight: '1.6' }}>
+						<p><strong>What this app does</strong></p>
+						<p>This app shows NHL anytime goal scorer probabilities from four sportsbooks — DraftKings, FanDuel, BetMGM, and BetRivers — for today's games.</p>
+						<p>Three picks are nominated per slot (Pick #1, #2, #3). The goal is to select one player per slot with the highest chance of scoring, where no two picks play in the same game.</p>
+						<p>The <strong>Avg</strong> column is the mean probability across all sportsbooks that list the player. The <strong>G/GP</strong> column shows each player's goals-per-game rate, converted to a Poisson goal probability for reference.</p>
+						<p>Clicking a sportsbook logo shows that book's optimal picks. The <strong>📊</strong> button shows the optimal picks by average, accounting for game conflicts.</p>
+					</div>
+					<div className="popup-section popup-section-break" style={{ textAlign: 'left', lineHeight: '1.6' }}>
+						<p><strong>Highlight legend</strong></p>
+						<p><span style={{ background: 'rgb(204,238,255)', color: '#000', padding: '0 0.4em', borderRadius: 3 }}>Blue</span> — Highest probability in that sportsbook column for that pick table.</p>
+						<p><span style={{ background: 'rgb(170,235,170)', color: '#000', padding: '0 0.4em', borderRadius: 3 }}>Green</span> — Player identified as an optimal pick for that slot by the stats analysis.</p>
+					</div>
+					<div className="popup-section popup-section-break" style={{ textAlign: 'left', lineHeight: '1.6' }}>
+						<p><strong>Contact</strong></p>
+						<p><a href="mailto:snovakow@gmail.com">snovakow@gmail.com</a></p>
+					</div>
+				</Popup>
 				<Popup title={showPopup.title} showPopUp={showPopup.visible} closePopUp={closePopup}>
 					{
 						popupStats.map((stat, i) => {
