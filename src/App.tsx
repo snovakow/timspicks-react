@@ -9,6 +9,8 @@ import logo3 from './images/sb-logo-16-mgm.svg';
 import logo4 from './images/sb-logo-16-betrivers.svg';
 import iconStats from './images/leaderboard_24dp_000000_FILL0_wght400_GRAD0_opsz24.svg';
 import iconInfo from './images/info_i_24dp_000000_FILL0_wght400_GRAD0_opsz24.svg';
+import iconHockeyDark from './images/sports_hockey_24dp_000000_FILL0_wght400_GRAD0_opsz24.svg';
+import iconHockeyLight from './images/sports_hockey_24dp_E3E3E3_FILL0_wght400_GRAD0_opsz24.svg';
 import type { Team } from './components/logo';
 
 const precision = Picks.precision;
@@ -871,7 +873,10 @@ function App() {
 						<img src={iconStats} alt="?" />
 					</button>
 				</div>
-				<span className="header-title">Tims Hockey Picks</span>
+				<span className="header-title">
+					<img className="header-title-icon" src={darkTheme ? iconHockeyLight : iconHockeyDark} alt="" aria-hidden="true" />
+					Tims Hockey Picks
+				</span>
 				<div className='toolBar' style={{ justifySelf: 'end' }}>
 					<button className="button"
 						onClick={() => setShowNumbers(v => !v)}
@@ -885,8 +890,9 @@ function App() {
 					<div className="popup-section" style={{ textAlign: 'left', lineHeight: '1.6' }}>
 						<p><strong>What this app does</strong></p>
 						<p>This app shows NHL anytime goal scorer probabilities from four sportsbooks — DraftKings, FanDuel, BetMGM, and BetRivers — for today's games.</p>
+						<p>The percentages are <strong>implied probabilities</strong> derived from each sportsbook's offered odds. For example, odds of −150 imply a 60% chance. Sportsbooks build a profit margin (vig or juice) into their lines, so the displayed probabilities are slightly inflated relative to the true odds. The <strong>#</strong> button switches the display to show the original American odds instead.</p>
 						<p>Three picks are nominated per slot (Pick #1, #2, #3). The goal is to select one player per slot with the highest chance of scoring, where no two picks play in the same game.</p>
-						<p>The <strong>Avg</strong> column is the mean probability across all sportsbooks that list the player. The <strong>G/GP</strong> column shows each player's goals-per-game rate, converted to a Poisson goal probability for reference.</p>
+						<p>The <strong>Avg</strong> column is the mean implied probability across all sportsbooks that list the player. The <strong>G/GP</strong> column shows each player's goals-per-game rate, converted to a Poisson goal probability for reference.</p>
 						<p>Clicking a sportsbook logo shows that book's optimal picks. The <strong>📊</strong> button shows the optimal picks by average, accounting for game conflicts.</p>
 					</div>
 					<div className="popup-section popup-section-break" style={{ textAlign: 'left', lineHeight: '1.6' }}>
