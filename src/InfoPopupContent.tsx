@@ -1,25 +1,78 @@
 import './InfoPopupContent.css';
 
 export default function InfoPopupContent() {
-    return (
-        <>
-            <div className="info-popup-section">
-                <p><strong>What this app does</strong></p>
-                <p>This app shows NHL anytime goal scorer probabilities from four sportsbooks — DraftKings, FanDuel, BetMGM, and BetRivers — for today's games.</p>
-                <p>The percentages are <strong>implied probabilities</strong> derived from each sportsbook's offered odds. For example, odds of −150 imply a 60% chance. Sportsbooks build a profit margin (vig or juice) into their lines, so the displayed probabilities are slightly inflated relative to the true odds. The <strong>#</strong> button switches the display to show the original American odds instead.</p>
-                <p>Three picks are nominated per slot (Pick #1, #2, #3). The goal is to select one player per slot with the highest chance of scoring, where no two picks play in the same game.</p>
-                <p>The <strong>Avg</strong> column is the mean implied probability across all sportsbooks that list the player. The <strong>G/GP</strong> column shows each player's goals-per-game rate, converted to a Poisson goal probability for reference.</p>
-                <p>Clicking a sportsbook logo shows that book's optimal picks. The <strong>📊</strong> button shows the optimal picks by average, accounting for game conflicts.</p>
-            </div>
-            <div className="info-popup-section info-popup-section-break">
-                <p><strong>Highlight legend</strong></p>
-                <p><span style={{ background: 'rgb(204,238,255)', color: '#000', padding: '0 0.4em', borderRadius: 3 }}>Blue</span> — Highest probability in that sportsbook column for that pick table.</p>
-                <p><span style={{ background: 'rgb(170,235,170)', color: '#000', padding: '0 0.4em', borderRadius: 3 }}>Green</span> — Player identified as an optimal pick for that slot by the stats analysis.</p>
-            </div>
-            <div className="info-popup-section info-popup-section-break">
-                <p><strong>Contact</strong></p>
-                <p><a href="mailto:snovakow@gmail.com">snovakow@gmail.com</a></p>
-            </div>
-        </>
-    );
+	return (
+		<div className="info-popup-layout">
+			<section className="info-popup-section">
+				<h3>Tim Hortons Hockey Challenge</h3>
+				<p>
+					This app helps make Tim Hortons Hockey Challenge picks in the Tims app.
+					It ranks candidates for Pick #1, Pick #2, and Pick #3 using implied probabilities
+					from sportsbook odds, with normalization to improve book-to-book comparability.
+				</p>
+			</section>
+
+			<section className="info-popup-section">
+				<h3>Features</h3>
+				<p>
+					Selecting picks from different games can improve total hit probability by reducing
+					correlation between picks. When picks come from independent games, outcomes are
+					less tied together than when multiple picks come from the same game.
+				</p>
+				<p>
+					Once games start, available pick quality can shift. Listing all players helps judge
+					whether to lock picks early or wait for later opportunities.
+				</p>
+			</section>
+
+			<section className="info-popup-section">
+				<h3>How Odds Are Balanced</h3>
+				<p>
+					The percentages shown are implied probabilities derived from sportsbook odds.
+					The app then normalizes books to reduce systematic pricing differences so books are more comparable.
+				</p>
+				<p>
+					In practice, this means each sportsbook is scaled toward the consensus of the other books
+					(de-vig normalization), helping separate real player signal from sportsbook-specific bias.
+				</p>
+				<p>
+					Sportsbooks include a margin known as <strong>vig</strong> (also called <strong>juice</strong>),
+					so normalization helps align books onto a more comparable baseline.
+				</p>
+				<p>
+					Use the <strong>#</strong> button to switch between percentage view and American odds view.
+				</p>
+			</section>
+
+			<section className="info-popup-section">
+				<h3>Stats and Sportsbook Buttons</h3>
+				<p>
+					The <strong>📊</strong> stats button and sportsbook logo buttons display the top picks,
+					and, if any picks are from the same game, if possible, the next best picks using players from different games.
+				</p>
+				<p>
+					The sportsbook buttons (DraftKings, FanDuel, BetMGM, or BetRivers)
+					display the picks using that sportsbook's odds.
+					The <strong>📊</strong> stats button displays the picks based on the average odds across all
+					sportsbooks.
+				</p>
+				<p>
+					This lets you compare how picks change by source while keeping one consistent optimization method.
+				</p>
+			</section>
+
+			<section className="info-popup-section info-popup-section-break">
+				<h3>Highlight Legend</h3>
+				<p><span className="info-chip info-chip-blue">Blue</span> 
+				Highest probability picks.</p>
+				<p><span className="info-chip info-chip-green">Green</span> 
+				Highest probability picks from different games.</p>
+			</section>
+
+			<section className="info-popup-section info-popup-section-break info-popup-contact">
+				<h3>Contact</h3>
+				<p><a href="mailto:snovakow@gmail.com">snovakow@gmail.com</a></p>
+			</section>
+		</div>
+	);
 }
