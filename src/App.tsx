@@ -7,7 +7,7 @@ import logo1 from './images/sb-logo-16-draftkings.svg';
 import logo2 from './images/sb-logo-16-fanduel.svg';
 import logo3 from './images/sb-logo-16-mgm.svg';
 import logo4 from './images/sb-logo-16-betrivers.svg';
-import stats from './images/leaderboard.svg';
+import iconStats from './images/leaderboard_24dp_000000_FILL0_wght400_GRAD0_opsz24.svg';
 import type { Team } from './components/logo';
 
 const precision = Picks.precision;
