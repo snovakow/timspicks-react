@@ -601,20 +601,34 @@ const logStats = (betKey: LogStatsKey): HighlightByPick => {
 			addPlayersToHighlight(2, ...max2row.players);
 			addPlayersToHighlight(3, ...max3row.players);
 		} else {
+			addLogTitle("Independent Games");
+
 			const comboPrecision = 2;
 			for (const bestCombo of bestCombos) {
 				let line1 = `1: ${printName(bestCombo.pick1.player)}`;
-				if (bestCombo.pick1.avg !== max1row.avg) line1 += " " + roundToPercent(bestCombo.pick1.avg - max1row.avg, comboPrecision);
+				let reducedCount = 0;
+				if (bestCombo.pick1.avg !== max1row.avg) {
+					reducedCount++;
+					line1 += " " + roundToPercent(bestCombo.pick1.avg - max1row.avg, comboPrecision);
+				}
 				let line2 = `2: ${printName(bestCombo.pick2.player)}`;
-				if (bestCombo.pick2.avg !== max2row.avg) line2 += " " + roundToPercent(bestCombo.pick2.avg - max2row.avg, comboPrecision);
+				if (bestCombo.pick2.avg !== max2row.avg) {
+					reducedCount++;
+					line2 += " " + roundToPercent(bestCombo.pick2.avg - max2row.avg, comboPrecision);
+				}
 				let line3 = `3: ${printName(bestCombo.pick3.player)}`;
-				if (bestCombo.pick3.avg !== max3row.avg) line3 += " " + roundToPercent(bestCombo.pick3.avg - max3row.avg, comboPrecision);
+				if (bestCombo.pick3.avg !== max3row.avg) {
+					reducedCount++;
+					line3 += " " + roundToPercent(bestCombo.pick3.avg - max3row.avg, comboPrecision);
+				}
 
 				addLog(line1);
 				addLog(line2);
 				addLog(line3);
 
-				addLog(`Total: ${roundToPercent(bestCombo.total - totalMax, comboPrecision)}`, "center");
+				if (reducedCount > 1) {
+					addLog(`Total: ${roundToPercent(bestCombo.total - totalMax, comboPrecision)}`, "center");
+				}
 
 				const any = roundToPercent(calcAny(bestCombo.pick1.avg, bestCombo.pick2.avg, bestCombo.pick3.avg), precision);
 				const all = roundToPercent(calcAll(bestCombo.pick1.avg, bestCombo.pick2.avg, bestCombo.pick3.avg), precision);
@@ -630,6 +644,10 @@ const logStats = (betKey: LogStatsKey): HighlightByPick => {
 	}
 	addLog("Any: (70-74 81.8) - All: (3-4 7.8)", "center");
 	return highlightByPick;
+}
+const addLogTitle = (title: string) => {
+	addLog(title, "center", true);
+	logSection++;
 }
 
 const cloneLogStats = (stats: LogStat[]): LogStat[] => {
