@@ -735,49 +735,53 @@ const processMaxArray = (array: Picks.PickOdds[]) => {
 	for (const row of max4) row.highlight4 = true;
 	for (const row of maxAvg) row.highlightAvg = true;
 }
+processMaxArray(table1Rows);
+processMaxArray(table2Rows);
+processMaxArray(table3Rows);
 
-function App() {
-	const [statsCache] = useState<Record<LogStatsKey, LogStatsCacheItem>>(() => precalculateLogStats());
-	const [showPopup, setShowPopup] = useState({ visible: false, title: 'Stats', key: 'betAvg' });
-	const [popupStats, setPopupStats] = useState<LogStat[]>(() => cloneLogStats(statsCache.betAvg.stats));
-
-	const applyAllStatsHighlights = () => {
-		const rows = [table1Rows, table2Rows, table3Rows];
-		for (const tableRows of rows) {
-			for (const row of tableRows) {
-				row.statsHighlight1 = false;
-				row.statsHighlight2 = false;
-				row.statsHighlight3 = false;
-				row.statsHighlight4 = false;
-				row.statsHighlightAvg = false;
-			}
+const statsCache = precalculateLogStats();
+const applyAllStatsHighlights = () => {
+	const rows = [table1Rows, table2Rows, table3Rows];
+	for (const tableRows of rows) {
+		for (const row of tableRows) {
+			row.statsHighlight1 = false;
+			row.statsHighlight2 = false;
+			row.statsHighlight3 = false;
+			row.statsHighlight4 = false;
+			row.statsHighlightAvg = false;
 		}
+	}
 
-		const applyToRows = (
-			rows: Picks.PickOdds[],
-			pick: PickIndex,
-			highlightByPick: HighlightByPick,
-			key: LogStatsKey,
-		) => {
-			const playerIds = highlightByPick[pick];
-			for (const row of rows) {
-				if (!playerIds.has(row.player.playerId)) continue;
-				if (key === 'bet1') row.statsHighlight1 = true;
-				else if (key === 'bet2') row.statsHighlight2 = true;
-				else if (key === 'bet3') row.statsHighlight3 = true;
-				else if (key === 'bet4') row.statsHighlight4 = true;
-				else row.statsHighlightAvg = true;
-			}
-		};
-
-		const keys: LogStatsKey[] = ['bet1', 'bet2', 'bet3', 'bet4', 'betAvg'];
-		for (const key of keys) {
-			const highlightByPick = statsCache[key].highlightByPick;
-			applyToRows(table1Rows, 1, highlightByPick, key);
-			applyToRows(table2Rows, 2, highlightByPick, key);
-			applyToRows(table3Rows, 3, highlightByPick, key);
+	const applyToRows = (
+		rows: Picks.PickOdds[],
+		pick: PickIndex,
+		highlightByPick: HighlightByPick,
+		key: LogStatsKey,
+	) => {
+		const playerIds = highlightByPick[pick];
+		for (const row of rows) {
+			if (!playerIds.has(row.player.playerId)) continue;
+			if (key === 'bet1') row.statsHighlight1 = true;
+			else if (key === 'bet2') row.statsHighlight2 = true;
+			else if (key === 'bet3') row.statsHighlight3 = true;
+			else if (key === 'bet4') row.statsHighlight4 = true;
+			else row.statsHighlightAvg = true;
 		}
 	};
+
+	const keys: LogStatsKey[] = ['bet1', 'bet2', 'bet3', 'bet4', 'betAvg'];
+	for (const key of keys) {
+		const highlightByPick = statsCache[key].highlightByPick;
+		applyToRows(table1Rows, 1, highlightByPick, key);
+		applyToRows(table2Rows, 2, highlightByPick, key);
+		applyToRows(table3Rows, 3, highlightByPick, key);
+	}
+};
+applyAllStatsHighlights();
+
+function App() {
+	const [showPopup, setShowPopup] = useState({ visible: false, title: 'Stats', key: 'betAvg' });
+	const [popupStats, setPopupStats] = useState<LogStat[]>(() => cloneLogStats(statsCache.betAvg.stats));
 
 	const closePopup = () => {
 		setShowPopup({ ...showPopup, visible: false });
@@ -829,11 +833,6 @@ function App() {
 	const requestSort2: Picks.RequestSort = makeSort(sortConfig2, setSortConfig2);
 	const requestSort3: Picks.RequestSort = makeSort(sortConfig3, setSortConfig3);
 	const requestSortPlayer: Picks.RequestSort = makeSort(sortConfigPlayer, setSortConfigPlayer);
-
-	processMaxArray(sortedRows1);
-	processMaxArray(sortedRows2);
-	processMaxArray(sortedRows3);
-	applyAllStatsHighlights();
 
 	return (
 		<>
