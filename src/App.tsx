@@ -115,6 +115,15 @@ gamesList.sort((a: Picks.GameData, b: Picks.GameData): number => {
 	return a.away.name.localeCompare(b.away.name);
 });
 
+const probabilityToAmerican = (chance: number | null): string => {
+	if (chance === null || chance <= 0) return "-";
+	const decimal = 1 / chance;
+	const american = decimal >= 2
+		? Math.round(100 * (decimal - 1))
+		: Math.round(100 / (1 - decimal));
+	return (american > 0 ? "+" : "") + american;
+};
+
 const betDisplayRounded = (chance: number | null): string => {
 	if (chance === null) return "-";
 	return roundToPercent(chance, precision);
@@ -293,6 +302,11 @@ const compilePlayerList = () => {
 		nameFind(player, bet2, "bet2", "betDisplay2");
 		nameFind(player, bet3, "bet3", "betDisplay3");
 		nameFind(player, bet4, "bet4", "betDisplay4");
+
+		player.american1 = probabilityToAmerican(player.bet1);
+		player.american2 = probabilityToAmerican(player.bet2);
+		player.american3 = probabilityToAmerican(player.bet3);
+		player.american4 = probabilityToAmerican(player.bet4);
 	}
 
 	const deVig = true;
@@ -782,6 +796,7 @@ applyAllStatsHighlights();
 function App() {
 	const [showPopup, setShowPopup] = useState({ visible: false, title: 'Stats', key: 'betAvg' });
 	const [popupStats, setPopupStats] = useState<LogStat[]>(() => cloneLogStats(statsCache.betAvg.stats));
+	const [showNumbers, setShowNumbers] = useState(false);
 
 	const closePopup = () => {
 		setShowPopup({ ...showPopup, visible: false });
@@ -839,6 +854,11 @@ function App() {
 			<header>
 				<span className="header-title">Tims Hockey Picks</span>
 				<button className="button"
+					onClick={() => setShowNumbers(v => !v)}
+					aria-label="Toggle display">
+					{showNumbers ? '%' : '+/-'}
+				</button>
+				<button className="button"
 					onClick={
 						() => {
 							if (showPopup.visible) closePopup();
@@ -888,19 +908,19 @@ function App() {
 				</div>
 				<div className="table-container">
 					<h2>Pick #1</h2>
-					<Picks.Table columns={columns} sortedRows={sortedRows1} requestSort={requestSort1} sortConfig={sortConfig1} darkTheme={darkTheme} />
+					<Picks.Table columns={columns} sortedRows={sortedRows1} requestSort={requestSort1} sortConfig={sortConfig1} darkTheme={darkTheme} showNumbers={showNumbers} />
 				</div>
 				<div className="table-container">
 					<h2>Pick #2</h2>
-					<Picks.Table columns={columns} sortedRows={sortedRows2} requestSort={requestSort2} sortConfig={sortConfig2} darkTheme={darkTheme} />
+					<Picks.Table columns={columns} sortedRows={sortedRows2} requestSort={requestSort2} sortConfig={sortConfig2} darkTheme={darkTheme} showNumbers={showNumbers} />
 				</div>
 				<div className="table-container">
 					<h2>Pick #3</h2>
-					<Picks.Table columns={columns} sortedRows={sortedRows3} requestSort={requestSort3} sortConfig={sortConfig3} darkTheme={darkTheme} />
+					<Picks.Table columns={columns} sortedRows={sortedRows3} requestSort={requestSort3} sortConfig={sortConfig3} darkTheme={darkTheme} showNumbers={showNumbers} />
 				</div>
 				<div className="table-container">
 					<h2>Players</h2>
-					<Picks.Table columns={columnsPlayer} sortedRows={sortedRowsPlayer} requestSort={requestSortPlayer} sortConfig={sortConfigPlayer} darkTheme={darkTheme} />
+					<Picks.Table columns={columnsPlayer} sortedRows={sortedRowsPlayer} requestSort={requestSortPlayer} sortConfig={sortConfigPlayer} darkTheme={darkTheme} showNumbers={showNumbers} />
 				</div>
 			</main>
 		</>

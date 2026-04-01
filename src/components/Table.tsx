@@ -119,6 +119,10 @@ export class Player {
 	gameTime: Date;
 
 	fullName: string;
+	american1: string = "-";
+	american2: string = "-";
+	american3: string = "-";
+	american4: string = "-";
 	bet1: number | null = null;
 	bet2: number | null = null;
 	bet3: number | null = null;
@@ -180,7 +184,7 @@ export class PickOdds {
 	player: Player;
 
 	gg: number;
-	ggChance: string;
+	ggDisplay: string;
 	highlight1 = false;
 	highlight2 = false;
 	highlight3 = false;
@@ -195,7 +199,7 @@ export class PickOdds {
 		this.player = player;
 
 		this.gg = item.gamesPlayed > 0 ? item.goals / item.gamesPlayed : 0;
-		this.ggChance = ggChance(this.gg);
+		this.ggDisplay = ggChance(this.gg);
 	}
 }
 
@@ -210,9 +214,10 @@ export function Table(props: {
 	sortedRows: (Player | PickOdds)[],
 	requestSort: RequestSort,
 	sortConfig: SortConfig,
-	darkTheme: boolean
+	darkTheme: boolean,
+	showNumbers: boolean
 }) {
-	const { columns, sortedRows, requestSort, sortConfig, darkTheme } = props;
+	const { columns, sortedRows, requestSort, sortConfig, darkTheme, showNumbers } = props;
 	const cellClass = (primary: boolean, stats: boolean): string | undefined => {
 		if (stats) return "highlight-stats";
 		if (primary) return "highlight";
@@ -266,21 +271,21 @@ export function Table(props: {
 								<td><a href={player.link} target="_blank" rel="noopener noreferrer">🔗</a></td>
 							)}
 
-							{picks && (<td>{row.ggChance}</td>)}
-							<td className={picks ? cellClass(row.highlight1, row.statsHighlight1) : undefined}>
-								{player.betDisplay1}
-							</td>
-							<td className={picks ? cellClass(row.highlight2, row.statsHighlight2) : undefined}>
-								{player.betDisplay2}
-							</td>
-							<td className={picks ? cellClass(row.highlight3, row.statsHighlight3) : undefined}>
-								{player.betDisplay3}
-							</td>
-							<td className={picks ? cellClass(row.highlight4, row.statsHighlight4) : undefined}>
-								{player.betDisplay4}
-							</td>
-							<td className={picks ? cellClass(row.highlightAvg, row.statsHighlightAvg) : undefined}>
-								{player.betDisplayAvg}
+						{picks && (<td>{showNumbers ? row.gg.toFixed(2) : row.ggDisplay}</td>)}
+						<td className={picks ? cellClass(row.highlight1, row.statsHighlight1) : undefined}>
+							{showNumbers ? player.american1 : player.betDisplay1}
+						</td>
+						<td className={picks ? cellClass(row.highlight2, row.statsHighlight2) : undefined}>
+							{showNumbers ? player.american2 : player.betDisplay2}
+						</td>
+						<td className={picks ? cellClass(row.highlight3, row.statsHighlight3) : undefined}>
+							{showNumbers ? player.american3 : player.betDisplay3}
+						</td>
+						<td className={picks ? cellClass(row.highlight4, row.statsHighlight4) : undefined}>
+							{showNumbers ? player.american4 : player.betDisplay4}
+						</td>
+						<td className={picks ? cellClass(row.highlightAvg, row.statsHighlightAvg) : undefined}>
+							{player.betDisplayAvg}
 							</td>
 							{!picks && (<td>{(row.pick === 0 ? "-" : row.pick)}</td>)}
 							{!picks && (<td className="cell-container">{row.gameTime?.toLocaleTimeString([], timeFormat)}</td>)}
