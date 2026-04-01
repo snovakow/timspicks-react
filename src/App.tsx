@@ -355,7 +355,7 @@ const compilePlayerList = () => {
 			const peerAvg = peerTotals[key].sum / peerTotals[key].count;
 			if (bookAvg === 0) continue;
 			scales[key] = peerAvg / bookAvg;
-			console.log(`De-vig [${key}]: scale=${scales[key].toFixed(4)} from ${bookTotals[key].count} players`);
+			// console.log(`De-vig [${key}]: scale=${scales[key].toFixed(4)} from ${bookTotals[key].count} players`);
 		}
 
 		for (const key of betKeys) {
