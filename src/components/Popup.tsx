@@ -31,7 +31,11 @@ function Popup({ showPopUp, title, closePopUp, children }: PopupProps) {
 
         // Block scroll events on the overlay to prevent background scrolling on touch devices
         const preventDefault = (e: Event) => {
-            e.preventDefault();
+            // Only block scroll gestures on the backdrop itself.
+            // Allow wheel/touch scrolling inside popup content.
+            if (e.target === overlay) {
+                e.preventDefault();
+            }
         };
 
         const overlay = overlayRef.current;
