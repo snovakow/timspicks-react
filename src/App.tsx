@@ -115,14 +115,7 @@ gamesList.sort((a: Picks.GameData, b: Picks.GameData): number => {
 	return a.away.name.localeCompare(b.away.name);
 });
 
-// Implied Odds
-const betDisplay = (x: number | null): number | null => {
-	if (x === null) return null;
-	return 1 / x;
-}
-
-const betDisplayRounded = (x: number | null): string => {
-	const chance = betDisplay(x);
+const betDisplayRounded = (chance: number | null): string => {
 	if (chance === null) return "-";
 	return roundToPercent(chance, precision);
 }
@@ -149,8 +142,7 @@ const sortFunction = (sortConfig: Picks.SortConfig) => {
 				if (bVal === 0) return -1;
 
 				if (aVal !== bVal) {
-					if (key === 'gg') return bVal - aVal;
-					else return aVal - bVal;
+					return bVal - aVal;
 				}
 			}
 
@@ -233,8 +225,9 @@ const compilePlayerList = () => {
 			const decimal = oddsMap.get(removeAccentsNormalize(name));
 			if (decimal === undefined) return false;
 
-			player[betKey] = decimal;
-			player[betDisplayKey] = betDisplayRounded(decimal);
+			const chance = 1 / decimal;
+			player[betKey] = chance;
+			player[betDisplayKey] = betDisplayRounded(chance);
 			return true;
 		};
 
@@ -301,6 +294,298 @@ const compilePlayerList = () => {
 		nameFind(player, bet3, "bet3", "betDisplay3");
 		nameFind(player, bet4, "bet4", "betDisplay4");
 	}
+
+	const deVig = true;
+	if (deVig) {
+		const minProb = 0.0001;
+		const maxProb = 0.9999;
+		const minFactor = 0.80;
+		const maxFactor = 1.25;
+		const minRatioDefault = 0.60;
+		const maxRatioDefault = 1.60;
+		// Per-book global normalization across a sampled set.
+		// Each book is compared against the average of OTHER books (leave-one-out)
+		// to avoid self-bias and produce a stable global factor per sportsbook.
+		const betKeys = ["bet1", "bet2", "bet3", "bet4"] as const;
+		const vigFactors: Record<typeof betKeys[number], number> = {
+			bet1: 1,
+			bet2: 1,
+			bet3: 1,
+			bet4: 1,
+		};
+		const factorTotals: Record<typeof betKeys[number], { logSum: number; weightSum: number; count: number }> = {
+			bet1: { logSum: 0, weightSum: 0, count: 0 },
+			bet2: { logSum: 0, weightSum: 0, count: 0 },
+			bet3: { logSum: 0, weightSum: 0, count: 0 },
+			bet4: { logSum: 0, weightSum: 0, count: 0 },
+		};
+		const ratioSamples: Record<typeof betKeys[number], number[]> = {
+			bet1: [],
+			bet2: [],
+			bet3: [],
+			bet4: [],
+		};
+		const ratioBounds: Record<typeof betKeys[number], { min: number; max: number; p05: number; p95: number }> = {
+			bet1: { min: minRatioDefault, max: maxRatioDefault, p05: minRatioDefault, p95: maxRatioDefault },
+			bet2: { min: minRatioDefault, max: maxRatioDefault, p05: minRatioDefault, p95: maxRatioDefault },
+			bet3: { min: minRatioDefault, max: maxRatioDefault, p05: minRatioDefault, p95: maxRatioDefault },
+			bet4: { min: minRatioDefault, max: maxRatioDefault, p05: minRatioDefault, p95: maxRatioDefault },
+		};
+		const percentile = (values: number[], p: number): number | null => {
+			if (values.length === 0) return null;
+			const sorted = [...values].sort((a, b) => a - b);
+			const idx = (sorted.length - 1) * p;
+			const lo = Math.floor(idx);
+			const hi = Math.ceil(idx);
+			if (lo === hi) return sorted[lo];
+			const t = idx - lo;
+			return sorted[lo] * (1 - t) + sorted[hi] * t;
+		};
+		const chooseSampleSize = (poolSize: number): number => {
+			if (poolSize === 0) return 0;
+			const minSampleSize = 5;
+			const maxSampleSize = 25;
+			const scaledSample = Math.round(Math.sqrt(poolSize) * 3);
+			return Math.max(
+				minSampleSize,
+				Math.min(maxSampleSize, poolSize, scaledSample)
+			);
+		};
+		const toProbMap = (player: Picks.Player): Record<typeof betKeys[number], number | null> => ({
+			bet1: player.bet1,
+			bet2: player.bet2,
+			bet3: player.bet3,
+			bet4: player.bet4,
+		});
+		const forEachRatio = (
+			players: Picks.Player[],
+			activeKeys: readonly betKey[],
+			onRatio: (key: betKey, rawRatio: number, peerCount: number) => void
+		): void => {
+			for (const player of players) {
+				const probsByBook = toProbMap(player);
+
+				let availableCount = 0;
+				for (const key of activeKeys) {
+					if (probsByBook[key] !== null) availableCount++;
+				}
+				if (availableCount < 2) continue;
+
+				for (const key of activeKeys) {
+					const prob = probsByBook[key];
+					if (prob === null) continue;
+
+					let peerSum = 0;
+					let peerCount = 0;
+					for (const peerKey of activeKeys) {
+						if (peerKey === key) continue;
+						const peerProb = probsByBook[peerKey];
+						if (peerProb === null) continue;
+						peerSum += peerProb;
+						peerCount++;
+					}
+					if (peerCount === 0) continue;
+
+					const peerAvg = peerSum / peerCount;
+					const rawRatio = prob / peerAvg;
+					if (!Number.isFinite(rawRatio) || rawRatio <= 0) continue;
+					onRatio(key, rawRatio, peerCount);
+				}
+			}
+		};
+
+		const topPickCandidates = playerList
+			.filter(player => player.pick !== null && player.pick <= 3)
+			.map(player => {
+				let sum = 0;
+				let count = 0;
+				for (const key of betKeys) {
+					const prob = player[key];
+					if (prob === null) continue;
+					sum += prob;
+					count++;
+				}
+				return {
+					player,
+					avgProb: count > 0 ? sum / count : 0,
+					bookCount: count,
+				};
+			})
+			.filter(item => item.avgProb > 0);
+
+		const fullCoverageCandidates = topPickCandidates.filter(item => item.bookCount === betKeys.length);
+		const fallbackCandidates = topPickCandidates.filter(item => item.bookCount >= 2);
+		const sampleMode = fullCoverageCandidates.length > 0 ? "all-books" : "fallback-partial-books";
+		const candidatePoolSize = sampleMode === "all-books" ? fullCoverageCandidates.length : fallbackCandidates.length;
+		const sampleSize = chooseSampleSize(candidatePoolSize);
+		const candidateSource = fullCoverageCandidates.length > 0
+			? [...fullCoverageCandidates].sort((a, b) => b.avgProb - a.avgProb)
+			: [...fallbackCandidates].sort((a, b) => {
+				if (b.bookCount !== a.bookCount) return b.bookCount - a.bookCount;
+				return b.avgProb - a.avgProb;
+			});
+		const sampledCandidates = candidateSource.slice(0, sampleSize);
+		const topPickPlayers = sampledCandidates.map(item => item.player);
+		const sampleCountByPick: Record<1 | 2 | 3, number> = { 1: 0, 2: 0, 3: 0 };
+		for (const item of sampledCandidates) {
+			const pick = item.player.pick;
+			if (pick === 1 || pick === 2 || pick === 3) sampleCountByPick[pick]++;
+		}
+		const sampleByPick = {
+			pick1: sampleCountByPick[1],
+			pick2: sampleCountByPick[2],
+			pick3: sampleCountByPick[3],
+		};
+		const minBookRowsRequired = sampleSize === 0
+			? 0
+			: Math.min(sampleSize, Math.max(5, Math.ceil(sampleSize * 0.7)));
+		const sampledAvailability: Record<typeof betKeys[number], number> = {
+			bet1: 0,
+			bet2: 0,
+			bet3: 0,
+			bet4: 0,
+		};
+		for (const player of topPickPlayers) {
+			for (const key of betKeys) {
+				if (player[key] !== null) sampledAvailability[key]++;
+			}
+		}
+		const eligibleBetKeys = betKeys.filter(key => sampledAvailability[key] >= minBookRowsRequired);
+		const canApplyDeVig = sampleSize > 0 && (sampleMode !== "fallback-partial-books" || topPickPlayers.length === sampleSize);
+		if (!canApplyDeVig) {
+			console.log(`Skipping de-vig (fallback needs full top-${sampleSize} sample)`, {
+				sampleSize: topPickPlayers.length,
+				candidatePoolSize,
+				sampleMode,
+				sampleByPick,
+				minBookRowsRequired,
+				eligibleBooks: eligibleBetKeys,
+			});
+		} else if (eligibleBetKeys.length < 2) {
+			console.log(`Skipping de-vig (not enough eligible books)`, {
+				sampleSize: topPickPlayers.length,
+				candidatePoolSize,
+				sampleMode,
+				sampleByPick,
+				minBookRowsRequired,
+				availability: sampledAvailability,
+				eligibleBooks: eligibleBetKeys,
+			});
+		} else {
+			// First pass: collect raw ratios to calibrate percentile-based clamp bounds.
+			forEachRatio(topPickPlayers, eligibleBetKeys, (key, rawRatio) => {
+				ratioSamples[key].push(rawRatio);
+			});
+
+			for (const key of eligibleBetKeys) {
+				const sampleCount = ratioSamples[key].length;
+				const lowerQuantile = sampleCount < 8 ? 0.15 : sampleCount < 12 ? 0.10 : 0.05;
+				const upperQuantile = 1 - lowerQuantile;
+				const lowerBound = percentile(ratioSamples[key], lowerQuantile);
+				const upperBound = percentile(ratioSamples[key], upperQuantile);
+				if (lowerBound !== null && upperBound !== null && upperBound >= lowerBound) {
+					// Slightly widen percentile interval to avoid hard-edge clipping.
+					const spread = upperBound - lowerBound;
+					const minBound = Math.max(minRatioDefault, lowerBound - spread * 0.10);
+					const maxBound = Math.min(maxRatioDefault, upperBound + spread * 0.10);
+					ratioBounds[key] = {
+						min: minBound,
+						max: Math.max(minBound, maxBound),
+						p05: lowerBound,
+						p95: upperBound,
+					};
+				}
+			}
+
+			const peerMaxCount = Math.max(1, eligibleBetKeys.length - 1);
+			forEachRatio(topPickPlayers, eligibleBetKeys, (key, rawRatio, peerCount) => {
+				const bounds = ratioBounds[key];
+				const clampedRatio = Math.max(bounds.min, Math.min(bounds.max, rawRatio));
+				const weight = peerCount / peerMaxCount;
+				factorTotals[key].logSum += Math.log(clampedRatio) * weight;
+				factorTotals[key].weightSum += weight;
+				factorTotals[key].count++;
+			});
+
+			for (const key of eligibleBetKeys) {
+				if (factorTotals[key].count > 0 && factorTotals[key].weightSum > 0) {
+					const factor = Math.exp(factorTotals[key].logSum / factorTotals[key].weightSum);
+					vigFactors[key] = Math.max(minFactor, Math.min(maxFactor, factor));
+				}
+			}
+
+			const booksMeetMinimum = eligibleBetKeys.every(key => factorTotals[key].count >= minBookRowsRequired);
+			if (!booksMeetMinimum) {
+				console.log(`Skipping de-vig (per-book row minimum not met)`, {
+					sampleSize: topPickPlayers.length,
+					candidatePoolSize,
+					sampleMode,
+					sampleByPick,
+					minBookRowsRequired,
+					eligibleBooks: eligibleBetKeys,
+					rows: {
+						bet1: factorTotals.bet1.count,
+						bet2: factorTotals.bet2.count,
+						bet3: factorTotals.bet3.count,
+						bet4: factorTotals.bet4.count,
+					},
+				});
+			} else {
+				// Re-center factors so the sportsbook set stays globally neutral.
+				const logMean = eligibleBetKeys.reduce((sum, key) => sum + Math.log(vigFactors[key]), 0) / eligibleBetKeys.length;
+				const meanFactor = Math.exp(logMean);
+				for (const key of eligibleBetKeys) {
+					vigFactors[key] = Math.max(minFactor, Math.min(maxFactor, vigFactors[key] / meanFactor));
+				}
+
+				console.log(`Sportsbook vig (top-${sampleSize} global)`, {
+					sampleSize: topPickPlayers.length,
+					candidatePoolSize,
+					sampleMode,
+					sampleByPick,
+					minBookRowsRequired,
+					availability: sampledAvailability,
+					eligibleBooks: eligibleBetKeys,
+					bet1: {
+						factor: vigFactors.bet1,
+						vigPct: (vigFactors.bet1 - 1) * 100,
+						rows: factorTotals.bet1.count,
+						ratioBounds: ratioBounds.bet1,
+					},
+					bet2: {
+						factor: vigFactors.bet2,
+						vigPct: (vigFactors.bet2 - 1) * 100,
+						rows: factorTotals.bet2.count,
+						ratioBounds: ratioBounds.bet2,
+					},
+					bet3: {
+						factor: vigFactors.bet3,
+						vigPct: (vigFactors.bet3 - 1) * 100,
+						rows: factorTotals.bet3.count,
+						ratioBounds: ratioBounds.bet3,
+					},
+					bet4: {
+						factor: vigFactors.bet4,
+						vigPct: (vigFactors.bet4 - 1) * 100,
+						rows: factorTotals.bet4.count,
+						ratioBounds: ratioBounds.bet4,
+					},
+				});
+
+				for (const player of playerList) {
+					for (const key of eligibleBetKeys) {
+						const prob = player[key];
+						if (prob === null) continue;
+						const noVigProb = Math.min(maxProb, Math.max(minProb, prob / vigFactors[key]));
+						player[key] = noVigProb;
+						const displayKey = `betDisplay${key.slice(-1)}` as betDisplayKey;
+						player[displayKey] = betDisplayRounded(noVigProb);
+					}
+				}
+			}
+		}
+	}
+
 	for (const player of playerList) {
 		let count = 0;
 		let avg = 0;
@@ -369,7 +654,7 @@ const logStats = (betKey: 'bet1' | 'bet2' | 'bet3' | 'bet4' | 'betAvg') => {
 	const calulateAvgRows = (rows: Picks.PickOdds[]): Avg[] => {
 		const avgs: Avg[] = [];
 		for (const row of rows) {
-			const playerBetKey = betDisplay(row.player[betKey]);
+			const playerBetKey = row.player[betKey];
 			if (playerBetKey === null) continue;
 			avgs.push({ avg: playerBetKey, player: row.player });
 		}
@@ -459,7 +744,7 @@ const logStats = (betKey: 'bet1' | 'bet2' | 'bet3' | 'bet4' | 'betAvg') => {
 		const makeChoices = (list: Picks.PickOdds[]): Choice[] => {
 			const choices: Choice[] = [];
 			for (const row of list) {
-				const avg = betDisplay(row.player[betKey]);
+				const avg = row.player[betKey];
 				if (avg === null) continue;
 				const opp = gamesMap.get(row.player.team.code);
 				if (opp === undefined) continue;
@@ -593,7 +878,7 @@ const processMax = (row: Picks.PickOdds, max: Picks.PickOdds[], key: processKeys
 	if (rowVal === topBet) {
 		max.push(row);
 	} else {
-		if (rowVal < topBet) max.splice(0, max.length, row);
+		if (rowVal > topBet) max.splice(0, max.length, row);
 	}
 }
 const processMaxArray = (array: Picks.PickOdds[]) => {
