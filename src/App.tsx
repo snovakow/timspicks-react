@@ -302,7 +302,12 @@ const compilePlayerList = () => {
 		const minBookPlayers = 5;
 		const betKeys = ["bet1", "bet2", "bet3", "bet4"] as const;
 
-		// Compute per-book scale factor using leave-one-out peer averages.
+		// Each book applies a consistent per-player margin (vig) to its prices.
+		// We can't anchor to an external fair value (G/GP is season-average and
+		// doesn't reflect tonight's matchup context), but we can remove each book's
+		// systematic bias relative to the consensus of all other books.
+		// Leave-one-out: the peer mean for book X excludes X's own value,
+		// so the scale factor is unbiased and preserves absolute price levels.
 		const bookTotals: Record<string, { sum: number; count: number }> = {};
 		const peerTotals: Record<string, { sum: number; count: number }> = {};
 		for (const key of betKeys) {
@@ -319,14 +324,12 @@ const compilePlayerList = () => {
 				if (player[key] === null) continue;
 				bookTotals[key].sum += player[key]!;
 				bookTotals[key].count++;
-				// Leave-one-out: peer mean excludes this book's own value.
 				const peerMean = (allSum - player[key]!) / (allCount - 1);
 				peerTotals[key].sum += peerMean;
 				peerTotals[key].count++;
 			}
 		}
 
-		// Scale each book uniformly to the peer level (preserves relative player diffs).
 		const scales: Record<string, number> = {};
 		for (const key of betKeys) {
 			if (bookTotals[key].count < minBookPlayers) continue;
@@ -334,6 +337,7 @@ const compilePlayerList = () => {
 			const peerAvg = peerTotals[key].sum / peerTotals[key].count;
 			if (bookAvg === 0) continue;
 			scales[key] = peerAvg / bookAvg;
+			// console.log(`De-vig [${key}]: scale=${scales[key].toFixed(4)} from ${bookTotals[key].count} players`);
 		}
 
 		for (const key of betKeys) {
