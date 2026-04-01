@@ -186,6 +186,11 @@ export class PickOdds {
 	highlight3 = false;
 	highlight4 = false;
 	highlightAvg = false;
+	statsHighlight1 = false;
+	statsHighlight2 = false;
+	statsHighlight3 = false;
+	statsHighlight4 = false;
+	statsHighlightAvg = false;
 	constructor(player: Player, item: OddsItem) {
 		this.player = player;
 
@@ -208,6 +213,11 @@ export function Table(props: {
 	darkTheme: boolean
 }) {
 	const { columns, sortedRows, requestSort, sortConfig, darkTheme } = props;
+	const cellClass = (primary: boolean, stats: boolean): string | undefined => {
+		if (stats) return "highlight-stats";
+		if (primary) return "highlight";
+		return undefined;
+	};
 	return (
 		<table>
 			<thead>
@@ -257,19 +267,19 @@ export function Table(props: {
 							)}
 
 							{picks && (<td>{row.ggChance}</td>)}
-							<td className={picks && row.highlight1 ? "highlight" : undefined}>
+							<td className={picks ? cellClass(row.highlight1, row.statsHighlight1) : undefined}>
 								{player.betDisplay1}
 							</td>
-							<td className={picks && row.highlight2 ? "highlight" : undefined}>
+							<td className={picks ? cellClass(row.highlight2, row.statsHighlight2) : undefined}>
 								{player.betDisplay2}
 							</td>
-							<td className={picks && row.highlight3 ? "highlight" : undefined}>
+							<td className={picks ? cellClass(row.highlight3, row.statsHighlight3) : undefined}>
 								{player.betDisplay3}
 							</td>
-							<td className={picks && row.highlight4 ? "highlight" : undefined}>
+							<td className={picks ? cellClass(row.highlight4, row.statsHighlight4) : undefined}>
 								{player.betDisplay4}
 							</td>
-							<td className={picks && row.highlightAvg ? "highlight" : undefined}>
+							<td className={picks ? cellClass(row.highlightAvg, row.statsHighlightAvg) : undefined}>
 								{player.betDisplayAvg}
 							</td>
 							{!picks && (<td>{(row.pick === 0 ? "-" : row.pick)}</td>)}

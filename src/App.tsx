@@ -188,7 +188,7 @@ const mapPlayers = () => {
 			const playerId = item.playerId < 0 ? -item.playerId : item.playerId;
 			let player = playerMap.get(playerId);
 			if (!player) {
-				console.warn(`Player not found for odds data:`, data);
+				console.warn(`Player not found for odds data:`, item);
 				const fullName = item.firstName + " " + item.lastName;
 				const fullNameNormalized = removeAccentsNormalize(fullName);
 				for (const playerItem of playerList) {
@@ -404,7 +404,23 @@ const addLog = (line: string, align: LogStatAlign = "left", isTitle: boolean = f
 		dataStats[logSection] = dataStatsPrev;
 	}
 }
-const logStats = (betKey: 'bet1' | 'bet2' | 'bet3' | 'bet4' | 'betAvg') => {
+type LogStatsKey = 'bet1' | 'bet2' | 'bet3' | 'bet4' | 'betAvg';
+type PickIndex = 1 | 2 | 3;
+type HighlightByPick = Record<PickIndex, Set<number>>;
+interface LogStatsCacheItem {
+	stats: LogStat[];
+	highlightByPick: HighlightByPick;
+}
+
+const logStats = (betKey: LogStatsKey): HighlightByPick => {
+	const highlightByPick: HighlightByPick = {
+		1: new Set<number>(),
+		2: new Set<number>(),
+		3: new Set<number>(),
+	};
+	const addPlayersToHighlight = (pick: PickIndex, ...players: Picks.Player[]) => {
+		for (const player of players) highlightByPick[pick].add(player.playerId);
+	};
 	interface Avg {
 		avg: number;
 		player: Picks.Player;
@@ -449,7 +465,7 @@ const logStats = (betKey: 'bet1' | 'bet2' | 'bet3' | 'bet4' | 'betAvg') => {
 	const max2row = processRow(avg2rows);
 	const max3row = processRow(avg3rows);
 
-	if (!max1row || !max2row || !max3row) return;
+	if (!max1row || !max2row || !max3row) return highlightByPick;
 
 	const printName = (player: Picks.Player) => `${player.fullName} (${player.team.code})`;
 
@@ -577,7 +593,11 @@ const logStats = (betKey: 'bet1' | 'bet2' | 'bet3' | 'bet4' | 'betAvg') => {
 		}
 
 		logRoot();
-		if (!optimized) {
+		if (optimized) {
+			addPlayersToHighlight(1, ...max1row.players);
+			addPlayersToHighlight(2, ...max2row.players);
+			addPlayersToHighlight(3, ...max3row.players);
+		} else {
 			const comboPrecision = 2;
 			for (const bestCombo of bestCombos) {
 				let line1 = `1: ${printName(bestCombo.pick1.player)}`;
@@ -598,12 +618,39 @@ const logStats = (betKey: 'bet1' | 'bet2' | 'bet3' | 'bet4' | 'betAvg') => {
 				const all = roundToPercent(calcAll(bestCombo.pick1.avg, bestCombo.pick2.avg, bestCombo.pick3.avg), precision);
 				addLog(`Any: ${any} - Avg: ${avg} - All: ${all}`, "center");
 
+				addPlayersToHighlight(1, bestCombo.pick1.player);
+				addPlayersToHighlight(2, bestCombo.pick2.player);
+				addPlayersToHighlight(3, bestCombo.pick3.player);
+
 				logSection++;
 			}
 		}
 	}
 	addLog("Any: (70-74 81.8) - Avg: (33-36 43.1) - All: (3-4 7.8)", "center");
+	return highlightByPick;
 }
+
+const cloneLogStats = (stats: LogStat[]): LogStat[] => {
+	return stats.map((stat) => ({
+		...stat,
+		lines: [...stat.lines],
+	}));
+};
+
+const precalculateLogStats = (): Record<LogStatsKey, LogStatsCacheItem> => {
+	const keys: LogStatsKey[] = ['bet1', 'bet2', 'bet3', 'bet4', 'betAvg'];
+	const cache = {} as Record<LogStatsKey, LogStatsCacheItem>;
+	for (const key of keys) {
+		resetLogStats();
+		const highlightByPick = logStats(key);
+		cache[key] = {
+			stats: cloneLogStats(dataStats),
+			highlightByPick,
+		};
+	}
+	resetLogStats();
+	return cache;
+};
 
 const oddsColumns: Picks.ColumnData[] = sportsbooks.map((book) => ({
 	key: book.key,
@@ -670,19 +717,55 @@ const processMaxArray = (array: Picks.PickOdds[]) => {
 }
 
 function App() {
+	const [statsCache] = useState<Record<LogStatsKey, LogStatsCacheItem>>(() => precalculateLogStats());
 	const [showPopup, setShowPopup] = useState({ visible: false, title: 'Stats', key: 'betAvg' });
-	const [popupStats, setPopupStats] = useState<LogStat[]>([]);
+	const [popupStats, setPopupStats] = useState<LogStat[]>(() => cloneLogStats(statsCache.betAvg.stats));
 
-	const openStatsPopup = (key: 'bet1' | 'bet2' | 'bet3' | 'bet4' | 'betAvg', title: string) => {
-		const shouldRefresh = showPopup.key !== key || popupStats.length === 0;
-		if (shouldRefresh) {
-			resetLogStats();
-			logStats(key);
-			setPopupStats(dataStats.map((stat) => ({
-				...stat,
-				lines: [...stat.lines],
-			})));
+	const applyAllStatsHighlights = () => {
+		const rows = [table1Rows, table2Rows, table3Rows];
+		for (const tableRows of rows) {
+			for (const row of tableRows) {
+				row.statsHighlight1 = false;
+				row.statsHighlight2 = false;
+				row.statsHighlight3 = false;
+				row.statsHighlight4 = false;
+				row.statsHighlightAvg = false;
+			}
 		}
+
+		const applyToRows = (
+			rows: Picks.PickOdds[],
+			pick: PickIndex,
+			highlightByPick: HighlightByPick,
+			key: LogStatsKey,
+		) => {
+			const playerIds = highlightByPick[pick];
+			for (const row of rows) {
+				if (!playerIds.has(row.player.playerId)) continue;
+				if (key === 'bet1') row.statsHighlight1 = true;
+				else if (key === 'bet2') row.statsHighlight2 = true;
+				else if (key === 'bet3') row.statsHighlight3 = true;
+				else if (key === 'bet4') row.statsHighlight4 = true;
+				else row.statsHighlightAvg = true;
+			}
+		};
+
+		const keys: LogStatsKey[] = ['bet1', 'bet2', 'bet3', 'bet4', 'betAvg'];
+		for (const key of keys) {
+			const highlightByPick = statsCache[key].highlightByPick;
+			applyToRows(table1Rows, 1, highlightByPick, key);
+			applyToRows(table2Rows, 2, highlightByPick, key);
+			applyToRows(table3Rows, 3, highlightByPick, key);
+		}
+	};
+
+	const closePopup = () => {
+		setShowPopup({ ...showPopup, visible: false });
+	};
+
+	const openStatsPopup = (key: LogStatsKey, title: string) => {
+		const cached = statsCache[key];
+		setPopupStats(cloneLogStats(cached.stats));
 		setShowPopup({ visible: true, title, key });
 	};
 
@@ -730,6 +813,7 @@ function App() {
 	processMaxArray(sortedRows1);
 	processMaxArray(sortedRows2);
 	processMaxArray(sortedRows3);
+	applyAllStatsHighlights();
 
 	return (
 		<>
@@ -738,7 +822,7 @@ function App() {
 				<button className="button"
 					onClick={
 						() => {
-							if (showPopup.visible) setShowPopup({ ...showPopup, visible: false });
+							if (showPopup.visible) closePopup();
 							else openStatsPopup('betAvg', 'Stats');
 						}
 					}>
@@ -746,7 +830,7 @@ function App() {
 				</button>
 			</header>
 			<main className='content'>
-				<Popup title={showPopup.title} showPopUp={showPopup.visible} closePopUp={() => setShowPopup({ ...showPopup, visible: false })}>
+				<Popup title={showPopup.title} showPopUp={showPopup.visible} closePopUp={closePopup}>
 					{
 						popupStats.map((stat, i) => {
 							let className = 'popup-section';
