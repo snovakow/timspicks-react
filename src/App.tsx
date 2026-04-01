@@ -388,7 +388,7 @@ const compilePlayerList = () => {
 }
 compilePlayerList();
 
-type LogStatAlign = "left" | "center";
+type LogStatAlign = 'left' | 'center';
 interface LogStat {
 	isTitle: boolean;
 	align: LogStatAlign;
@@ -506,13 +506,15 @@ const logStats = (betKey: LogStatsKey): HighlightByPick => {
 	}
 
 	const logRoot = () => {
+		addLogTitle("Top Picks");
+
 		addLog(`1: ${roundToPercent(max1row.avg, precision)} - ${names(max1row)}`);
 		addLog(`2: ${roundToPercent(max2row.avg, precision)} - ${names(max2row)}`);
 		addLog(`3: ${roundToPercent(max3row.avg, precision)} - ${names(max3row)}`);
 
 		const any = roundToPercent(calcAny(max1row.avg, max2row.avg, max3row.avg), precision);
 		const all = roundToPercent(calcAll(max1row.avg, max2row.avg, max3row.avg), precision);
-		addLog(`Any: ${any} - All: ${all}`, "center");
+		addLog(`Any: ${any} - All: ${all}`, 'center');
 		logSection++;
 	}
 
@@ -645,12 +647,12 @@ const logStats = (betKey: LogStatsKey): HighlightByPick => {
 				addLog(line3);
 
 				if (reducedCount > 1) {
-					addLog(`Total: ${roundToPercent(bestCombo.total - totalMax, comboPrecision)}`, "center");
+					addLog(`Total: ${roundToPercent(bestCombo.total - totalMax, comboPrecision)}`, 'center');
 				}
 
 				const any = roundToPercent(calcAny(bestCombo.pick1.avg, bestCombo.pick2.avg, bestCombo.pick3.avg), precision);
 				const all = roundToPercent(calcAll(bestCombo.pick1.avg, bestCombo.pick2.avg, bestCombo.pick3.avg), precision);
-				addLog(`Any: ${any} - All: ${all}`, "center");
+				addLog(`Any: ${any} - All: ${all}`, 'center');
 
 				addPlayersToHighlight(1, bestCombo.pick1.player);
 				addPlayersToHighlight(2, bestCombo.pick2.player);
@@ -660,12 +662,13 @@ const logStats = (betKey: LogStatsKey): HighlightByPick => {
 			}
 		}
 	}
-	addLog("Any: (70-74 81.8) - All: (3-4 7.8)", "center");
+
+	addLogTitle("Good Ranges");
+	addLog("Any: 70-74% - All: 3-4%", 'left');
 	return highlightByPick;
 }
 const addLogTitle = (title: string) => {
-	addLog(title, "center", true);
-	logSection++;
+	addLog(title, 'center', true);
 }
 
 const cloneLogStats = (stats: LogStat[]): LogStat[] => {
