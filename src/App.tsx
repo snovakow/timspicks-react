@@ -4,7 +4,7 @@ import './Stats.css';
 import * as Picks from './components/Table';
 import Popup from './components/Popup';
 import InfoPopupContent from './InfoPopupContent';
-import { roundToPercent } from './utility';
+import { poissonChance, roundToPercent, probabilityToAmerican } from './utility';
 import logo1 from './images/sb-logo-16-draftkings.svg';
 import logo2 from './images/sb-logo-16-fanduel.svg';
 import logo3 from './images/sb-logo-16-mgm.svg';
@@ -120,15 +120,6 @@ gamesList.sort((a: Picks.GameData, b: Picks.GameData): number => {
 	return a.away.name.localeCompare(b.away.name);
 });
 
-const probabilityToAmerican = (chance: number | null): string => {
-	if (chance === null || chance <= 0) return "-";
-	const decimal = 1 / chance;
-	const american = decimal >= 2
-		? Math.round(100 * (decimal - 1))
-		: Math.round(100 / (1 - decimal));
-	return (american > 0 ? "+" : "") + american;
-};
-
 const betDisplayRounded = (chance: number | null): string => {
 	if (chance === null) return "-";
 	return roundToPercent(chance, precision);
@@ -139,8 +130,8 @@ const sortFunction = (sortConfig: Picks.SortConfig) => {
 		const aPlayer = a instanceof Picks.PickOdds ? a.player : a;
 		const bPlayer = b instanceof Picks.PickOdds ? b.player : b;
 		for (const key of sortConfig.keyOrder) {
-			const aVal = key === 'gg' ? (a as Picks.PickOdds)[key] : aPlayer[key];
-			const bVal = key === 'gg' ? (b as Picks.PickOdds)[key] : bPlayer[key];
+			const aVal = key === 'ggRaw' ? (a as Picks.PickOdds)[key] : aPlayer[key];
+			const bVal = key === 'ggRaw' ? (b as Picks.PickOdds)[key] : bPlayer[key];
 
 			if (aVal === null) {
 				if (bVal === null) continue;
@@ -307,11 +298,10 @@ const compilePlayerList = () => {
 		nameFind(player, bet2, "bet2", "betDisplay2");
 		nameFind(player, bet3, "bet3", "betDisplay3");
 		nameFind(player, bet4, "bet4", "betDisplay4");
-
-		player.american1 = probabilityToAmerican(player.bet1);
-		player.american2 = probabilityToAmerican(player.bet2);
-		player.american3 = probabilityToAmerican(player.bet3);
-		player.american4 = probabilityToAmerican(player.bet4);
+		player.betRaw1 = player.bet1;
+		player.betRaw2 = player.bet2;
+		player.betRaw3 = player.bet3;
+		player.betRaw4 = player.bet4;
 	}
 
 	const deVig = true;
@@ -356,7 +346,7 @@ const compilePlayerList = () => {
 			const peerAvg = peerTotals[key].sum / peerTotals[key].count;
 			if (bookAvg === 0) continue;
 			scales[key] = peerAvg / bookAvg;
-			// console.log(`De-vig [${key}]: scale=${scales[key].toFixed(4)} from ${bookTotals[key].count} players`);
+			console.log(`De-vig [${key}]: scale=${scales[key].toFixed(4)} from ${bookTotals[key].count} players`);
 		}
 
 		for (const key of betKeys) {
@@ -703,7 +693,7 @@ const oddsColumns: Picks.ColumnData[] = sportsbooks.map((book) => ({
 
 const columns: Picks.ColumnData[] = [
 	{ key: "fullName", title: "Player", sort: true },
-	{ key: "gg", title: "G/GP", sort: true },
+	{ key: "ggRaw", title: "G/GP", sort: true },
 	...oddsColumns,
 	{ key: "betAvg", title: "Avg", sort: true },
 ];
@@ -801,11 +791,40 @@ const applyAllStatsHighlights = () => {
 };
 applyAllStatsHighlights();
 
+let displayState: boolean = false;
+const updateDisplayState = (showNumbers: boolean) => {
+	if (showNumbers === displayState) return;
+	displayState = showNumbers;
+
+	if (showNumbers) {
+		for (const row of table1Rows) row.ggDisplay = row.ggRaw.toFixed(2);
+		for (const row of table2Rows) row.ggDisplay = row.ggRaw.toFixed(2);
+		for (const row of table3Rows) row.ggDisplay = row.ggRaw.toFixed(2);
+		for (const player of playerList) {
+			if (player.betRaw1 !== null) player.betDisplay1 = probabilityToAmerican(player.betRaw1);
+			if (player.betRaw2 !== null) player.betDisplay2 = probabilityToAmerican(player.betRaw2);
+			if (player.betRaw3 !== null) player.betDisplay3 = probabilityToAmerican(player.betRaw3);
+			if (player.betRaw4 !== null) player.betDisplay4 = probabilityToAmerican(player.betRaw4);
+		}
+	} else {
+		for (const row of table1Rows) row.ggDisplay = poissonChance(row.ggRaw, precision);
+		for (const row of table2Rows) row.ggDisplay = poissonChance(row.ggRaw, precision);
+		for (const row of table3Rows) row.ggDisplay = poissonChance(row.ggRaw, precision);
+		for (const player of playerList) {
+			if (player.betRaw1 !== null) player.betDisplay1 = roundToPercent(player.betRaw1, precision);
+			if (player.betRaw2 !== null) player.betDisplay2 = roundToPercent(player.betRaw2, precision);
+			if (player.betRaw3 !== null) player.betDisplay3 = roundToPercent(player.betRaw3, precision);
+			if (player.betRaw4 !== null) player.betDisplay4 = roundToPercent(player.betRaw4, precision);
+		}
+	}
+}
 function App() {
 	const [showPopup, setShowPopup] = useState({ visible: false, title: 'Stats', key: 'betAvg' });
 	const [popupStats, setPopupStats] = useState<LogStat[]>(() => cloneLogStats(statsCache.betAvg.stats));
 	const [popupView, setPopupView] = useState<'info' | 'stats'>('stats');
-	const [showNumbers, setShowNumbers] = useState(false);
+	const [showNumbers, setShowNumbers] = useState(displayState);
+
+	updateDisplayState(showNumbers);
 
 	const closePopup = () => {
 		setShowPopup({ ...showPopup, visible: false });
@@ -849,9 +868,9 @@ function App() {
 		return () => darkModeMql.removeEventListener('change', handleChange);
 	}, []);
 
-	const [sortConfig1, setSortConfig1] = useState<Picks.SortConfig>({ keyOrder: ['gg'] });
-	const [sortConfig2, setSortConfig2] = useState<Picks.SortConfig>({ keyOrder: ['gg'] });
-	const [sortConfig3, setSortConfig3] = useState<Picks.SortConfig>({ keyOrder: ['gg'] });
+	const [sortConfig1, setSortConfig1] = useState<Picks.SortConfig>({ keyOrder: ['ggRaw'] });
+	const [sortConfig2, setSortConfig2] = useState<Picks.SortConfig>({ keyOrder: ['ggRaw'] });
+	const [sortConfig3, setSortConfig3] = useState<Picks.SortConfig>({ keyOrder: ['ggRaw'] });
 	const [sortConfigPlayer, setSortConfigPlayer] = useState<Picks.SortConfig>({ keyOrder: ['betAvg'] });
 
 	sortedRows1.sort(sortFunction(sortConfig1));

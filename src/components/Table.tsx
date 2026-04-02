@@ -1,5 +1,5 @@
 import { type Team } from "./logo";
-import { roundToPercent } from "../utility";
+import { poissonChance, roundToPercent } from "../utility";
 import "./Table.css";
 
 export const precision = 1;
@@ -119,10 +119,10 @@ export class Player {
 	gameTime: Date;
 
 	fullName: string;
-	american1: string = "-";
-	american2: string = "-";
-	american3: string = "-";
-	american4: string = "-";
+	betRaw1: number | null = null;
+	betRaw2: number | null = null;
+	betRaw3: number | null = null;
+	betRaw4: number | null = null;
 	bet1: number | null = null;
 	bet2: number | null = null;
 	bet3: number | null = null;
@@ -157,7 +157,7 @@ export class Player {
 	}
 }
 
-export type ColumnKeys = "fullName" | "bet1" | "bet2" | "bet3" | "bet4" | "betAvg" | "gg" | "pick" | "gameTime";
+export type ColumnKeys = "fullName" | "bet1" | "bet2" | "bet3" | "bet4" | "betAvg" | "ggRaw" | "pick" | "gameTime";
 export interface ColumnData {
 	key: ColumnKeys;
 	title: string;
@@ -173,17 +173,10 @@ export interface OddsItem {
 	goals: number;
 }
 
-// Poisson distribution chance of 0 goals: e^(−μ)
-// Chance of at least one goal: 1 − e^(−μ)
-const ggChance = (x: number): string => {
-	const chance = 1 - Math.exp(-x);
-	return roundToPercent(chance, precision);
-}
-
 export class PickOdds {
 	player: Player;
 
-	gg: number;
+	ggRaw: number;
 	ggDisplay: string;
 	highlight1 = false;
 	highlight2 = false;
@@ -197,9 +190,8 @@ export class PickOdds {
 	statsHighlightAvg = false;
 	constructor(player: Player, item: OddsItem) {
 		this.player = player;
-
-		this.gg = item.gamesPlayed > 0 ? item.goals / item.gamesPlayed : 0;
-		this.ggDisplay = ggChance(this.gg);
+		this.ggRaw = item.gamesPlayed > 0 ? item.goals / item.gamesPlayed : 0;
+		this.ggDisplay = poissonChance(this.ggRaw, precision);
 	}
 }
 
@@ -271,18 +263,18 @@ export function Table(props: {
 								<td><a href={player.link} target="_blank" rel="noopener noreferrer">🔗</a></td>
 							)}
 
-							{picks && (<td>{showNumbers ? row.gg.toFixed(2) : row.ggDisplay}</td>)}
+							{picks && (<td>{row.ggDisplay}</td>)}
 							<td className={picks ? cellClass(row.highlight1, row.statsHighlight1) : undefined}>
-								{showNumbers ? player.american1 : player.betDisplay1}
+								{player.betDisplay1}
 							</td>
 							<td className={picks ? cellClass(row.highlight2, row.statsHighlight2) : undefined}>
-								{showNumbers ? player.american2 : player.betDisplay2}
+								{player.betDisplay2}
 							</td>
 							<td className={picks ? cellClass(row.highlight3, row.statsHighlight3) : undefined}>
-								{showNumbers ? player.american3 : player.betDisplay3}
+								{player.betDisplay3}
 							</td>
 							<td className={picks ? cellClass(row.highlight4, row.statsHighlight4) : undefined}>
-								{showNumbers ? player.american4 : player.betDisplay4}
+								{player.betDisplay4}
 							</td>
 							<td className={picks ? cellClass(row.highlightAvg, row.statsHighlightAvg) : undefined}>
 								{player.betDisplayAvg}
