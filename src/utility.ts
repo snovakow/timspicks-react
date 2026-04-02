@@ -9,8 +9,7 @@ const poisson = (x: number): number => {
 }
 
 export const poissonChance = (x: number, precision: number): string => {
-  const chance = 1 - Math.exp(-x);
-  return roundToPercent(chance, precision);
+  return roundToPercent(poisson(x), precision);
 }
 
 export const probabilityToAmerican = (chance: number | null): string => {
