@@ -4,7 +4,7 @@ import './Stats.css';
 import * as Picks from './components/Table';
 import Popup from './components/Popup';
 import InfoPopupContent from './InfoPopupContent';
-import SettingsPanel, { type AvgDisplayMode } from './components/Settings';
+import SettingsPanel from './components/Settings';
 import { poissonChance, roundToPercent, probabilityToAmerican } from './utility';
 import logo1 from './images/sb-logo-16-draftkings.svg';
 import logo2 from './images/sb-logo-16-fanduel.svg';
@@ -967,8 +967,6 @@ function App() {
 							onDeVigEnabledChange={setDeVigEnabled}
 							minSportsbooks={minSportsbooks}
 							onMinSportsbooksChange={setMinSportsbooks}
-							avgDisplayMode={avgDisplayMode}
-							onAvgDisplayModeChange={setAvgDisplayMode}
 						/>
 					) : (
 						<>

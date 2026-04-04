@@ -1,7 +1,5 @@
 import './Settings.css';
 
-export type AvgDisplayMode = 'avg' | 'max';
-
 interface SettingsPanelProps {
 	showPercentage: boolean;
 	onShowPercentageChange: (value: boolean) => void;
@@ -9,8 +7,6 @@ interface SettingsPanelProps {
 	onDeVigEnabledChange: (value: boolean) => void;
 	minSportsbooks: number;
 	onMinSportsbooksChange: (value: number) => void;
-	avgDisplayMode: AvgDisplayMode;
-	onAvgDisplayModeChange: (value: AvgDisplayMode) => void;
 }
 
 export default function SettingsPanel(props: SettingsPanelProps) {
@@ -21,8 +17,6 @@ export default function SettingsPanel(props: SettingsPanelProps) {
 		onDeVigEnabledChange,
 		minSportsbooks,
 		onMinSportsbooksChange,
-		avgDisplayMode,
-		onAvgDisplayModeChange,
 	} = props;
 
 	return (
@@ -63,7 +57,7 @@ export default function SettingsPanel(props: SettingsPanelProps) {
 
 			<div className="settings-group">
 				<label htmlFor="min-sportsbooks" className="settings-label">
-					Minimum Sportsbooks for Avg/Max
+					Minimum Sportsbooks for Avg
 				</label>
 				<select
 					id="min-sportsbooks"
@@ -77,27 +71,10 @@ export default function SettingsPanel(props: SettingsPanelProps) {
 					<option value="4">All 4 sportsbooks</option>
 				</select>
 				<div className="settings-description">
-					Highlight Avg/Max when at least this many sportsbooks have values.
+					Highlight Avg when at least this many sportsbooks have values.
 				</div>
 			</div>
 
-			<div className="settings-group">
-				<label htmlFor="avg-display" className="settings-label">
-					Avg/Max Column Display
-				</label>
-				<select
-					id="avg-display"
-					className="settings-select"
-					value={avgDisplayMode}
-					onChange={(e) => onAvgDisplayModeChange(e.target.value as AvgDisplayMode)}
-				>
-					<option value="avg">Avg of sportsbooks</option>
-					<option value="max">Max normalized sportsbook value</option>
-				</select>
-				<div className="settings-description">
-					Choose what to display in the Avg column.
-				</div>
-			</div>
 		</div>
 	);
 }
