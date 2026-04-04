@@ -304,58 +304,62 @@ const compilePlayerList = () => {
 		player.bet4 = player.betRaw4;
 	}
 
-	const deVig = true;
-	if (deVig) {
+	// De-vig: remove each sportsbook's systematic margin (vig) so implied
+	// probabilities are comparable across books.
+	//
+	// With only the "yes" side of anytime-goal-scorer props we can't compute
+	// per-player overround, but with multiple books pricing the same players
+	// we can estimate and remove each book's systematic bias:
+	//
+	// 1. Leave-one-out consensus: for book X, the fair value per player is the
+	//    median of the *other* books — avoids the book influencing its own
+	//    vig estimate.
+	// 2. Vig factor: geometric mean of (book / peer median) across all eligible
+	//    players — correct estimator for multiplicative pricing.
+	// 3. Normalize: divide each book's probabilities by its vig factor.
+	{
 		const minProb = 0.0001;
 		const maxProb = 0.9999;
 		const minBookPlayers = 5;
 		const betKeys = ["bet1", "bet2", "bet3", "bet4"] as const;
 
-		// Each book applies a consistent per-player margin (vig) to its prices.
-		// We can't anchor to an external fair value (G/GP is season-average and
-		// doesn't reflect tonight's matchup context), but we can remove each book's
-		// systematic bias relative to the consensus of all other books.
-		// Leave-one-out: the peer mean for book X excludes X's own value,
-		// so the scale factor is unbiased and preserves absolute price levels.
-		const bookTotals: Record<string, { sum: number; count: number }> = {};
-		const peerTotals: Record<string, { sum: number; count: number }> = {};
+		const median = (values: number[]): number => {
+			values.sort((a, b) => a - b);
+			const mid = Math.floor(values.length / 2);
+			return values.length % 2 === 0
+				? (values[mid - 1] + values[mid]) / 2
+				: values[mid];
+		};
+
+		// Compute all vig factors first (from unmodified values)
+		const vigFactors: Partial<Record<typeof betKeys[number], number>> = {};
 		for (const key of betKeys) {
-			bookTotals[key] = { sum: 0, count: 0 };
-			peerTotals[key] = { sum: 0, count: 0 };
-		}
-		for (const player of playerList) {
-			let allSum = 0, allCount = 0;
-			for (const key of betKeys) {
-				if (player[key] !== null) { allSum += player[key]!; allCount++; }
+			let logRatioSum = 0;
+			let count = 0;
+			for (const player of playerList) {
+				const bookProb = player[key];
+				if (bookProb === null) continue;
+				const peers: number[] = [];
+				for (const other of betKeys) {
+					if (other === key) continue;
+					if (player[other] !== null) peers.push(player[other]!);
+				}
+				if (peers.length === 0) continue;
+				logRatioSum += Math.log(bookProb / median(peers));
+				count++;
 			}
-			if (allCount < 2) continue;
-			for (const key of betKeys) {
-				if (player[key] === null) continue;
-				bookTotals[key].sum += player[key]!;
-				bookTotals[key].count++;
-				const peerMean = (allSum - player[key]!) / (allCount - 1);
-				peerTotals[key].sum += peerMean;
-				peerTotals[key].count++;
-			}
+			if (count < minBookPlayers) continue;
+			vigFactors[key] = Math.exp(logRatioSum / count);
+			console.log(`De-vig [${key}]: vig=${vigFactors[key]!.toFixed(4)} (${count} players)`);
 		}
 
-		const scales: Record<string, number> = {};
+		// Then apply all at once
 		for (const key of betKeys) {
-			if (bookTotals[key].count < minBookPlayers) continue;
-			const bookAvg = bookTotals[key].sum / bookTotals[key].count;
-			const peerAvg = peerTotals[key].sum / peerTotals[key].count;
-			if (bookAvg === 0) continue;
-			scales[key] = peerAvg / bookAvg;
-			console.log(`De-vig [${key}]: scale=${scales[key].toFixed(4)} from ${bookTotals[key].count} players`);
-		}
-
-		for (const key of betKeys) {
-			const scale = scales[key];
-			if (scale === undefined) continue;
+			const vig = vigFactors[key];
+			if (vig === undefined) continue;
 			for (const player of playerList) {
 				if (player[key] === null) continue;
-				const scaled = Math.min(maxProb, Math.max(minProb, player[key]! * scale));
-				player[key] = scaled;
+				player[key] = Math.min(maxProb, Math.max(minProb, player[key]! / vig));
 			}
 		}
 	}
