@@ -132,6 +132,7 @@ export class Player {
 	betDisplay3: string = "-";
 	betDisplay4: string = "-";
 	betDisplayAvg: string = "-";
+	betCount: number = 0;
 
 	pick: 0 | 1 | 2 | 3 = 0;
 

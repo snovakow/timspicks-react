@@ -408,7 +408,7 @@ interface LogStatsCacheItem {
 	highlightByPick: HighlightByPick;
 }
 
-const logStats = (betKey: LogStatsKey): HighlightByPick => {
+const logStats = (betKey: LogStatsKey, minSportsbooks: number): HighlightByPick => {
 	const highlightByPick: HighlightByPick = {
 		1: new Set<number>(),
 		2: new Set<number>(),
@@ -431,6 +431,7 @@ const logStats = (betKey: LogStatsKey): HighlightByPick => {
 		for (const row of rows) {
 			const playerBetKey = row.player[betKey];
 			if (playerBetKey === null) continue;
+			if (betKey === 'betAvg' && row.player.betCount < minSportsbooks) continue;
 			avgs.push({ avg: playerBetKey, player: row.player });
 		}
 		return avgs;
@@ -523,6 +524,7 @@ const logStats = (betKey: LogStatsKey): HighlightByPick => {
 			for (const row of list) {
 				const avg = row.player[betKey];
 				if (avg === null) continue;
+				if (betKey === 'betAvg' && row.player.betCount < minSportsbooks) continue;
 				const opp = gamesMap.get(row.player.team.code);
 				if (opp === undefined) continue;
 				choices.push(new Choice(row.player, avg, opp));
@@ -654,12 +656,12 @@ const cloneLogStats = (stats: LogStat[]): LogStat[] => {
 	}));
 };
 
-const precalculateLogStats = (): Record<LogStatsKey, LogStatsCacheItem> => {
+const precalculateLogStats = (minSportsbooks: number): Record<LogStatsKey, LogStatsCacheItem> => {
 	const keys: LogStatsKey[] = ['bet1', 'bet2', 'bet3', 'bet4', 'betAvg'];
 	const cache = {} as Record<LogStatsKey, LogStatsCacheItem>;
 	for (const key of keys) {
 		resetLogStats();
-		const highlightByPick = logStats(key);
+		const highlightByPick = logStats(key, minSportsbooks);
 		cache[key] = {
 			stats: cloneLogStats(dataStats),
 			highlightByPick,
@@ -708,7 +710,7 @@ const processMax = (row: Picks.PickOdds, max: Picks.PickOdds[], key: processKeys
 		if (rowVal > topBet) max.splice(0, max.length, row);
 	}
 }
-const processMaxArray = (array: Picks.PickOdds[]) => {
+const processMaxArray = (array: Picks.PickOdds[], minSportsbooks: number) => {
 	const max1: Picks.PickOdds[] = [];
 	const max2: Picks.PickOdds[] = [];
 	const max3: Picks.PickOdds[] = [];
@@ -724,7 +726,7 @@ const processMaxArray = (array: Picks.PickOdds[]) => {
 		processMax(row, max2, 'bet2');
 		processMax(row, max3, 'bet3');
 		processMax(row, max4, 'bet4');
-		processMax(row, maxAvg, 'betAvg');
+		if (row.player.betCount >= minSportsbooks) processMax(row, maxAvg, 'betAvg');
 	}
 	for (const row of max1) row.highlight1 = true;
 	for (const row of max2) row.highlight2 = true;
@@ -732,11 +734,8 @@ const processMaxArray = (array: Picks.PickOdds[]) => {
 	for (const row of max4) row.highlight4 = true;
 	for (const row of maxAvg) row.highlightAvg = true;
 }
-processMaxArray(table1Rows);
-processMaxArray(table2Rows);
-processMaxArray(table3Rows);
 
-const applyAllStatsHighlights = (statsCache: Record<LogStatsKey, LogStatsCacheItem>) => {
+const applyAllStatsHighlights = (statsCache: Record<LogStatsKey, LogStatsCacheItem>, minSportsbooks: number) => {
 	const rows = [table1Rows, table2Rows, table3Rows];
 	for (const tableRows of rows) {
 		for (const row of tableRows) {
@@ -761,7 +760,7 @@ const applyAllStatsHighlights = (statsCache: Record<LogStatsKey, LogStatsCacheIt
 			else if (key === 'bet2') row.statsHighlight2 = true;
 			else if (key === 'bet3') row.statsHighlight3 = true;
 			else if (key === 'bet4') row.statsHighlight4 = true;
-			else row.statsHighlightAvg = true;
+			else if (row.player.betCount >= minSportsbooks) row.statsHighlightAvg = true;
 		}
 	};
 
@@ -777,80 +776,89 @@ const applyAllStatsHighlights = (statsCache: Record<LogStatsKey, LogStatsCacheIt
 let stateTracker: {
 	showPercentage: boolean;
 	deVigEnabled: boolean;
+	minSportsbooks: number;
 } | null = null;
 let statsCacheTracker: Record<LogStatsKey, LogStatsCacheItem> | null = null;
-const updateDisplayState = (state: { showPercentage: boolean, deVigEnabled: boolean }) => {
+const updateDisplayState = (state: { showPercentage: boolean, deVigEnabled: boolean, minSportsbooks: number }) => {
 	let updatePercentage = true;
 	let updateDeVig = true;
+	let updateMinSportsbooks = true;
 	if (stateTracker === null) {
 		stateTracker = {
 			showPercentage: state.showPercentage,
 			deVigEnabled: state.deVigEnabled,
+			minSportsbooks: state.minSportsbooks,
 		}
 	} else {
 		if (stateTracker.showPercentage === state.showPercentage) updatePercentage = false;
 		else stateTracker.showPercentage = state.showPercentage;
 		if (stateTracker.deVigEnabled === state.deVigEnabled) updateDeVig = false;
 		else stateTracker.deVigEnabled = state.deVigEnabled;
+		if (stateTracker.minSportsbooks === state.minSportsbooks) updateMinSportsbooks = false;
+		else stateTracker.minSportsbooks = state.minSportsbooks;
 	}
 
-	if (updatePercentage || updateDeVig) {
-		type keyType = 'bet1' | 'bet2' | 'bet3' | 'bet4' | 'betRaw1' | 'betRaw2' | 'betRaw3' | 'betRaw4';
-		const [key1, key2, key3, key4]: keyType[] = stateTracker.deVigEnabled ?
-			['bet1', 'bet2', 'bet3', 'bet4'] :
-			['betRaw1', 'betRaw2', 'betRaw3', 'betRaw4'];
-		if (updatePercentage || (updateDeVig && stateTracker.showPercentage)) {
-			if (state.showPercentage) {
-				for (const row of table1Rows) row.ggDisplay = poissonChance(row.ggRaw, precision);
-				for (const row of table2Rows) row.ggDisplay = poissonChance(row.ggRaw, precision);
-				for (const row of table3Rows) row.ggDisplay = poissonChance(row.ggRaw, precision);
-				for (const player of playerList) {
-					if (player[key1] !== null) player.betDisplay1 = roundToPercent(player[key1], precision);
-					if (player[key2] !== null) player.betDisplay2 = roundToPercent(player[key2], precision);
-					if (player[key3] !== null) player.betDisplay3 = roundToPercent(player[key3], precision);
-					if (player[key4] !== null) player.betDisplay4 = roundToPercent(player[key4], precision);
-				}
-			} else {
-				for (const row of table1Rows) row.ggDisplay = row.ggRaw.toFixed(2);
-				for (const row of table2Rows) row.ggDisplay = row.ggRaw.toFixed(2);
-				for (const row of table3Rows) row.ggDisplay = row.ggRaw.toFixed(2);
-				for (const player of playerList) {
-					if (player[key1] !== null) player.betDisplay1 = probabilityToAmerican(player[key1]);
-					if (player[key2] !== null) player.betDisplay2 = probabilityToAmerican(player[key2]);
-					if (player[key3] !== null) player.betDisplay3 = probabilityToAmerican(player[key3]);
-					if (player[key4] !== null) player.betDisplay4 = probabilityToAmerican(player[key4]);
-				}
-			}
-		}
-		if (updateDeVig) {
+	type keyType = 'bet1' | 'bet2' | 'bet3' | 'bet4' | 'betRaw1' | 'betRaw2' | 'betRaw3' | 'betRaw4';
+	const [key1, key2, key3, key4]: keyType[] = stateTracker.deVigEnabled ?
+		['bet1', 'bet2', 'bet3', 'bet4'] :
+		['betRaw1', 'betRaw2', 'betRaw3', 'betRaw4'];
+
+	if (updatePercentage || (updateDeVig && stateTracker.showPercentage)) {
+		if (stateTracker.showPercentage) {
+			for (const row of table1Rows) row.ggDisplay = poissonChance(row.ggRaw, precision);
+			for (const row of table2Rows) row.ggDisplay = poissonChance(row.ggRaw, precision);
+			for (const row of table3Rows) row.ggDisplay = poissonChance(row.ggRaw, precision);
 			for (const player of playerList) {
-				let count = 0;
-				let avg = 0;
-				if (player[key1] !== null) { avg += player[key1]; count++; }
-				if (player[key2] !== null) { avg += player[key2]; count++; }
-				if (player[key3] !== null) { avg += player[key3]; count++; }
-				if (player[key4] !== null) { avg += player[key4]; count++; }
-				if (count > 0) {
-					avg /= count;
-					player.betAvg = avg;
-					player.betDisplayAvg = betDisplayRounded(avg);
-				}
+				if (player[key1] !== null) player.betDisplay1 = roundToPercent(player[key1], precision);
+				if (player[key2] !== null) player.betDisplay2 = roundToPercent(player[key2], precision);
+				if (player[key3] !== null) player.betDisplay3 = roundToPercent(player[key3], precision);
+				if (player[key4] !== null) player.betDisplay4 = roundToPercent(player[key4], precision);
+			}
+		} else {
+			for (const row of table1Rows) row.ggDisplay = row.ggRaw.toFixed(2);
+			for (const row of table2Rows) row.ggDisplay = row.ggRaw.toFixed(2);
+			for (const row of table3Rows) row.ggDisplay = row.ggRaw.toFixed(2);
+			for (const player of playerList) {
+				if (player[key1] !== null) player.betDisplay1 = probabilityToAmerican(player[key1]);
+				if (player[key2] !== null) player.betDisplay2 = probabilityToAmerican(player[key2]);
+				if (player[key3] !== null) player.betDisplay3 = probabilityToAmerican(player[key3]);
+				if (player[key4] !== null) player.betDisplay4 = probabilityToAmerican(player[key4]);
 			}
 		}
 	}
 
-	if (!statsCacheTracker || updateDeVig) {
-		statsCacheTracker = precalculateLogStats();
-		applyAllStatsHighlights(statsCacheTracker);
+	if (updateDeVig || updateMinSportsbooks) {
+		for (const player of playerList) {
+			let count = 0;
+			let avg = 0;
+			if (player[key1] !== null) { avg += player[key1]; count++; }
+			if (player[key2] !== null) { avg += player[key2]; count++; }
+			if (player[key3] !== null) { avg += player[key3]; count++; }
+			if (player[key4] !== null) { avg += player[key4]; count++; }
+			if (count > 0) {
+				avg /= count;
+				player.betAvg = avg;
+				player.betDisplayAvg = betDisplayRounded(avg);
+				player.betCount = count;
+			}
+		}
+		processMaxArray(table1Rows, stateTracker.minSportsbooks);
+		processMaxArray(table2Rows, stateTracker.minSportsbooks);
+		processMaxArray(table3Rows, stateTracker.minSportsbooks);
+	}
+
+	if (!statsCacheTracker || updateDeVig || updateMinSportsbooks) {
+		statsCacheTracker = precalculateLogStats(stateTracker.minSportsbooks);
+		applyAllStatsHighlights(statsCacheTracker, stateTracker.minSportsbooks);
 	}
 	return statsCacheTracker;
 }
 function App() {
 	const [showPercentage, setShowPercentage] = useState(true);
 	const [deVigEnabled, setDeVigEnabled] = useState(true);
-	const [minSportsbooks, setMinSportsbooks] = useState(2);
+	const [minSportsbooks, setMinSportsbooks] = useState(3);
 
-	const statsCache = updateDisplayState({ showPercentage, deVigEnabled });
+	const statsCache = updateDisplayState({ showPercentage, deVigEnabled, minSportsbooks });
 
 	const [showPopup, setShowPopup] = useState({ visible: false, title: 'Stats', key: 'betAvg' });
 	const [popupStats, setPopupStats] = useState<LogStat[]>(() => cloneLogStats(statsCache.betAvg.stats));
