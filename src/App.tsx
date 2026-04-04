@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import './App.css';
 import './Stats.css';
 import * as Picks from './components/Table';
@@ -773,92 +773,74 @@ const applyAllStatsHighlights = (statsCache: Record<LogStatsKey, LogStatsCacheIt
 	}
 };
 
-let stateTracker: {
+type DisplayState = {
 	showPercentage: boolean;
 	deVigEnabled: boolean;
 	minSportsbooks: number;
-} | null = null;
-let statsCacheTracker: Record<LogStatsKey, LogStatsCacheItem> | null = null;
-const updateDisplayState = (state: { showPercentage: boolean, deVigEnabled: boolean, minSportsbooks: number }) => {
-	let updatePercentage = true;
-	let updateDeVig = true;
-	let updateMinSportsbooks = true;
-	if (stateTracker === null) {
-		stateTracker = {
-			showPercentage: state.showPercentage,
-			deVigEnabled: state.deVigEnabled,
-			minSportsbooks: state.minSportsbooks,
-		}
-	} else {
-		if (stateTracker.showPercentage === state.showPercentage) updatePercentage = false;
-		else stateTracker.showPercentage = state.showPercentage;
-		if (stateTracker.deVigEnabled === state.deVigEnabled) updateDeVig = false;
-		else stateTracker.deVigEnabled = state.deVigEnabled;
-		if (stateTracker.minSportsbooks === state.minSportsbooks) updateMinSportsbooks = false;
-		else stateTracker.minSportsbooks = state.minSportsbooks;
-	}
+};
 
+const updateDisplayState = (state: DisplayState): Record<LogStatsKey, LogStatsCacheItem> => {
 	type keyType = 'bet1' | 'bet2' | 'bet3' | 'bet4' | 'betRaw1' | 'betRaw2' | 'betRaw3' | 'betRaw4';
-	const [key1, key2, key3, key4]: keyType[] = stateTracker.deVigEnabled ?
-		['bet1', 'bet2', 'bet3', 'bet4'] :
-		['betRaw1', 'betRaw2', 'betRaw3', 'betRaw4'];
+	const [key1, key2, key3, key4]: keyType[] = state.deVigEnabled
+		? ['bet1', 'bet2', 'bet3', 'bet4']
+		: ['betRaw1', 'betRaw2', 'betRaw3', 'betRaw4'];
 
-	if (updatePercentage || (updateDeVig && stateTracker.showPercentage)) {
-		if (stateTracker.showPercentage) {
-			for (const row of table1Rows) row.ggDisplay = poissonChance(row.ggRaw, precision);
-			for (const row of table2Rows) row.ggDisplay = poissonChance(row.ggRaw, precision);
-			for (const row of table3Rows) row.ggDisplay = poissonChance(row.ggRaw, precision);
-			for (const player of playerList) {
-				if (player[key1] !== null) player.betDisplay1 = roundToPercent(player[key1], precision);
-				if (player[key2] !== null) player.betDisplay2 = roundToPercent(player[key2], precision);
-				if (player[key3] !== null) player.betDisplay3 = roundToPercent(player[key3], precision);
-				if (player[key4] !== null) player.betDisplay4 = roundToPercent(player[key4], precision);
-			}
+	const allRows = [table1Rows, table2Rows, table3Rows];
+	for (const rows of allRows) {
+		for (const row of rows) {
+			row.ggDisplay = state.showPercentage
+				? poissonChance(row.ggRaw, precision)
+				: row.ggRaw.toFixed(2);
+		}
+	}
+
+	for (const player of playerList) {
+		const values = [player[key1], player[key2], player[key3], player[key4]];
+		const displays = ['betDisplay1', 'betDisplay2', 'betDisplay3', 'betDisplay4'] as const;
+
+		for (let i = 0; i < values.length; i++) {
+			const value = values[i];
+			if (value === null) continue;
+			player[displays[i]] = state.showPercentage
+				? roundToPercent(value, precision)
+				: probabilityToAmerican(value);
+		}
+
+		let count = 0;
+		let avg = 0;
+		for (const value of values) {
+			if (value === null) continue;
+			avg += value;
+			count++;
+		}
+
+		player.betCount = count;
+		if (count > 0) {
+			player.betAvg = avg / count;
+			player.betDisplayAvg = betDisplayRounded(player.betAvg);
 		} else {
-			for (const row of table1Rows) row.ggDisplay = row.ggRaw.toFixed(2);
-			for (const row of table2Rows) row.ggDisplay = row.ggRaw.toFixed(2);
-			for (const row of table3Rows) row.ggDisplay = row.ggRaw.toFixed(2);
-			for (const player of playerList) {
-				if (player[key1] !== null) player.betDisplay1 = probabilityToAmerican(player[key1]);
-				if (player[key2] !== null) player.betDisplay2 = probabilityToAmerican(player[key2]);
-				if (player[key3] !== null) player.betDisplay3 = probabilityToAmerican(player[key3]);
-				if (player[key4] !== null) player.betDisplay4 = probabilityToAmerican(player[key4]);
-			}
+			player.betAvg = null;
+			player.betDisplayAvg = '-';
 		}
 	}
 
-	if (updateDeVig || updateMinSportsbooks) {
-		for (const player of playerList) {
-			let count = 0;
-			let avg = 0;
-			if (player[key1] !== null) { avg += player[key1]; count++; }
-			if (player[key2] !== null) { avg += player[key2]; count++; }
-			if (player[key3] !== null) { avg += player[key3]; count++; }
-			if (player[key4] !== null) { avg += player[key4]; count++; }
-			if (count > 0) {
-				avg /= count;
-				player.betAvg = avg;
-				player.betDisplayAvg = betDisplayRounded(avg);
-				player.betCount = count;
-			}
-		}
-		processMaxArray(table1Rows, stateTracker.minSportsbooks);
-		processMaxArray(table2Rows, stateTracker.minSportsbooks);
-		processMaxArray(table3Rows, stateTracker.minSportsbooks);
-	}
+	processMaxArray(table1Rows, state.minSportsbooks);
+	processMaxArray(table2Rows, state.minSportsbooks);
+	processMaxArray(table3Rows, state.minSportsbooks);
 
-	if (!statsCacheTracker || updateDeVig || updateMinSportsbooks) {
-		statsCacheTracker = precalculateLogStats(stateTracker.minSportsbooks);
-		applyAllStatsHighlights(statsCacheTracker, stateTracker.minSportsbooks);
-	}
-	return statsCacheTracker;
+	const statsCache = precalculateLogStats(state.minSportsbooks);
+	applyAllStatsHighlights(statsCache, state.minSportsbooks);
+	return statsCache;
 }
 function App() {
 	const [showPercentage, setShowPercentage] = useState(true);
 	const [deVigEnabled, setDeVigEnabled] = useState(true);
 	const [minSportsbooks, setMinSportsbooks] = useState(3);
 
-	const statsCache = updateDisplayState({ showPercentage, deVigEnabled, minSportsbooks });
+	const statsCache = useMemo(
+		() => updateDisplayState({ showPercentage, deVigEnabled, minSportsbooks }),
+		[showPercentage, deVigEnabled, minSportsbooks]
+	);
 
 	const [showPopup, setShowPopup] = useState({ visible: false, title: 'Stats', key: 'betAvg' });
 	const [popupStats, setPopupStats] = useState<LogStat[]>(() => cloneLogStats(statsCache.betAvg.stats));
