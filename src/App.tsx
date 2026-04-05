@@ -418,60 +418,16 @@ const logStats = (betKey: LogStatsKey, minSportsbooks: number): HighlightByPick 
 		2: new Set<number>(),
 		3: new Set<number>(),
 	};
-	const addPlayersToHighlight = (pick: PickIndex, ...players: Picks.Player[]) => {
+	const addPlayersToHighlight = (pick: PickIndex, players: Set<Picks.Player>) => {
 		for (const player of players) highlightByPick[pick].add(player.playerId);
 	};
-	interface Avg {
-		avg: number;
-		player: Picks.Player;
-	}
-	interface AvgResult {
-		avg: number;
-		players: Picks.Player[];
-	}
-
-	const calulateAvgRows = (rows: Picks.PickOdds[]): Avg[] => {
-		const avgs: Avg[] = [];
-		for (const row of rows) {
-			const playerBetKey = row.player[betKey];
-			if (playerBetKey === null) continue;
-			if (betKey === 'betAvg' && row.player.betCount < minSportsbooks) continue;
-			avgs.push({ avg: playerBetKey, player: row.player });
-		}
-		return avgs;
-	}
-	const avg1rows: Avg[] = calulateAvgRows(table1Rows);
-	const avg2rows: Avg[] = calulateAvgRows(table2Rows);
-	const avg3rows: Avg[] = calulateAvgRows(table3Rows);
-
-	const processRow = (rows: Avg[]): AvgResult | null => {
-		let max: AvgResult | null = null;
-		for (const row of rows) {
-			const player = row.player;
-			const val = row.avg;
-			if (!max) {
-				max = { avg: val, players: [player] };
-				continue;
-			}
-
-			const maxval = max.avg;
-			if (val < maxval) continue;
-			if (val > maxval) max = { avg: val, players: [player] };
-			else max.players.push(player);
-		}
-		return max;
-	};
-
-	const max1row = processRow(avg1rows);
-	const max2row = processRow(avg2rows);
-	const max3row = processRow(avg3rows);
-
-	if (!max1row || !max2row || !max3row) return highlightByPick;
 
 	const printName = (player: Picks.Player) => `${player.fullName} (${player.team.code})`;
 
-	const names = (players: AvgResult) => {
-		return players.players.map(player => printName(player)).join("\n           ");
+	const names = (players: Set<Picks.Player>) => {
+		const names: string[] = [];
+		for (const player of players) names.push(printName(player));
+		return names.join("\n           ");
 	}
 
 	const calcAny = (max1: number, max2: number, max3: number): number => {
@@ -484,191 +440,244 @@ const logStats = (betKey: LogStatsKey, minSportsbooks: number): HighlightByPick 
 		return max1 * max2 * max3;
 	}
 
-	const logRoot = () => {
+	const gamesMap = new Map<Team, Team>();
+	for (const game of gamesList) {
+		gamesMap.set(game.home.code, game.away.code);
+		gamesMap.set(game.away.code, game.home.code);
+	}
+
+	type Collide = "on" | "opp" | "team" | "none";
+	class Choice {
+		avg: number;
+		player: Picks.Player;
+		on: Team;
+		opp: Team;
+		constructor(player: Picks.Player, avg: number, opp: Team) {
+			this.avg = avg;
+			this.player = player;
+			this.on = player.team.code;
+			this.opp = opp;
+		}
+		collides(player: Picks.Player, mode: Collide): boolean {
+			switch (mode) {
+				case "on":
+					return this.on === player.team.code;
+				case "opp":
+					return this.opp === player.team.code;
+				case "team":
+					return this.on === player.team.code || this.opp === player.team.code;
+				case "none":
+					return false;
+			}
+		}
+	}
+
+	const makeChoices = (list: Picks.PickOdds[]): Choice[] => {
+		const choices: Choice[] = [];
+		for (const row of list) {
+			const avg = row.player[betKey];
+			if (avg === null) continue;
+			if (betKey === 'betAvg' && row.player.betCount < minSportsbooks) continue;
+			const opp = gamesMap.get(row.player.team.code);
+			if (opp === undefined) continue;
+			choices.push(new Choice(row.player, avg, opp));
+		}
+
+		return choices;
+	};
+	const choices1: Choice[] = makeChoices(table1Rows);
+	const choices2: Choice[] = makeChoices(table2Rows);
+	const choices3: Choice[] = makeChoices(table3Rows);
+
+	interface BestCombo {
+		pick1: Choice;
+		pick2: Choice;
+		pick3: Choice;
+	}
+
+	class Result {
+		players1: Set<Picks.Player>;
+		players2: Set<Picks.Player>;
+		players3: Set<Picks.Player>;
+		avg1: number;
+		avg2: number;
+		avg3: number;
+		constructor(combo: BestCombo) {
+			this.players1 = new Set([combo.pick1.player]);
+			this.players2 = new Set([combo.pick2.player]);
+			this.players3 = new Set([combo.pick3.player]);
+			this.avg1 = combo.pick1.avg;
+			this.avg2 = combo.pick2.avg;
+			this.avg3 = combo.pick3.avg;
+		}
+		merge(combo: BestCombo): boolean {
+			if (this.avg1 !== combo.pick1.avg || this.avg2 !== combo.pick2.avg || this.avg3 !== combo.pick3.avg) return false;
+
+			this.players1.add(combo.pick1.player);
+			this.players2.add(combo.pick2.player);
+			this.players3.add(combo.pick3.player);
+			return true;
+		}
+	}
+	class ComboGroup {
+		combos: BestCombo[] = [];
+		total: number = 0;
+		type: Collide;
+		constructor(type: Collide) {
+			this.type = type;
+		}
+		add(pick1: Choice, pick2: Choice, pick3: Choice) {
+			const total = pick1.avg + pick2.avg + pick3.avg;
+			if (total > this.total) {
+				this.combos.splice(0, this.combos.length, { pick1, pick2, pick3 });
+				this.total = total;
+			} else if (total === this.total) {
+				this.combos.push({ pick1, pick2, pick3 });
+			}
+		}
+		merge(): Result[] {
+			const avgResults: Result[] = [];
+			if (this.combos.length === 0) return avgResults;
+			let prev: Result | null = null;
+			for (const combo of this.combos) {
+				if (prev && prev.merge(combo)) continue;
+				prev = new Result(combo);
+				avgResults.push(prev);
+			}
+			return avgResults;
+		}
+	}
+
+	const calcCombo = (type: Collide): ComboGroup => {
+		const group = new ComboGroup(type);
+		for (const pick1 of choices1) {
+			for (const pick2 of choices2) {
+				if (pick2.collides(pick1.player, type)) continue;
+				for (const pick3 of choices3) {
+					if (pick3.collides(pick1.player, type) || pick3.collides(pick2.player, type)) continue;
+					group.add(pick1, pick2, pick3);
+				}
+			}
+		}
+		return group;
+	}
+
+	/*
+		Calculate top picks (None). This reveals the max total.
+	
+		Top Picks (Independent Games)
+		1 - Independent Games with max total
+
+		Top Picks (Any Game / All Games)
+		1 - Any or All with max total			
+		2 - Remaining Any Game / All Games greater than Independent Games
+		3 - Independent Games
+
+		Top Picks
+		1 - None
+		2 - Any Game greater than Independent Games	
+		3 - All Games greater than Independent Games	
+		4 - Independent Games
+
+		1: Process team
+		If has max total merge and log as Independent Games.
+
+		Process none
+
+	*/
+
+	const comboNone = calcCombo('none');
+	if (comboNone.combos.length === 0) return highlightByPick;
+
+	const comboTeam = calcCombo('team');
+	const teamResult: Result[] = comboTeam.merge();
+	if (comboTeam.total === comboNone.total) {
 		addLogTitle("Top Picks");
+		for (const avgResult of teamResult) {
+			addLog(`1: ${roundToPercent(avgResult.avg1, precision)} - ${names(avgResult.players1)}`);
+			addLog(`2: ${roundToPercent(avgResult.avg2, precision)} - ${names(avgResult.players2)}`);
+			addLog(`3: ${roundToPercent(avgResult.avg3, precision)} - ${names(avgResult.players3)}`);
 
-		addLog(`1: ${roundToPercent(max1row.avg, precision)} - ${names(max1row)}`);
-		addLog(`2: ${roundToPercent(max2row.avg, precision)} - ${names(max2row)}`);
-		addLog(`3: ${roundToPercent(max3row.avg, precision)} - ${names(max3row)}`);
+			const any = roundToPercent(calcAny(avgResult.avg1, avgResult.avg2, avgResult.avg3), precision);
+			const avg = roundToPercent(calcAvg(avgResult.avg1, avgResult.avg2, avgResult.avg3), precision);
+			const all = roundToPercent(calcAll(avgResult.avg1, avgResult.avg2, avgResult.avg3), precision);
+			addLog(`Any: ${any} - Avg: ${avg} - All: ${all}`, 'center');
 
-		const any = roundToPercent(calcAny(max1row.avg, max2row.avg, max3row.avg), precision);
-		const avg = roundToPercent(calcAvg(max1row.avg, max2row.avg, max3row.avg), precision);
-		const all = roundToPercent(calcAll(max1row.avg, max2row.avg, max3row.avg), precision);
+			addPlayersToHighlight(1, avgResult.players1);
+			addPlayersToHighlight(2, avgResult.players2);
+			addPlayersToHighlight(3, avgResult.players3);
+
+			logSection++;
+		}
+		addLogTitle("Good Ranges");
+		addLog("Any: 64.6-70-74% - Avg: 28.7-33-36% - All: 2-3-4%", 'center');
+
+		return highlightByPick;
+	}
+
+	const comboAll = calcCombo('opp');
+	const comboAny = calcCombo('on');
+
+	const noneResult: Result[] = comboNone.merge();
+
+	const topResult: Result = noneResult[0];
+	const totalMax = topResult.avg1 + topResult.avg2 + topResult.avg3;
+
+	const comboPrecision = 2;
+
+	addLogTitle("Top Picks");
+	for (const avgResult of noneResult) {
+		addLog(`1: ${roundToPercent(avgResult.avg1, precision)} - ${names(avgResult.players1)}`);
+		addLog(`2: ${roundToPercent(avgResult.avg2, precision)} - ${names(avgResult.players2)}`);
+		addLog(`3: ${roundToPercent(avgResult.avg3, precision)} - ${names(avgResult.players3)}`);
+
+		const any = roundToPercent(calcAny(avgResult.avg1, avgResult.avg2, avgResult.avg3), precision);
+		const avg = roundToPercent(calcAvg(avgResult.avg1, avgResult.avg2, avgResult.avg3), precision);
+		const all = roundToPercent(calcAll(avgResult.avg1, avgResult.avg2, avgResult.avg3), precision);
 		addLog(`Any: ${any} - Avg: ${avg} - All: ${all}`, 'center');
 		logSection++;
 	}
-
-	if (gamesList.length < 3) {
-		logRoot();
-	} else {
-		const gamesMap = new Map<Team, Team>();
-		for (const game of gamesList) {
-			gamesMap.set(game.home.code, game.away.code);
-			gamesMap.set(game.away.code, game.home.code);
+	addLogTitle("Independent Games");
+	for (const avgResult of teamResult) {
+		let line1 = `1: ${names(avgResult.players1)}`;
+		let reducedCount = 0;
+		if (avgResult.avg1 !== topResult.avg1) {
+			reducedCount++;
+			line1 += " " + roundToPercent(avgResult.avg1 - topResult.avg1, comboPrecision);
+		}
+		let line2 = `2: ${names(avgResult.players2)}`;
+		if (avgResult.avg2 !== topResult.avg2) {
+			reducedCount++;
+			line2 += " " + roundToPercent(avgResult.avg2 - topResult.avg2, comboPrecision);
+		}
+		let line3 = `3: ${names(avgResult.players3)}`;
+		if (avgResult.avg3 !== topResult.avg3) {
+			reducedCount++;
+			line3 += " " + roundToPercent(avgResult.avg3 - topResult.avg3, comboPrecision);
 		}
 
-		type Collide = "on" | "opp" | "team";
-		class Choice {
-			avg: number;
-			player: Picks.Player;
-			on: Team;
-			opp: Team;
-			constructor(player: Picks.Player, avg: number, opp: Team) {
-				this.avg = avg;
-				this.player = player;
-				this.on = player.team.code;
-				this.opp = opp;
-			}
-			collides(player: Picks.Player, mode: Collide): boolean {
-				switch (mode) {
-					case "on":
-						return this.on === player.team.code;
-					case "opp":
-						return this.opp === player.team.code;
-					case "team":
-						return this.on === player.team.code || this.opp === player.team.code;
-				}
-			}
+		addLog(line1);
+		addLog(line2);
+		addLog(line3);
+
+		if (reducedCount > 1) {
+			const total = avgResult.avg1 + avgResult.avg2 + avgResult.avg3;
+			addLog(`Total: ${roundToPercent(total - totalMax, comboPrecision)}`, 'center');
 		}
 
-		const makeChoices = (list: Picks.PickOdds[]): Choice[] => {
-			const choices: Choice[] = [];
-			for (const row of list) {
-				const avg = row.player[betKey];
-				if (avg === null) continue;
-				if (betKey === 'betAvg' && row.player.betCount < minSportsbooks) continue;
-				const opp = gamesMap.get(row.player.team.code);
-				if (opp === undefined) continue;
-				choices.push(new Choice(row.player, avg, opp));
-			}
+		const any = roundToPercent(calcAny(avgResult.avg1, avgResult.avg2, avgResult.avg3), precision);
+		const avg = roundToPercent(calcAvg(avgResult.avg1, avgResult.avg2, avgResult.avg3), precision);
+		const all = roundToPercent(calcAll(avgResult.avg1, avgResult.avg2, avgResult.avg3), precision);
+		addLog(`Any: ${any} - Avg: ${avg} - All: ${all}`, 'center');
 
-			return choices;
-		};
-		const choices1: Choice[] = makeChoices(table1Rows);
-		const choices2: Choice[] = makeChoices(table2Rows);
-		const choices3: Choice[] = makeChoices(table3Rows);
-
-		interface BestCombo {
-			pick1: Choice;
-			pick2: Choice;
-			pick3: Choice;
-			total: number;
-		}
-
-		const calcBestCombo = (type: Collide): BestCombo[] => {
-			const combos: BestCombo[] = [];
-			for (const pick1 of choices1) {
-				for (const pick2 of choices2) {
-					if (pick2.collides(pick1.player, type)) continue;
-					for (const pick3 of choices3) {
-						if (pick3.collides(pick1.player, type) || pick3.collides(pick2.player, type)) continue;
-						const total = pick1.avg + pick2.avg + pick3.avg;
-						const bestCombo = combos[0];
-						if (bestCombo === undefined || total > bestCombo.total) {
-							combos.splice(0, combos.length, { pick1, pick2, pick3, total });
-						} else if (total === bestCombo.total) {
-							combos.push({ pick1, pick2, pick3, total });
-						}
-					}
-				}
-			}
-			return combos;
-		}
-
-		const bestCombos = calcBestCombo('team');
-
-		const totalMax = max1row.avg + max2row.avg + max3row.avg;
-
-		let optimized = bestCombos.length === 0;
-		if (!optimized) {
-			const maxCombo = bestCombos[0].total;
-			if (maxCombo === totalMax) {
-				const keepPlayers1 = new Set<Picks.Player>();
-				const keepPlayers2 = new Set<Picks.Player>();
-				const keepPlayers3 = new Set<Picks.Player>();
-				for (const combo of bestCombos) {
-					keepPlayers1.add(combo.pick1.player);
-					keepPlayers2.add(combo.pick2.player);
-					keepPlayers3.add(combo.pick3.player);
-				}
-				for (let i = max1row.players.length - 1; i >= 0; i--) {
-					const player = max1row.players[i];
-					if (!keepPlayers1.has(player)) max1row.players.splice(i, 1);
-				}
-				for (let i = max2row.players.length - 1; i >= 0; i--) {
-					const player = max2row.players[i];
-					if (!keepPlayers2.has(player)) max2row.players.splice(i, 1);
-				}
-				for (let i = max3row.players.length - 1; i >= 0; i--) {
-					const player = max3row.players[i];
-					if (!keepPlayers3.has(player)) max3row.players.splice(i, 1);
-				}
-
-				optimized = true;
-			}
-		}
-
-		logRoot();
-
-		const comboPrecision = 2;
-		const logComboSet = (title: string, combos: BestCombo[]) => {
-			addLogTitle(title);
-
-			for (const bestCombo of combos) {
-				let line1 = `1: ${printName(bestCombo.pick1.player)}`;
-				let reducedCount = 0;
-				if (bestCombo.pick1.avg !== max1row.avg) {
-					reducedCount++;
-					line1 += " " + roundToPercent(bestCombo.pick1.avg - max1row.avg, comboPrecision);
-				}
-				let line2 = `2: ${printName(bestCombo.pick2.player)}`;
-				if (bestCombo.pick2.avg !== max2row.avg) {
-					reducedCount++;
-					line2 += " " + roundToPercent(bestCombo.pick2.avg - max2row.avg, comboPrecision);
-				}
-				let line3 = `3: ${printName(bestCombo.pick3.player)}`;
-				if (bestCombo.pick3.avg !== max3row.avg) {
-					reducedCount++;
-					line3 += " " + roundToPercent(bestCombo.pick3.avg - max3row.avg, comboPrecision);
-				}
-
-				addLog(line1);
-				addLog(line2);
-				addLog(line3);
-
-				if (reducedCount > 1) {
-					addLog(`Total: ${roundToPercent(bestCombo.total - totalMax, comboPrecision)}`, 'center');
-				}
-
-				const any = roundToPercent(calcAny(bestCombo.pick1.avg, bestCombo.pick2.avg, bestCombo.pick3.avg), precision);
-				const avg = roundToPercent(calcAvg(bestCombo.pick1.avg, bestCombo.pick2.avg, bestCombo.pick3.avg), precision);
-				const all = roundToPercent(calcAll(bestCombo.pick1.avg, bestCombo.pick2.avg, bestCombo.pick3.avg), precision);
-				addLog(`Any: ${any} - Avg: ${avg} - All: ${all}`, 'center');
-
-				addPlayersToHighlight(1, bestCombo.pick1.player);
-				addPlayersToHighlight(2, bestCombo.pick2.player);
-				addPlayersToHighlight(3, bestCombo.pick3.player);
-
-				logSection++;
-			}
-		}
-
-		if (optimized) {
-			addPlayersToHighlight(1, ...max1row.players);
-			addPlayersToHighlight(2, ...max2row.players);
-			addPlayersToHighlight(3, ...max3row.players);
-		} else {
-			logComboSet("Independent Games", bestCombos);
-		}
-
-		const allCombos = calcBestCombo('opp');
-		logComboSet("All Games", allCombos);
-		const anyCombos = calcBestCombo('on');
-		logComboSet("Any Game", anyCombos);
+		addPlayersToHighlight(1, avgResult.players1);
+		addPlayersToHighlight(2, avgResult.players2);
+		addPlayersToHighlight(3, avgResult.players3);
+		logSection++;
 	}
-
 	addLogTitle("Good Ranges");
-	addLog("Any: 70-74% - Avg: 33-36% - All: 3-4%", 'center');
+	addLog("Any: 64.6-70-74% - Avg: 28.7-33-36% - All: 2-3-4%", 'center');
+
 	return highlightByPick;
 }
 const addLogTitle = (title: string) => {
