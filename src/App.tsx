@@ -436,11 +436,10 @@ const logStats = (betKey: LogStatsKey, minSportsbooks: number): HighlightByPick 
 	};
 
 	const printName = (player: Picks.Player) => `${player.fullName} (${player.team.code})`;
-
-	const names = (players: Set<Picks.Player>) => {
+	const names = (players: Set<Picks.Player>, shortTab: boolean = false) => {
 		const names: string[] = [];
 		for (const player of players) names.push(printName(player));
-		return names.join("\n           ");
+		return names.join(shortTab ? "\n   " : "\n           ");
 	}
 
 	const calcAny = (max1: number, max2: number, max3: number): number => {
@@ -575,95 +574,38 @@ const logStats = (betKey: LogStatsKey, minSportsbooks: number): HighlightByPick 
 		return group;
 	}
 
-	/*
-		Calculate top picks (None). This reveals the max total.
-	
-		Top Picks (Independent Games)
-		1 - Independent Games with max total
-
-		Top Picks (Any Game / All Games)
-		1 - Any or All with max total			
-		2 - Remaining Any Game / All Games greater than Independent Games
-		3 - Independent Games
-
-		Top Picks
-		1 - None
-		2 - Any Game greater than Independent Games	
-		3 - All Games greater than Independent Games	
-		4 - Independent Games
-
-		1: Process team
-		If has max total merge and log as Independent Games.
-
-		Process none
-
-	*/
-
-	const comboNone = calcCombo('none');
-	if (comboNone.combos.length === 0) return highlightByPick;
-
-	const comboTeam = calcCombo('team');
-	const teamResult: Result[] = comboTeam.merge();
-	if (comboTeam.total === comboNone.total) {
-		addLogTitle("Top Picks");
-		for (const avgResult of teamResult) {
-			addLog(`1: ${roundToPercent(avgResult.avg1, precision)} - ${names(avgResult.players1)}`);
-			addLog(`2: ${roundToPercent(avgResult.avg2, precision)} - ${names(avgResult.players2)}`);
-			addLog(`3: ${roundToPercent(avgResult.avg3, precision)} - ${names(avgResult.players3)}`);
-
-			const any = roundToPercent(calcAny(avgResult.avg1, avgResult.avg2, avgResult.avg3), precision);
-			const avg = roundToPercent(calcAvg(avgResult.avg1, avgResult.avg2, avgResult.avg3), precision);
-			const all = roundToPercent(calcAll(avgResult.avg1, avgResult.avg2, avgResult.avg3), precision);
-			addLog(`Any: ${any} - Avg: ${avg} - All: ${all}`, 'center');
-
-			addPlayersToHighlight(1, avgResult.players1);
-			addPlayersToHighlight(2, avgResult.players2);
-			addPlayersToHighlight(3, avgResult.players3);
-
-			logSection++;
-		}
-		addLogTitle("Good Ranges");
-		addLog("Any: 64.6-70-74% - Avg: 28.7-33-36% - All: 2-3-4%", 'center');
-
-		return highlightByPick;
-	}
-
-	const comboAll = calcCombo('opp');
-	const comboAny = calcCombo('on');
-
-	const noneResult: Result[] = comboNone.merge();
-
-	const topResult: Result = noneResult[0];
-	const totalMax = topResult.avg1 + topResult.avg2 + topResult.avg3;
-
 	const comboPrecision = 2;
-
-	addLogTitle("Top Picks");
-	for (const avgResult of noneResult) {
-		addLog(`1: ${roundToPercent(avgResult.avg1, precision)} - ${names(avgResult.players1)}`);
-		addLog(`2: ${roundToPercent(avgResult.avg2, precision)} - ${names(avgResult.players2)}`);
-		addLog(`3: ${roundToPercent(avgResult.avg3, precision)} - ${names(avgResult.players3)}`);
-
+	const logCalcStats = (avgResult: Result) => {
 		const any = roundToPercent(calcAny(avgResult.avg1, avgResult.avg2, avgResult.avg3), precision);
 		const avg = roundToPercent(calcAvg(avgResult.avg1, avgResult.avg2, avgResult.avg3), precision);
 		const all = roundToPercent(calcAll(avgResult.avg1, avgResult.avg2, avgResult.avg3), precision);
 		addLog(`Any: ${any} - Avg: ${avg} - All: ${all}`, 'center');
+
 		logSection++;
 	}
-	addLogTitle("Independent Games");
-	for (const avgResult of teamResult) {
-		let line1 = `1: ${names(avgResult.players1)}`;
+	const logHighlights = (avgResult: Result) => {
+		addPlayersToHighlight(1, avgResult.players1);
+		addPlayersToHighlight(2, avgResult.players2);
+		addPlayersToHighlight(3, avgResult.players3);
+	}
+	const logTopPicks = (avgResult: Result) => {
+		addLog(`1: ${roundToPercent(avgResult.avg1, precision)} - ${names(avgResult.players1)}`);
+		addLog(`2: ${roundToPercent(avgResult.avg2, precision)} - ${names(avgResult.players2)}`);
+		addLog(`3: ${roundToPercent(avgResult.avg3, precision)} - ${names(avgResult.players3)}`);
+	}
+	const logReduced = (avgResult: Result) => {
+		let line1 = `1: ${names(avgResult.players1, true)}`;
 		let reducedCount = 0;
 		if (avgResult.avg1 !== topResult.avg1) {
 			reducedCount++;
 			line1 += " " + roundToPercent(avgResult.avg1 - topResult.avg1, comboPrecision);
 		}
-		let line2 = `2: ${names(avgResult.players2)}`;
+		let line2 = `2: ${names(avgResult.players2, true)}`;
 		if (avgResult.avg2 !== topResult.avg2) {
 			reducedCount++;
 			line2 += " " + roundToPercent(avgResult.avg2 - topResult.avg2, comboPrecision);
 		}
-		let line3 = `3: ${names(avgResult.players3)}`;
+		let line3 = `3: ${names(avgResult.players3, true)}`;
 		if (avgResult.avg3 !== topResult.avg3) {
 			reducedCount++;
 			line3 += " " + roundToPercent(avgResult.avg3 - topResult.avg3, comboPrecision);
@@ -677,21 +619,93 @@ const logStats = (betKey: LogStatsKey, minSportsbooks: number): HighlightByPick 
 			const total = avgResult.avg1 + avgResult.avg2 + avgResult.avg3;
 			addLog(`Total: ${roundToPercent(total - totalMax, comboPrecision)}`, 'center');
 		}
-
-		const any = roundToPercent(calcAny(avgResult.avg1, avgResult.avg2, avgResult.avg3), precision);
-		const avg = roundToPercent(calcAvg(avgResult.avg1, avgResult.avg2, avgResult.avg3), precision);
-		const all = roundToPercent(calcAll(avgResult.avg1, avgResult.avg2, avgResult.avg3), precision);
-		addLog(`Any: ${any} - Avg: ${avg} - All: ${all}`, 'center');
-
-		addPlayersToHighlight(1, avgResult.players1);
-		addPlayersToHighlight(2, avgResult.players2);
-		addPlayersToHighlight(3, avgResult.players3);
-		logSection++;
 	}
-	addLogTitle("Good Ranges");
-	addLog("Any: 64.6-70-74% - Avg: 28.7-33-36% - All: 2-3-4%", 'center');
+	const logFooter = () => {
+		addLogTitle("Good Ranges");
+		addLog("Any: 67.1-70-74% - Avg: 30.8-33-36% - All: 2.9-3-4%", 'center');
 
-	return highlightByPick;
+		return highlightByPick;
+	}
+
+	/*
+		Calculate total top picks (none). This reveals the max total.
+	
+		Top Picks (team) have max total
+		1 - Independent Games
+
+		Top Picks (opp) have max total
+		1 - Any Game
+		2 - Independent Games
+
+		Top Picks
+		1 - None
+		2 - Any Game if greater than Independent Games	
+		4 - Independent Games
+	*/
+
+	const comboNone = calcCombo('none');
+	if (comboNone.combos.length === 0) return highlightByPick;
+
+	const comboTeam = calcCombo('team');
+	const teamResult: Result[] = comboTeam.merge();
+	const totalMax = comboNone.total;
+	if (comboTeam.total === totalMax) {
+		addLogTitle("Top Picks");
+		for (const avgResult of teamResult) {
+			logTopPicks(avgResult);
+			logCalcStats(avgResult);
+			logHighlights(avgResult);
+		}
+		return logFooter();
+	}
+
+	const noneResult: Result[] = comboNone.merge();
+	const topResult: Result = noneResult[0];
+
+	const comboAny = calcCombo('on');
+	const anyResult = comboAny.merge();
+	if (comboAny.total === totalMax) {
+		addLogTitle("Top Picks (Any Game)");
+		for (const avgResult of anyResult) {
+			logTopPicks(avgResult);
+			logCalcStats(avgResult);
+		}
+
+		if (comboTeam.total > 0) {
+			addLogTitle("Independent Games");
+			for (const avgResult of teamResult) {
+				logReduced(avgResult);
+				logCalcStats(avgResult);
+				logHighlights(avgResult);
+			}
+		}
+		return logFooter();
+	}
+
+	addLogTitle("Top Picks");
+	for (const avgResult of noneResult) {
+		logTopPicks(avgResult);
+		logCalcStats(avgResult);
+	}
+
+	if (comboAny.total > comboTeam.total) {
+		addLogTitle("Any Game");
+		for (const avgResult of anyResult) {
+			logReduced(avgResult);
+			logCalcStats(avgResult);
+			// logHighlights(avgResult);
+		}
+	}
+
+	if (comboTeam.total > 0) {
+		addLogTitle("Independent Games");
+		for (const avgResult of teamResult) {
+			logReduced(avgResult);
+			logCalcStats(avgResult);
+			logHighlights(avgResult);
+		}
+	}
+	return logFooter();
 }
 const addLogTitle = (title: string) => {
 	addLog(title, 'center', true);
