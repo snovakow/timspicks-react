@@ -167,7 +167,7 @@ const sortFunction = (sortConfig: Picks.SortConfig) => {
 	}
 }
 
-const makeSort = (sortConfig: Picks.SortConfig, setSortConfig: (config: Picks.SortConfig) => void) => {
+const makeSort = (sortConfig: Picks.SortConfig) => {
 	return (keyPrimary: Picks.ColumnKeys) => {
 		if (sortConfig.keyOrder[0] === keyPrimary) return;
 		const keyOrder = [keyPrimary];
@@ -175,7 +175,7 @@ const makeSort = (sortConfig: Picks.SortConfig, setSortConfig: (config: Picks.So
 			if (key === keyPrimary) continue;
 			keyOrder.push(key);
 		}
-		setSortConfig({ keyOrder });
+		sortConfig.keyOrder = keyOrder;
 	};
 }
 
@@ -873,9 +873,53 @@ type DisplayState = {
 	showPercentage: boolean;
 	deVigEnabled: boolean;
 	minSportsbooks: number;
+	needsSort1: Picks.ColumnKeys | null;
+	needsSort2: Picks.ColumnKeys | null;
+	needsSort3: Picks.ColumnKeys | null;
+	needsSortPlayer: Picks.ColumnKeys | null;
 };
 
-const updateDisplayState = (state: DisplayState): Record<LogStatsKey, LogStatsCacheItem> => {
+const sortConfig1: Picks.SortConfig = { keyOrder: [] };
+const sortConfig2: Picks.SortConfig = { keyOrder: [] };
+const sortConfig3: Picks.SortConfig = { keyOrder: [] };
+const sortConfigPlayer: Picks.SortConfig = { keyOrder: [] };
+const buildSort = (rows: Picks.PickOdds[] | Picks.Player[], primaryKey: Picks.ColumnKeys, sortConfig: Picks.SortConfig) => {
+	sortConfig.keyOrder.push(primaryKey);
+	const applyConfig = makeSort(sortConfig);
+	const sorter = sortFunction(sortConfig);
+	return (key: Picks.ColumnKeys) => {
+		applyConfig(key);
+		rows.sort(sorter);
+	}
+}
+const applpySort1 = buildSort(table1Rows, 'ggRaw', sortConfig1);
+const applpySort2 = buildSort(table2Rows, 'ggRaw', sortConfig2);
+const applpySort3 = buildSort(table3Rows, 'ggRaw', sortConfig3);
+const applpySortPlayer = buildSort(playerList, 'betAvg', sortConfigPlayer);
+
+type DisplayStateResult = {
+	statsCache: Record<LogStatsKey, LogStatsCacheItem>;
+	table1Rows: Picks.PickOdds[];
+	table2Rows: Picks.PickOdds[];
+	table3Rows: Picks.PickOdds[];
+	playerList: Picks.Player[];
+};
+
+const updateDisplayState = (state: DisplayState): DisplayStateResult => {
+	if (state.needsSort1) {
+		applpySort1(state.needsSort1);
+		console.log("1 applied");
+	}
+	if (state.needsSort2) {
+		applpySort2(state.needsSort2);
+	}
+	if (state.needsSort3) {
+		applpySort3(state.needsSort3);
+	}
+	if (state.needsSortPlayer) {
+		applpySortPlayer(state.needsSortPlayer);
+	}
+
 	type keyType = 'bet1' | 'bet2' | 'bet3' | 'bet4' | 'betRaw1' | 'betRaw2' | 'betRaw3' | 'betRaw4';
 	const [key1, key2, key3, key4]: keyType[] = state.deVigEnabled
 		? ['bet1', 'bet2', 'bet3', 'bet4']
@@ -927,16 +971,35 @@ const updateDisplayState = (state: DisplayState): Record<LogStatsKey, LogStatsCa
 
 	const statsCache = precalculateLogStats(state.minSportsbooks);
 	applyAllStatsHighlights(statsCache, state.minSportsbooks);
-	return statsCache;
+	return {
+		statsCache,
+		table1Rows: [...table1Rows],
+		table2Rows: [...table2Rows],
+		table3Rows: [...table3Rows],
+		playerList: [...playerList]
+	};
 }
 function App() {
 	const [showPercentage, setShowPercentage] = useState(true);
 	const [deVigEnabled, setDeVigEnabled] = useState(true);
 	const [minSportsbooks, setMinSportsbooks] = useState(3);
 
-	const statsCache = useMemo(
-		() => updateDisplayState({ showPercentage, deVigEnabled, minSportsbooks }),
-		[showPercentage, deVigEnabled, minSportsbooks]
+	const [needsSort1, setNeedsSort1] = useState<Picks.ColumnKeys | null>('ggRaw');
+	const [needsSort2, setNeedsSort2] = useState<Picks.ColumnKeys | null>('ggRaw');
+	const [needsSort3, setNeedsSort3] = useState<Picks.ColumnKeys | null>('ggRaw');
+	const [needsSortPlayer, setNeedsSortPlayer] = useState<Picks.ColumnKeys | null>('betAvg');
+
+	const requestSort1: Picks.RequestSort = (key) => setNeedsSort1(key);
+	const requestSort2: Picks.RequestSort = (key) => setNeedsSort2(key);
+	const requestSort3: Picks.RequestSort = (key) => setNeedsSort3(key);
+	const requestSortPlayer: Picks.RequestSort = (key) => setNeedsSortPlayer(key);
+
+	const { statsCache, table1Rows, table2Rows, table3Rows, playerList: displayPlayerList } = useMemo(
+		() => updateDisplayState({
+			showPercentage, deVigEnabled, minSportsbooks,
+			needsSort1, needsSort2, needsSort3, needsSortPlayer
+		}),
+		[showPercentage, deVigEnabled, minSportsbooks, needsSort1, needsSort2, needsSort3, needsSortPlayer]
 	);
 
 	const [showPopup, setShowPopup] = useState({ visible: false, title: 'Stats', key: 'betAvg' });
@@ -964,18 +1027,6 @@ function App() {
 		setShowPopup({ visible: true, title: 'Settings', key: showPopup.key });
 	};
 
-	const [rows1] = useState(table1Rows);
-	const sortedRows1 = [...rows1];
-
-	const [rows2] = useState(table2Rows);
-	const sortedRows2 = [...rows2];
-
-	const [rows3] = useState(table3Rows);
-	const sortedRows3 = [...rows3];
-
-	const [rowsPlayer] = useState(playerList);
-	const sortedRowsPlayer = [...rowsPlayer];
-
 	// Theme state
 	const [darkTheme, setDarkTheme] = useState(() => {
 		return window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -989,21 +1040,6 @@ function App() {
 		darkModeMql.addEventListener('change', handleChange);
 		return () => darkModeMql.removeEventListener('change', handleChange);
 	}, []);
-
-	const [sortConfig1, setSortConfig1] = useState<Picks.SortConfig>({ keyOrder: ['ggRaw'] });
-	const [sortConfig2, setSortConfig2] = useState<Picks.SortConfig>({ keyOrder: ['ggRaw'] });
-	const [sortConfig3, setSortConfig3] = useState<Picks.SortConfig>({ keyOrder: ['ggRaw'] });
-	const [sortConfigPlayer, setSortConfigPlayer] = useState<Picks.SortConfig>({ keyOrder: ['betAvg'] });
-
-	sortedRows1.sort(sortFunction(sortConfig1));
-	sortedRows2.sort(sortFunction(sortConfig2));
-	sortedRows3.sort(sortFunction(sortConfig3));
-	sortedRowsPlayer.sort(sortFunction(sortConfigPlayer));
-
-	const requestSort1: Picks.RequestSort = makeSort(sortConfig1, setSortConfig1);
-	const requestSort2: Picks.RequestSort = makeSort(sortConfig2, setSortConfig2);
-	const requestSort3: Picks.RequestSort = makeSort(sortConfig3, setSortConfig3);
-	const requestSortPlayer: Picks.RequestSort = makeSort(sortConfigPlayer, setSortConfigPlayer);
 
 	return (
 		<>
@@ -1100,19 +1136,19 @@ function App() {
 				</div>
 				<div className="table-container">
 					<h2>Pick #1</h2>
-					<Picks.Table columns={columns} sortedRows={sortedRows1} requestSort={requestSort1} sortConfig={sortConfig1} darkTheme={darkTheme} />
+					<Picks.Table columns={columns} sortedRows={table1Rows} requestSort={requestSort1} sortConfig={sortConfig1} darkTheme={darkTheme} />
 				</div>
 				<div className="table-container">
 					<h2>Pick #2</h2>
-					<Picks.Table columns={columns} sortedRows={sortedRows2} requestSort={requestSort2} sortConfig={sortConfig2} darkTheme={darkTheme} />
+					<Picks.Table columns={columns} sortedRows={table2Rows} requestSort={requestSort2} sortConfig={sortConfig2} darkTheme={darkTheme} />
 				</div>
 				<div className="table-container">
 					<h2>Pick #3</h2>
-					<Picks.Table columns={columns} sortedRows={sortedRows3} requestSort={requestSort3} sortConfig={sortConfig3} darkTheme={darkTheme} />
+					<Picks.Table columns={columns} sortedRows={table3Rows} requestSort={requestSort3} sortConfig={sortConfig3} darkTheme={darkTheme} />
 				</div>
 				<div className="table-container">
 					<h2>Players</h2>
-					<Picks.Table columns={columnsPlayer} sortedRows={sortedRowsPlayer} requestSort={requestSortPlayer} sortConfig={sortConfigPlayer} darkTheme={darkTheme} />
+					<Picks.Table columns={columnsPlayer} sortedRows={displayPlayerList} requestSort={requestSortPlayer} sortConfig={sortConfigPlayer} darkTheme={darkTheme} />
 				</div>
 			</main>
 		</>
