@@ -176,7 +176,7 @@ function App() {
 		const table1Rows = [...origTable1];
 		const table2Rows = [...origTable2];
 		const table3Rows = [...origTable3];
-		const playerList = origPlayerList; // Players themselves need to be mutated for display values, but we keep the list same
+		const playerList = [...origPlayerList];
 
 		// Update pick odds display values
 		const updatePickOddsDisplay = (rows: Picks.PickOdds[]) => {
