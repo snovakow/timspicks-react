@@ -6,8 +6,8 @@ import Popup from './components/Popup';
 import InfoPopupContent from './InfoPopupContent';
 import SettingsPanel from './components/Settings';
 import { poissonChance, roundToPercent, probabilityToAmerican } from './utility';
-import { loadInitialData, buildGamesList, buildPlayerList, buildNormalizedNameMap, mapPlayers, compilePlayerList, oddsNameMap } from './dataProcessor';
-import { precalculateLogStats, cloneLogStats, type LogStatsKey, type LogStat, type LogStatsCacheItem } from './statsCalculations';
+import { loadInitialData, buildGamesList, buildPlayerList, buildNormalizedNameMap, mapPlayers, compilePlayerList } from './dataProcessor';
+import { precalculateLogStats, cloneLogStats, type LogStatsKey, type LogStat } from './statsCalculations';
 import logo1 from './images/sb-logo-16-draftkings.svg';
 import logo2 from './images/sb-logo-16-fanduel.svg';
 import logo3 from './images/sb-logo-16-mgm.svg';
@@ -17,7 +17,6 @@ import iconStats from './images/leaderboard_24dp_000000_FILL0_wght400_GRAD0_opsz
 import iconInfo from './images/info_i_24dp_000000_FILL0_wght400_GRAD0_opsz24.svg';
 import iconHockeyDark from './images/sports_hockey_24dp_000000_FILL0_wght400_GRAD0_opsz24.svg';
 import iconHockeyLight from './images/sports_hockey_24dp_E3E3E3_FILL0_wght400_GRAD0_opsz24.svg';
-import type { Team } from './components/logo';
 
 const precision = Picks.precision;
 
@@ -33,10 +32,6 @@ const sportsbooks: Sportsbook[] = [
 	{ key: "bet3", title: "BetMGM", logo: logo3 },
 	{ key: "bet4", title: "BetRivers", logo: logo4 },
 ];
-
-const removeAccentsNormalize = (name: string): string => {
-	return name.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLocaleLowerCase();
-}
 
 const betDisplayRounded = (chance: number | null): string => {
 	if (chance === null) return "-";
@@ -95,10 +90,7 @@ const makeSort = (sortConfig: Picks.SortConfig) => {
 	};
 }
 
-type LogStatAlign = 'left' | 'center';
 type PickIndex = 1 | 2 | 3;
-type StatsHighlightMode = 'opp' | 'any';
-type HighlightByPick = Record<PickIndex, Map<number, StatsHighlightMode>>;
 
 interface InitializedData {
 	gamesList: Picks.GameData[];
