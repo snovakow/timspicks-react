@@ -573,6 +573,22 @@ const logStats = (betKey: LogStatsKey, minSportsbooks: number): HighlightByPick 
 		}
 		return group;
 	}
+	const calcComboWithOpposing = (oppTeam: Team): ComboGroup => {
+		const group = new ComboGroup('none');
+		for (const pick1 of choices1) {
+			for (const pick2 of choices2) {
+				for (const pick3 of choices3) {
+					if (
+						pick1.player.team.code !== oppTeam
+						&& pick2.player.team.code !== oppTeam
+						&& pick3.player.team.code !== oppTeam
+					) continue;
+					group.add(pick1, pick2, pick3);
+				}
+			}
+		}
+		return group;
+	}
 
 	const comboPrecision = 2;
 	const logCalcStats = (avgResult: Result) => {
@@ -703,6 +719,30 @@ const logStats = (betKey: LogStatsKey, minSportsbooks: number): HighlightByPick 
 			logReduced(avgResult);
 			logCalcStats(avgResult);
 			logHighlights(avgResult);
+		}
+	}
+
+	if (gamesList.length === 1) {
+		const topTeams = new Set<Team>();
+		for (const avgResult of noneResult) {
+			for (const player of avgResult.players1) topTeams.add(player.team.code);
+			for (const player of avgResult.players2) topTeams.add(player.team.code);
+			for (const player of avgResult.players3) topTeams.add(player.team.code);
+		}
+		if (topTeams.size === 1) {
+			const [topTeam] = topTeams;
+			const oppTeam = gamesMap.get(topTeam);
+			if (oppTeam !== undefined) {
+				const oppCombo = calcComboWithOpposing(oppTeam);
+				if (oppCombo.total > 0) {
+					addLogTitle("Any Game");
+					for (const avgResult of oppCombo.merge()) {
+						logReduced(avgResult);
+						logCalcStats(avgResult);
+						logHighlights(avgResult, 'any');
+					}
+				}
+			}
 		}
 	}
 	return logFooter();
