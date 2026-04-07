@@ -173,7 +173,7 @@ export interface OddsItem {
 	goals: number;
 }
 
-export type HighlightMode = "none" | "top" | "opp" | "any";
+export type HighlightMode = "none" | "top" | "opp" | "independent";
 export class PickOdds {
 	player: Player;
 
@@ -206,9 +206,9 @@ export function Table(props: {
 }) {
 	const { columns, sortedRows, requestSort, sortConfig, darkTheme } = props;
 	const cellClass = (highlight: HighlightMode): string | undefined => {
-		if (highlight === "top") return "highlight";
+		if (highlight === "top") return "highlight-top";
 		if (highlight === "opp") return "highlight-opp";
-		if (highlight === "any") return "highlight-unique";
+		if (highlight === "independent") return "highlight-independent";
 		return undefined;
 	};
 	return (

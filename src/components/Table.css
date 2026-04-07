@@ -100,12 +100,12 @@ td {
   padding: 0.5em;
 }
 
-.highlight {
+.highlight-top {
   color: #000;
   background-color: rgb(204, 238, 255);
 }
 
-.highlight-unique {
+.highlight-independent {
   color: #000;
   background-color: rgb(170, 235, 170);
 }

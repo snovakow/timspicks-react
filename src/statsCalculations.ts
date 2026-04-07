@@ -14,7 +14,7 @@ export interface LogStat {
 
 export type LogStatsKey = 'bet1' | 'bet2' | 'bet3' | 'bet4' | 'betAvg';
 export type PickIndex = 1 | 2 | 3;
-export type StatsHighlightMode = 'opp' | 'any';
+export type StatsHighlightMode = 'opp' | 'independent';
 export type HighlightByPick = Record<PickIndex, Map<number, StatsHighlightMode>>;
 
 export interface LogStatsCacheItem {
@@ -108,7 +108,7 @@ export const calculateStats = (
 		gamesMap.set(game.away.code, game.home.code);
 	}
 
-	type Collide = "on" | "opp" | "team" | "none";
+	type Collide = "on" | "opp" | "game" | "none";
 	class Choice {
 		avg: number;
 		player: Picks.Player;
@@ -126,7 +126,7 @@ export const calculateStats = (
 					return this.on === player.team.code;
 				case "opp":
 					return this.opp === player.team.code;
-				case "team":
+				case "game":
 					return this.on === player.team.code || this.opp === player.team.code;
 				case "none":
 					return false;
@@ -299,16 +299,16 @@ export const calculateStats = (
 	const comboNone = calcCombo('none');
 	if (comboNone.combos.length === 0) return highlightByPick;
 
-	const comboTeam = calcCombo('team');
-	const teamResult: Result[] = comboTeam.merge();
+	const comboIndependent = calcCombo('game');
+	const independentResult: Result[] = comboIndependent.merge();
 	const totalMax = comboNone.total;
 
-	if (comboTeam.total === totalMax) {
+	if (comboIndependent.total === totalMax) {
 		addLogTitle("Top Picks");
-		for (const avgResult of teamResult) {
+		for (const avgResult of independentResult) {
 			logTopPicks(avgResult);
 			logCalcStats(avgResult);
-			logHighlights(avgResult, 'any');
+			logHighlights(avgResult, 'independent');
 		}
 		return logFooter();
 	}
@@ -327,12 +327,12 @@ export const calculateStats = (
 			logHighlights(avgResult, 'opp');
 		}
 
-		if (comboTeam.total > 0) {
+		if (comboIndependent.total > 0) {
 			addLogTitle("Independent Games");
-			for (const avgResult of teamResult) {
+			for (const avgResult of independentResult) {
 				logReduced(avgResult, topResult, totalMax);
 				logCalcStats(avgResult);
-				logHighlights(avgResult, 'any');
+				logHighlights(avgResult, 'independent');
 			}
 		}
 		return logFooter();
@@ -344,7 +344,7 @@ export const calculateStats = (
 		logCalcStats(avgResult);
 	}
 
-	if (comboAny.total > comboTeam.total) {
+	if (comboAny.total > comboIndependent.total) {
 		addLogTitle("Any Game");
 		for (const avgResult of anyResult) {
 			logReduced(avgResult, topResult, totalMax);
@@ -353,12 +353,12 @@ export const calculateStats = (
 		}
 	}
 
-	if (comboTeam.total > 0) {
+	if (comboIndependent.total > 0) {
 		addLogTitle("Independent Games");
-		for (const avgResult of teamResult) {
+		for (const avgResult of independentResult) {
 			logReduced(avgResult, topResult, totalMax);
 			logCalcStats(avgResult);
-			logHighlights(avgResult, 'any');
+			logHighlights(avgResult, 'independent');
 		}
 	}
 
