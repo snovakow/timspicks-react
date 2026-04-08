@@ -58,6 +58,10 @@
     --highlight-bg: var(--highlight-top-bg);
 }
 
+.info-chip-four-dot-top-optimum {
+    --highlight-bg: var(--highlight-top-optimum-bg);
+}
+
 .info-chip-four-dot-optimum {
     --highlight-bg: var(--highlight-optimum-bg);
 }

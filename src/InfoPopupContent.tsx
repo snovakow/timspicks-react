@@ -64,18 +64,24 @@ export default function InfoPopupContent() {
 			<section className="info-popup-section">
 				<h3>Highlight Legend</h3>
 				<p><span className="info-chip info-chip-four-dot info-chip-four-dot-top">Top</span>
-					Highest-probability pick.</p>
+					Highest-probability pick, but not optimal for any strategy.</p>
+				<p><span className="info-chip info-chip-four-dot info-chip-four-dot-top-optimum">Best</span>
+					Highest-probability pick and optimal for a strategy.</p>
 				<p><span className="info-chip info-chip-four-dot info-chip-four-dot-optimum">Optimal</span>
-					Not the highest-probability pick, but still optimal for the strategy.</p>
+					Not the highest-probability pick, but optimal for a strategy.</p>
+			</section>
+
+			<section className="info-popup-section">
+				<h3>Strategy Legend</h3>
 				<p><span className="info-chip info-chip-left-dot info-chip-streak-left-dot">Green</span>
 					Best picks for streaks. Getting at least one pick correct for 7 straight days earns free coffee for a week.</p>
+				<p><span className="info-chip info-chip-left-dot info-chip-hybrid-left-dot">Blue</span>
+					Hybrid strategy balanced between streak safety and point upside.</p>
 				<p><span className="info-chip info-chip-left-dot info-chip-point-left-dot">Magenta</span>
 					Best picks for maximum points. 1 correct = 25 points, 2 correct = 50 points, 3 correct = 100 points. Also strong for streaks
 					and the best overall strategy.</p>
 				<p><span className="info-chip info-chip-left-dot info-chip-leaderboard-left-dot">Amber</span>
 					Best picks for competing on the leaderboard. High-risk, high-reward strategy.</p>
-				<p><span className="info-chip info-chip-left-dot info-chip-hybrid-left-dot">Blue</span>
-					Hybrid strategy balanced between streak safety and point upside.</p>
 			</section>
 
 			<section className="info-popup-section info-popup-contact">
