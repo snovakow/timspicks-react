@@ -6,7 +6,7 @@ export default function InfoPopupContent() {
 			<section className="info-popup-section">
 				<h3>Tim Hortons Hockey Challenge</h3>
 				<p>
-					This app helps make Tim Hortons Hockey Challenge picks in the Tims app.
+					This app helps with Tim Hortons Hockey Challenge picks in the Tims app.
 					It ranks candidates for Pick #1, Pick #2, and Pick #3 using implied probabilities
 					from sportsbook odds, with normalization to improve book-to-book comparability.
 				</p>
@@ -47,8 +47,8 @@ export default function InfoPopupContent() {
 			<section className="info-popup-section">
 				<h3>Stats and Sportsbook Buttons</h3>
 				<p>
-					The <strong>📊</strong> stats button and sportsbook logo buttons display the top picks,
-					and, if any picks are from the same game, if possible, the next best picks using players from different games.
+					The <strong>📊</strong> stats button and sportsbook logo buttons display the top picks
+					and, when multiple picks are from the same game, the next-best alternatives from different games when available.
 				</p>
 				<p>
 					The sportsbook buttons (DraftKings, FanDuel, BetMGM, or BetRivers)
@@ -61,20 +61,24 @@ export default function InfoPopupContent() {
 				</p>
 			</section>
 
-			<section className="info-popup-section info-popup-section-break">
+			<section className="info-popup-section">
 				<h3>Highlight Legend</h3>
-				<p><span className="info-chip highlight-top">Blue</span>
-					Highest probability picks.</p>
-				<p><span className="info-chip highlight-streak">Green</span>
-					Best picks for streaks. Getting at least one picks correct 7 days consecutively gets free coffee for a week.</p>
-				<p><span className="info-chip highlight-hybrid">Magenta</span>
-					Best picks for maximum points. 1 correct = 25 points, 2 correct = 50 points, 3 correct = 100 points. Also good for streaks
+				<p><span className="info-chip info-chip-four-dot info-chip-four-dot-top">Top</span>
+					Highest-probability pick.</p>
+				<p><span className="info-chip info-chip-four-dot info-chip-four-dot-optimum">Optimal</span>
+					Not the highest-probability pick, but still optimal regarding strategies.</p>
+				<p><span className="info-chip info-chip-left-dot info-chip-streak-left-dot">Green</span>
+					Best picks for streaks. Getting at least one pick correct for 7 straight days earns free coffee for a week.</p>
+				<p><span className="info-chip info-chip-left-dot info-chip-point-left-dot">Magenta</span>
+					Best picks for maximum points. 1 correct = 25 points, 2 correct = 50 points, 3 correct = 100 points. Also strong for streaks
 					and the best overall strategy.</p>
-				<p><span className="info-chip highlight-leaderboard">Yellow</span>
-					Best picks for competing on the leaderboard. High risk, high reward strategy.</p>
+				<p><span className="info-chip info-chip-left-dot info-chip-leaderboard-left-dot">Amber</span>
+					Best picks for competing on the leaderboard. High-risk, high-reward strategy.</p>
+				<p><span className="info-chip info-chip-left-dot info-chip-hybrid-left-dot">Blue</span>
+					Hybrid strategy balanced between strategies, with good streak odds and point upside.</p>
 			</section>
 
-			<section className="info-popup-section info-popup-section-break info-popup-contact">
+			<section className="info-popup-section info-popup-contact">
 				<h3>Contact</h3>
 				<p><a href="mailto:snovakow@gmail.com">snovakow@gmail.com</a></p>
 			</section>

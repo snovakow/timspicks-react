@@ -20,10 +20,6 @@
     box-sizing: border-box;
 }
 
-.info-popup-section-break {
-    margin-bottom: 1rem;
-}
-
 .info-popup-section h3 {
     margin: 0 0 0.45rem 0;
     font-size: 1rem;
@@ -42,6 +38,66 @@
     border-radius: 4px;
     margin-right: 0.35rem;
     font-weight: 600;
+}
+
+.info-chip-four-dot {
+    position: relative;
+    background-color: var(--highlight-bg);
+    padding: 0.3em 0.6em;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    overflow: visible;
+    min-height: 1.45em;
+    min-width: 3.7em;
+    background-image:
+        radial-gradient(circle at 12.5% calc(100% - 0.42em), var(--highlight-streak-dot) 0 0.3em, transparent 0.32em),
+        radial-gradient(circle at 37.5% calc(100% - 0.42em), var(--highlight-point-dot) 0 0.3em, transparent 0.32em),
+        radial-gradient(circle at 62.5% calc(100% - 0.42em), var(--highlight-leaderboard-dot) 0 0.3em, transparent 0.32em),
+        radial-gradient(circle at 87.5% calc(100% - 0.42em), var(--highlight-hybrid-dot) 0 0.3em, transparent 0.32em);
+}
+
+.info-chip-four-dot-top {
+    --highlight-bg: var(--highlight-top-bg);
+}
+
+.info-chip-four-dot-optimum {
+    --highlight-bg: var(--highlight-optimum-bg);
+}
+
+.info-chip-left-dot {
+    position: relative;
+    background-color: transparent;
+    line-height: 1em;
+    padding-left: 1.8em;
+}
+
+.info-chip-left-dot::before {
+    content: '';
+    position: absolute;
+    width: 1em;
+    height: 1em;
+    border-radius: 50%;
+    background-color: var(--legend-dot-color);
+    left: 0.3em;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.info-chip-streak-left-dot {
+    --legend-dot-color: var(--highlight-streak-dot);
+}
+
+.info-chip-point-left-dot {
+    --legend-dot-color: var(--highlight-point-dot);
+}
+
+.info-chip-leaderboard-left-dot {
+    --legend-dot-color: var(--highlight-leaderboard-dot);
+}
+
+.info-chip-hybrid-left-dot {
+    --legend-dot-color: var(--highlight-hybrid-dot);
 }
 
 .info-popup-contact {
