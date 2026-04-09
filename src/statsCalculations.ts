@@ -235,18 +235,84 @@ export const calculateStats = (
 		}
 	}
 
-	const calcCombo = (type: Collide): ComboGroup => {
-		const group = new ComboGroup();
+	/*
+		- streak: independent games
+		- points: hybrid, best balance, still good for streaks, but leaderboard upside
+		- leaderboard: stacking, high variance, bad for streaks
+
+		- streak = all picks from different games
+		- points = two picks from the same team, one pick from another game
+		- leaderboard = all three picks from the same team
+
+		2 games:
+		- streak = same as points
+
+		1 game:
+		- streak = two picks from the same team, one pick from the opposing team
+			Select top picks from opposing teams, and the 3rd from the same team as the stonger player
+		- points = same as leaderboard
+	*/
+	const calcCombos = (): { top: ComboGroup, streak: ComboGroup, points: ComboGroup, leader: ComboGroup } => {
+		const top = new ComboGroup();
+		const streak = new ComboGroup();
+		const points = new ComboGroup();
+		const leader = new ComboGroup();
 		for (const pick1 of choices1) {
 			for (const pick2 of choices2) {
-				if (pick2.collides(pick1.player, type)) continue;
 				for (const pick3 of choices3) {
-					if (pick3.collides(pick1.player, type) || pick3.collides(pick2.player, type)) continue;
-					group.add(pick1, pick2, pick3);
+					top.add(pick1, pick2, pick3);
+					if (gamesList.length >= 3) {
+						if (!pick1.collides(pick2.player, 'game') &&
+							!pick2.collides(pick3.player, 'game') &&
+							!pick1.collides(pick3.player, 'game')) {
+							streak.add(pick1, pick2, pick3);
+						}
+					}
+
+					if (pick1.collides(pick2.player, 'on') &&
+						!pick3.collides(pick1.player, 'game')) {
+						points.add(pick1, pick2, pick3);
+						if (gamesList.length === 2) streak.add(pick1, pick2, pick3);
+					}
+					if (pick1.collides(pick3.player, 'on') &&
+						!pick2.collides(pick1.player, 'game')) {
+						points.add(pick1, pick2, pick3);
+						if (gamesList.length === 2) streak.add(pick1, pick2, pick3);
+					}
+					if (pick2.collides(pick3.player, 'on') &&
+						!pick1.collides(pick2.player, 'game')) {
+						points.add(pick1, pick2, pick3);
+						if (gamesList.length === 2) streak.add(pick1, pick2, pick3);
+					}
+
+					if (pick1.collides(pick2.player, 'on') && pick2.collides(pick3.player, 'on')) {
+						leader.add(pick1, pick2, pick3);
+						if (gamesList.length === 1) points.add(pick1, pick2, pick3);
+					}
+
+					if (gamesList.length === 1) {
+						if (pick1.collides(pick2.player, 'on') &&
+							pick3.collides(pick1.player, 'opp')) {
+							streak.add(pick1, pick2, pick3);
+						}
+						if (pick1.collides(pick3.player, 'on') &&
+							pick2.collides(pick1.player, 'opp')) {
+							streak.add(pick1, pick2, pick3);
+						}
+						if (pick2.collides(pick3.player, 'on') &&
+							pick1.collides(pick2.player, 'opp')) {
+							streak.add(pick1, pick2, pick3);
+						}
+					}
 				}
 			}
 		}
-		return group;
+		return {
+			top,
+			streak,
+			points,
+			leader
+		};
 	}
 
 	const calcComboWithOpposing = (oppTeam: Team): ComboGroup => {
@@ -259,20 +325,6 @@ export const calculateStats = (
 						&& pick2.player.team.code !== oppTeam
 						&& pick3.player.team.code !== oppTeam
 					) continue;
-					group.add(pick1, pick2, pick3);
-				}
-			}
-		}
-		return group;
-	}
-
-	const calcComboSameTeam = (): ComboGroup => {
-		const group = new ComboGroup();
-		for (const pick1 of choices1) {
-			for (const pick2 of choices2) {
-				if (pick2.player.team.code !== pick1.player.team.code) continue;
-				for (const pick3 of choices3) {
-					if (pick3.player.team.code !== pick1.player.team.code) continue;
 					group.add(pick1, pick2, pick3);
 				}
 			}
@@ -299,9 +351,10 @@ export const calculateStats = (
 		addLog(`1: ${roundToPercent(avgResult.avg1, precision)} - ${names(avgResult.players1)}`);
 		addLog(`2: ${roundToPercent(avgResult.avg2, precision)} - ${names(avgResult.players2)}`);
 		addLog(`3: ${roundToPercent(avgResult.avg3, precision)} - ${names(avgResult.players3)}`);
+		logCalcStats(avgResult);
 	}
 
-	const logReduced = (avgResult: Result, topResult: Result, totalMax: number) => {
+	const logReduced = (avgResult: Result, topResult: Result, totalMax: number): void => {
 		let line1 = `1: ${names(avgResult.players1, true)}`;
 		let reducedCount = 0;
 		if (avgResult.avg1 !== topResult.avg1) {
@@ -327,6 +380,8 @@ export const calculateStats = (
 			const total = avgResult.avg1 + avgResult.avg2 + avgResult.avg3;
 			addLog(`Total: ${roundToPercent(total - totalMax, comboPrecision)}`, 'center');
 		}
+		if (reducedCount > 0) logCalcStats(avgResult);
+		else logSection++;
 	}
 
 	const logFooter = () => {
@@ -335,116 +390,53 @@ export const calculateStats = (
 		return highlightByPick;
 	}
 
-	const comboNone = calcCombo('none');
-	if (comboNone.combos.length === 0) return highlightByPick;
+	const { top, streak, points, leader } = calcCombos();
+	if (top.combos.length === 0) return highlightByPick;
 
-	const noneResult: Result[] = comboNone.merge();
-	addLogTitle("Max Picks");
-	for (const avgResult of noneResult) {
+	const topResult: Result[] = top.merge();
+	const streakResult: Result[] = streak.merge();
+	const pointsResult: Result[] = points.merge();
+	const leaderResult: Result[] = leader.merge();
+
+	addLogTitle("Top Picks");
+	for (const avgResult of topResult) {
 		logTopPicks(avgResult);
-		logCalcStats(avgResult);
 		logHighlights(avgResult, 'top');
 	}
 
-	const comboIndependent = calcCombo('game');
-	const independentResult: Result[] = comboIndependent.merge();
-	const comboSameTeam = calcComboSameTeam();
-	const sameTeamResult: Result[] = comboSameTeam.merge();
-	const totalMax = comboNone.total;
-	const topResult: Result = noneResult[0];
+	const maxResult: Result = topResult[0];
 
-	if (comboIndependent.total > 0) {
-		addLogTitle("Independent Picks");
-		for (const avgResult of independentResult) {
-			logReduced(avgResult, topResult, totalMax);
-			logCalcStats(avgResult);
-			logHighlights(avgResult, 'top-optimum');
+	if (gamesList.length > 2 && streak.total > 0) {
+		addLogTitle("Streak");
+		for (const avgResult of streakResult) {
+			logReduced(avgResult, maxResult, top.total);
+			logHighlights(avgResult, 'optimum');
 		}
 	}
-	if (sameTeamResult.length > 0) {
-		addLogTitle("Same Game");
-		for (const avgResult of sameTeamResult) {
-			logReduced(avgResult, topResult, totalMax);
-			logCalcStats(avgResult);
+	if (gamesList.length > 1 && points.total > 0) {
+		if (gamesList.length === 2) addLogTitle("Streak/Points");
+		else addLogTitle("Points");
+		for (const avgResult of pointsResult) {
+			logReduced(avgResult, maxResult, top.total);
+			logHighlights(avgResult, 'optimum');
+		}
+	}
+	if (leader.total > 0) {
+		if (gamesList.length === 1) addLogTitle("Points/Leaderboard");
+		else addLogTitle("Leaderboard");
+		for (const avgResult of leaderResult) {
+			logReduced(avgResult, maxResult, top.total);
 			logHighlights(avgResult, 'optimum');
 		}
 	}
 
-/*
-	const comboAny = calcCombo('on');
-	const anyResult = comboAny.merge();
-
-	if (comboAny.total === totalMax) {
-		addLogTitle("Top Picks (Any Game)");
-		for (const avgResult of anyResult) {
-			logTopPicks(avgResult);
-			logCalcStats(avgResult);
-			logHighlights(avgResult, 'top-optimum');
-		}
-
-		if (comboIndependent.total > 0) {
-			addLogTitle("Independent Games");
-			for (const avgResult of independentResult) {
-				logReduced(avgResult, topResult, totalMax);
-				logCalcStats(avgResult);
-				logHighlights(avgResult, 'optimum');
-			}
-		}
-		return logFooter();
-	}
-
-	addLogTitle("Top Picks");
-	for (const avgResult of noneResult) {
-		logTopPicks(avgResult);
-		logCalcStats(avgResult);
-		logHighlights(avgResult, 'top-optimum');
-	}
-
-	if (comboAny.total > comboIndependent.total) {
-		addLogTitle("Any Game");
-		for (const avgResult of anyResult) {
-			logReduced(avgResult, topResult, totalMax);
-			logCalcStats(avgResult);
-			logHighlights(avgResult, 'optimum');
-		}
-	}
-
-	if (comboIndependent.total > 0) {
-		addLogTitle("Independent Games");
-		for (const avgResult of independentResult) {
-			logReduced(avgResult, topResult, totalMax);
-			logCalcStats(avgResult);
-			logHighlights(avgResult, 'optimum');
-		}
-	}
-
-	if (gamesList.length === 1) {
-		const topTeams = new Set<Team>();
-		for (const avgResult of noneResult) {
-			for (const player of avgResult.players1) topTeams.add(player.team.code);
-			for (const player of avgResult.players2) topTeams.add(player.team.code);
-			for (const player of avgResult.players3) topTeams.add(player.team.code);
-		}
-		if (topTeams.size === 1) {
-			const topTeam = Array.from(topTeams)[0];
-			if (topTeam === undefined) return logFooter();
-			const oppTeam = gamesMap.get(topTeam);
-			if (oppTeam) {
-				const oppCombo = calcComboWithOpposing(oppTeam as Team);
-				if (oppCombo.total > 0) {
-					addLogTitle("Any Game");
-					for (const avgResult of oppCombo.merge()) {
-						logReduced(avgResult, topResult, totalMax);
-						logCalcStats(avgResult);
-						logHighlights(avgResult, 'optimum');
-					}
-				}
-			}
-		}
-	}
-*/
 	return logFooter();
 };
+
+// 2023-10-10 2024-04-19 2024-04-20 2024-06-24
+// 2024-10-04 2025-04-17 2025-04-19 2025-06-17
+// 2025-10-07 2026-04-16 2026-04-18
+// https://api.hockeychallengehelper.com/api/history?datetime=2026-04-08
 
 export const precalculateLogStats = (
 	minSportsbooks: number,
