@@ -425,11 +425,6 @@ export const calculateStats = (
 	logFooter();
 };
 
-// 2023-10-10 2024-04-19 2024-04-20 2024-06-24
-// 2024-10-04 2025-04-17 2025-04-19 2025-06-17
-// 2025-10-07 2026-04-16 2026-04-18
-// https://api.hockeychallengehelper.com/api/history?datetime=2026-04-08
-
 export const precalculateLogStats = (
 	minSportsbooks: number,
 	gamesList: Picks.GameData[],

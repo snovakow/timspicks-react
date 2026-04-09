@@ -2,6 +2,7 @@
 $live = true;
 $secure = true;
 $savesrc = false;
+$fetchHistory = false;
 $debug = false;
 
 if ($live && $secure) {
@@ -51,6 +52,10 @@ if ($live && isset($_GET['players']) && isset($_GET['team'])) {
 
 	$filename = 'players_' . $code . '.json';
 	$filepath = './players/' . $filename;
+
+	$dir = dirname($filepath);
+	if (!is_dir($dir)) mkdir($dir, 0755, true);
+
 	if (file_put_contents($filepath, $response) === false) {
 		die('Error saving ' . $filepath . '<br>');
 	}
@@ -58,7 +63,110 @@ if ($live && isset($_GET['players']) && isset($_GET['team'])) {
 	die($filename . '<br>');
 }
 
+/*
+
+   History
+
+*/
+if ($fetchHistory) {
+	echo '<h2>History</h2>';
+
+	$ch = curl_init();
+
+	curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+	curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'GET');
+	curl_setopt($ch, CURLOPT_HTTPHEADER, [
+		'accept: */*',
+		'accept-language: en-US,en;q=0.9',
+		'cache-control: no-cache',
+		'origin: https://hockeychallengehelper.com',
+		'pragma: no-cache',
+		'priority: u=1, i',
+		'sec-ch-ua: "Chromium";v="146", "Not-A.Brand";v="24", "Google Chrome";v="146"',
+		'sec-ch-ua-mobile: ?0',
+		'sec-ch-ua-platform: "macOS"',
+		'sec-fetch-dest: empty',
+		'sec-fetch-mode: cors',
+		'sec-fetch-site: same-site',
+		'user-agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36',
+	]);
+
+	$basePath = './history';
+	if (!is_dir($basePath)) mkdir($basePath, 0755, true);
+
+	$dates = [
+		['season' => '2023-2024', 'format' => 'regular', 'start' => '2023-10-10', 'end' => '2024-04-18'],
+		['season' => '2023-2024', 'format' => 'playoff', 'start' => '2024-04-20', 'end' => '2024-06-24'],
+		['season' => '2024-2025', 'format' => 'regular', 'start' => '2024-10-04', 'end' => '2025-04-17'],
+		['season' => '2024-2025', 'format' => 'playoff', 'start' => '2025-04-19', 'end' => '2025-06-17'],
+		['season' => '2025-2026', 'format' => 'regular', 'start' => '2025-10-07', 'end' => '2026-04-08'],
+		// ['season'=>'2025-2026', 'format' => 'regular', 'start' => '2025-10-07', 'end' => '2026-04-16'],
+		// ['season'=>'2025-2026', 'format' => 'playoff', 'start' => '2026-04-18', 'end' => ''],
+	];
+
+	$baseURL = 'https://api.hockeychallengehelper.com/api/history?datetime=';
+	$format = 'Y-m-d';
+	$interval = new DateInterval('P1D'); // 1 day interval
+
+	$index = [];
+	foreach ($dates as &$dateRange) {
+		echo "Season: {$dateRange['season']}<br>";
+		echo "Format: {$dateRange['format']}<br>";
+		echo "Start: {$dateRange['start']}<br>";
+		echo "End: {$dateRange['end']}<br>";
+		echo "<br>";
+
+		$season = $dateRange['season'];
+		$part = $dateRange['format'];
+		$start = $dateRange['start'];
+		$end = $dateRange['end'];
+
+		$realEnd = new DateTime($end);
+		$realEnd->add($interval); // Include the end date in the range
+
+		$period = new DatePeriod(new DateTime($start), $interval, $realEnd);
+
+		$files = [];
+		foreach ($period as $date) {
+			$date = $date->format($format);
+			curl_setopt($ch, CURLOPT_URL, $baseURL . $date);
+
+			$response = curl_exec($ch);
+			if ($response === false) die('cURL Error: ' . curl_error($ch));
+
+			$data = json_decode($response, false);
+			if (json_last_error() !== JSON_ERROR_NONE) die('Error decoding JSON: ' . json_last_error_msg());
+
+			if ($data->status === 404) {
+				echo "No data for {$date}<br>";
+				continue;
+			}
+
+			$filename = "{$season}_{$date}_{$part}.json";
+			$files[] = $filename;
+			$local_file = $basePath . '/' . $filename;
+			file_put_contents($local_file, $response);
+			echo ("$filename<br>");
+		}
+		echo "<br>";
+		$dateRange["files"] = $files;
+	}
+
+	$json_string = json_encode($dates, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+
+	$local_file = $basePath . 'history.json';
+	if (file_put_contents($local_file, $json_string) === false) {
+		die('Error saving local JSON file.');
+	}
+	echo "Index has been written to $local_file";
+
+	die("<h2>Complete!!!</h2>");
+}
+
 echo '<h1>Data Downloader</h1>';
+
+$basePath = './data';
+if (!is_dir($basePath)) mkdir($basePath, 0755, true);
 
 /*
 
@@ -79,7 +187,7 @@ if ($live && isset($_GET['games'])) {
 		die('Error fetching NHL data: ' . $url);
 	}
 
-	if ($savesrc) file_put_contents('./data/src_games.json', $response);
+	if ($savesrc) file_put_contents($basePath . '/src_games.json', $response);
 
 	$data = json_decode($response, false);
 
@@ -153,7 +261,7 @@ if ($live && isset($_GET['games'])) {
 
 	$json_string = json_encode($games, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 
-	$local_file = './data/games.json';
+	$local_file = $basePath . '/games.json';
 	if (file_put_contents($local_file, $json_string) === false) {
 		die('Error saving local JSON file.');
 	}
@@ -161,10 +269,6 @@ if ($live && isset($_GET['games'])) {
 }
 
 $ch = curl_init();
-
-$timezone = new DateTimeZone('America/New_York');
-$endOfDay = new DateTime('tomorrow midnight', $timezone);
-$endOfDay = $endOfDay->getTimestamp();
 
 /*
 
@@ -201,7 +305,7 @@ if ($live && isset($_GET['picks'])) {
 	$response = curl_exec($ch);
 	if ($response === false) echo 'cURL Error: ' . curl_error($ch);
 
-	if ($savesrc) file_put_contents('./data/src_helper.json', $response);
+	if ($savesrc) file_put_contents($basePath . '/src_helper.json', $response);
 
 	$json = json_decode($response, false);
 	$json = $json->playerLists;
@@ -228,7 +332,7 @@ if ($live && isset($_GET['picks'])) {
 
 	$json_string = json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 
-	$local_file = './data/helper.json';
+	$local_file = $basePath . '/helper.json';
 	if (file_put_contents($local_file, $json_string) === false) {
 		die('Error saving local JSON file.');
 	}
@@ -255,7 +359,7 @@ if ($live && isset($_GET['odds'])) {
 
 	if ($response === false) die();
 
-	if ($savesrc) file_put_contents('./data/src_bet1.json', $response);
+	if ($savesrc) file_put_contents($basePath . '/src_bet1.json', $response);
 
 	$data = json_decode($response, false);
 	$data = $data->selections;
@@ -270,11 +374,15 @@ if ($live && isset($_GET['odds'])) {
 	}
 
 	$json_string = json_encode($map, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-	$local_file = './data/bet1.json';
+	$local_file = $basePath . '/bet1.json';
 	if (file_put_contents($local_file, $json_string) === false) die();
 
 	echo "<br>Data has been written to $local_file";
 }
+
+$timezone = new DateTimeZone('America/New_York');
+$endOfDay = new DateTime('tomorrow midnight', $timezone);
+$endOfDay = $endOfDay->getTimestamp();
 
 /*
 
@@ -315,7 +423,7 @@ if ($live && isset($_GET['odds'])) {
 
 	if ($response === false) die();
 
-	if ($savesrc) file_put_contents('./data/src_bet2.json', $response);
+	if ($savesrc) file_put_contents($basePath . '/src_bet2.json', $response);
 
 	$data = json_decode($response, false);
 	$data = $data->attachments;
@@ -341,7 +449,7 @@ if ($live && isset($_GET['odds'])) {
 	}
 
 	$json_string = json_encode($map, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-	$local_file = './data/bet2.json';
+	$local_file = $basePath . '/bet2.json';
 	if (file_put_contents($local_file, $json_string) === false) die();
 
 	echo "<br>Data has been written to $local_file";
@@ -396,7 +504,7 @@ if ($live && isset($_GET['odds'])) {
 		else die();
 	}
 
-	if ($savesrc) file_put_contents('./data/src_bet3_0.json', $response);
+	if ($savesrc) file_put_contents($basePath . '/src_bet3_0.json', $response);
 	$json_data = json_decode($response, false);
 	if (json_last_error() !== JSON_ERROR_NONE) {
 		if ($debug) die('Error decoding JSON: ' . json_last_error_msg());
@@ -458,7 +566,7 @@ if ($live && isset($_GET['odds'])) {
 			else die();
 		}
 
-		if ($savesrc) file_put_contents('./data/src_bet3_' . $id . '.json', $response);
+		if ($savesrc) file_put_contents($basePath . '/src_bet3_' . $id . '.json', $response);
 
 		$json_data = json_decode($response, false);
 		if (json_last_error() !== JSON_ERROR_NONE) {
@@ -484,11 +592,11 @@ if ($live && isset($_GET['odds'])) {
 	if ($savesrc) {
 		$items = array_merge([], ...$items);
 		$json_string = json_encode($items, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-		file_put_contents('./data/src_bet3.json', $json_string, LOCK_EX);
+		file_put_contents($basePath . '/src_bet3.json', $json_string, LOCK_EX);
 	}
 
 	$json_string = json_encode($map, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-	$local_file = './data/bet3.json';
+	$local_file = $basePath . '/bet3.json';
 
 	if (file_put_contents($local_file, $json_string, LOCK_EX) === false) die();
 
@@ -512,7 +620,7 @@ if ($live && isset($_GET['odds'])) {
 		else die();
 	}
 
-	if ($savesrc) file_put_contents('./data/src_bet4_1.json', $json_data);
+	if ($savesrc) file_put_contents($basePath . '/src_bet4_1.json', $json_data);
 
 	$data_array = json_decode($json_data, false);
 	if (json_last_error() !== JSON_ERROR_NONE) {
@@ -542,7 +650,7 @@ if ($live && isset($_GET['odds'])) {
 
 		if ($json_data === false) die();
 
-		if ($savesrc) file_put_contents('./data/src_bet4_' . $i . '.json', $json_data);
+		if ($savesrc) file_put_contents($basePath . '/src_bet4_' . $i . '.json', $json_data);
 
 		$data_array = json_decode($json_data, false);
 		if (json_last_error() !== JSON_ERROR_NONE) {
@@ -567,11 +675,11 @@ if ($live && isset($_GET['odds'])) {
 	if ($savesrc) {
 		$items = array_merge([], ...$items);
 		$json_string = json_encode($items, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-		file_put_contents('./data/src_bet4.json', $json_string, LOCK_EX);
+		file_put_contents($basePath . '/src_bet4.json', $json_string, LOCK_EX);
 	}
 
 	$json_string = json_encode($map, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-	$local_file = './data/bet4.json';
+	$local_file = $basePath . '/bet4.json';
 
 	if (file_put_contents($local_file, $json_string, LOCK_EX) === false) die();
 
