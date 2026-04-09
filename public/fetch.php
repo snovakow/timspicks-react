@@ -5,64 +5,6 @@ $savesrc = false;
 $fetchHistory = false;
 $debug = false;
 
-if ($live && $secure) {
-	session_start();
-
-	if (!isset($_SESSION['csrf_token'])) die();
-
-	$csrf_token = $_SESSION['csrf_token'];
-	// unset($_SESSION['csrf_token']);
-
-	if ($_SERVER['REQUEST_METHOD'] !== 'POST') die();
-
-	$json_data = file_get_contents('php://input');
-
-	$data = json_decode($json_data, true);
-
-	if (!isset($data['code']) || !isset($data['name'])) die();
-	if (!hash_equals($csrf_token, $data['csrf_token'])) die();
-	if (!hash_equals('snovakow', $data['name'])) die();
-
-	$source_file = './pwd.txt';
-	$stored_hash = file_get_contents($source_file);
-	$user_input_password = $data['code'];
-	if (password_verify($user_input_password, $stored_hash)) {
-		if (password_needs_rehash($stored_hash, PASSWORD_DEFAULT)) {
-			$stored_hash = password_hash($user_input_password, PASSWORD_DEFAULT);
-			file_put_contents($source_file, $stored_hash);
-		}
-	} else {
-		if ($debug) die("Password is incorrect.");
-		else die();
-	}
-}
-
-/*
-
-   Players
-
-*/
-if ($live && isset($_GET['players']) && isset($_GET['team'])) {
-	$code = $_GET['team'];
-	$url = 'https://api-web.nhle.com/v1/roster/' . $code . '/current';
-	$response = file_get_contents($url);
-	if ($response === false) {
-		die('Error fetching NHL data: ' . $url);
-	}
-
-	$filename = 'players_' . $code . '.json';
-	$filepath = './players/' . $filename;
-
-	$dir = dirname($filepath);
-	if (!is_dir($dir)) mkdir($dir, 0755, true);
-
-	if (file_put_contents($filepath, $response) === false) {
-		die('Error saving ' . $filepath . '<br>');
-	}
-
-	die($filename . '<br>');
-}
-
 /*
 
    History
@@ -154,13 +96,71 @@ if ($fetchHistory) {
 
 	$json_string = json_encode($dates, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 
-	$local_file = $basePath . 'history.json';
+	$local_file = $basePath . '/history.json';
 	if (file_put_contents($local_file, $json_string) === false) {
 		die('Error saving local JSON file.');
 	}
 	echo "Index has been written to $local_file";
 
 	die("<h2>Complete!!!</h2>");
+}
+
+if ($live && $secure) {
+	session_start();
+
+	if (!isset($_SESSION['csrf_token'])) die();
+
+	$csrf_token = $_SESSION['csrf_token'];
+	// unset($_SESSION['csrf_token']);
+
+	if ($_SERVER['REQUEST_METHOD'] !== 'POST') die();
+
+	$json_data = file_get_contents('php://input');
+
+	$data = json_decode($json_data, true);
+
+	if (!isset($data['code']) || !isset($data['name'])) die();
+	if (!hash_equals($csrf_token, $data['csrf_token'])) die();
+	if (!hash_equals('snovakow', $data['name'])) die();
+
+	$source_file = './pwd.txt';
+	$stored_hash = file_get_contents($source_file);
+	$user_input_password = $data['code'];
+	if (password_verify($user_input_password, $stored_hash)) {
+		if (password_needs_rehash($stored_hash, PASSWORD_DEFAULT)) {
+			$stored_hash = password_hash($user_input_password, PASSWORD_DEFAULT);
+			file_put_contents($source_file, $stored_hash);
+		}
+	} else {
+		if ($debug) die("Password is incorrect.");
+		else die();
+	}
+}
+
+/*
+
+   Players
+
+*/
+if ($live && isset($_GET['players']) && isset($_GET['team'])) {
+	$code = $_GET['team'];
+	$url = 'https://api-web.nhle.com/v1/roster/' . $code . '/current';
+	$response = file_get_contents($url);
+	if ($response === false) {
+		die('Error fetching NHL data: ' . $url);
+	}
+
+	$filename = 'players_' . $code . '.json';
+	$filepath = './players/' . $filename;
+
+	$dir = dirname($filepath);
+	if (!is_dir($dir)) mkdir($dir, 0755, true);
+
+	if (file_put_contents($filepath, $response) === false) {
+		die('Error saving ' . $filepath . '<br>');
+	}
+
+	die($filename . '<br>');
 }
 
 echo '<h1>Data Downloader</h1>';
