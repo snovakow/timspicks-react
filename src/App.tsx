@@ -244,38 +244,23 @@ function App() {
 			}
 		}
 
-		// Apply top-value highlights per column
-		type processKeys = 'bet1' | 'bet2' | 'bet3' | 'bet4' | 'betAvg';
-		const processMax = (row: Picks.PickOdds, max: Picks.PickOdds[], key: processKeys) => {
-			const rowVal = row.player[key];
-			if (rowVal === null) return;
-			if (max.length === 0) { max.push(row); return; }
-			const topBet = max[0].player[key]!;
-			if (rowVal === topBet) max.push(row);
-			else if (rowVal > topBet) max.splice(0, max.length, row);
-		};
-		const processMaxArray = (array: Picks.PickOdds[]) => {
-			const max1: Picks.PickOdds[] = [], max2: Picks.PickOdds[] = [], max3: Picks.PickOdds[] = [],
-				max4: Picks.PickOdds[] = [], maxAvg: Picks.PickOdds[] = [];
+		const clearArray = (array: Picks.PickOdds[]) => {
 			for (const row of array) {
-				row.highlight1 = 'none'; 
-				row.highlight2 = 'none'; 
+				row.highlight1 = 'none';
+				row.highlight2 = 'none';
 				row.highlight3 = 'none';
-				row.highlight4 = 'none'; 
+				row.highlight4 = 'none';
 				row.highlightAvg = 'none';
-				processMax(row, max1, 'bet1'); processMax(row, max2, 'bet2');
-				processMax(row, max3, 'bet3'); processMax(row, max4, 'bet4');
-				if (row.player.betCount >= minSportsbooks) processMax(row, maxAvg, 'betAvg');
+				row.strategy1.clear();
+				row.strategy2.clear();
+				row.strategy3.clear();
+				row.strategy4.clear();
+				row.strategyAvg.clear();
 			}
-			for (const row of max1) row.highlight1 = 'top';
-			for (const row of max2) row.highlight2 = 'top';
-			for (const row of max3) row.highlight3 = 'top';
-			for (const row of max4) row.highlight4 = 'top';
-			for (const row of maxAvg) row.highlightAvg = 'top';
 		};
-		processMaxArray(table1Rows);
-		processMaxArray(table2Rows);
-		processMaxArray(table3Rows);
+		clearArray(table1Rows);
+		clearArray(table2Rows);
+		clearArray(table3Rows);
 
 		// Build sort functions and apply sorting
 		const sortFunction1 = sortFunction(sortConfig1Ref.current);
