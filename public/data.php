@@ -65,6 +65,13 @@ $csrfToken = $_SESSION['csrf_token'];
 		const button = document.getElementById('button');
 		const name = document.getElementById('name');
 		const input = document.getElementById('input');
+		let activeRunId = 0;
+
+		const scrollResponseToBottom = (element) => {
+			window.requestAnimationFrame(() => {
+				element.scrollTop = element.scrollHeight;
+			});
+		};
 
 		const keydown = (e) => {
 			if (e.key === "Enter") {
@@ -77,18 +84,26 @@ $csrfToken = $_SESSION['csrf_token'];
 		input.addEventListener("keydown", keydown);
 
 		button.addEventListener('click', async () => {
+			const runId = ++activeRunId;
 			const option = document.getElementById('option');
 			const options = option.value;
 			if (!options) return;
 
 			const responseElement = document.getElementById('response');
-			responseElement.innerHTML = "";
+			responseElement.replaceChildren();
+			responseElement.textContent = "";
+			responseElement.scrollTop = 0;
 
 			if (options === "players") {
 				let teamIndex = 0;
 				const processTeam = async () => {
+					if (runId !== activeRunId) return;
 					const result = await sendRequest("players&team=" + teams[teamIndex]);
-					if (result) responseElement.innerHTML += result;
+					if (runId !== activeRunId) return;
+					if (result) {
+						responseElement.insertAdjacentHTML('beforeend', result);
+						scrollResponseToBottom(responseElement);
+					}
 
 					teamIndex++;
 
@@ -97,7 +112,8 @@ $csrfToken = $_SESSION['csrf_token'];
 							processTeam();
 						}, 1000);
 					} else {
-						responseElement.innerHTML += "<h2>All teams processed.</h2>";
+						responseElement.insertAdjacentHTML('beforeend', "<h2>All teams processed.</h2>");
+						scrollResponseToBottom(responseElement);
 					}
 				}
 				processTeam();
@@ -109,7 +125,12 @@ $csrfToken = $_SESSION['csrf_token'];
 			// input.parentElement.removeChild(input); // Remove the input from the DOM
 
 			const result = await sendRequest(options.split(",").join("&"));
-			if (result) responseElement.innerHTML = result;
+			if (runId !== activeRunId) return;
+			if (result) responseElement.replaceChildren();
+			if (result) {
+				responseElement.insertAdjacentHTML('beforeend', result);
+				scrollResponseToBottom(responseElement);
+			}
 		});
 	</script>
 
