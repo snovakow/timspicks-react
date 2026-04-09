@@ -104,7 +104,7 @@ function App() {
 	const [isLoading, setIsLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
 	const [data, setData] = useState<InitializedData | null>(null);
-	
+
 	const [showPercentage, setShowPercentage] = useState(true);
 	const [deVigEnabled, setDeVigEnabled] = useState(true);
 	const [minSportsbooks, setMinSportsbooks] = useState(3);
@@ -122,13 +122,13 @@ function App() {
 				const gamesList = buildGamesList(initialData.gamesListing);
 				const playerList = buildPlayerList(initialData.gamesListing);
 				const normalizedNameMap = buildNormalizedNameMap(playerList);
-				
+
 				const { table1Rows, table2Rows, table3Rows } = mapPlayers(
 					playerList,
 					initialData.playerData,
 					normalizedNameMap
 				);
-				
+
 				compilePlayerList(
 					playerList,
 					initialData.playerOddsDraftKings,
@@ -136,7 +136,7 @@ function App() {
 					initialData.playerOddsBetMGM,
 					initialData.playerOddsBetRivers
 				);
-				
+
 				setData({ gamesList, playerList, table1Rows, table2Rows, table3Rows });
 				setError(null);
 			} catch (error) {
@@ -164,7 +164,7 @@ function App() {
 
 	const memoizedDisplayData = useMemo(() => {
 		if (!data) return null;
-		
+
 		const { gamesList, playerList: origPlayerList, table1Rows: origTable1, table2Rows: origTable2, table3Rows: origTable3 } = data;
 
 		const clonePlayer = (player: Picks.Player): Picks.Player => {
@@ -284,7 +284,7 @@ function App() {
 		playerList.sort(sortFunctionPlayer);
 
 		return { gamesList, playerList, table1Rows, table2Rows, table3Rows };
-	}, [data, showPercentage, deVigEnabled, minSportsbooks, needsSort1, needsSort2, needsSort3, needsSortPlayer]);
+	}, [data, showPercentage, deVigEnabled, needsSort1, needsSort2, needsSort3, needsSortPlayer]);
 
 	// Memoize stats calculations - expensive O(n³) combo calculations
 	// Also applies stats-based highlights (opp/any) to rows after 'top' highlights are set
