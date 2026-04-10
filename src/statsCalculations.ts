@@ -137,14 +137,14 @@ export const calculateStats = (
 			this.on = pick.player.team.code;
 			this.opp = opp;
 		}
-		collides(player: Picks.Player, mode: Collide): boolean {
+		collides(pick: Picks.PickOdds, mode: Collide): boolean {
 			switch (mode) {
 				case "on":
-					return this.on === player.team.code;
+					return this.on === pick.player.team.code;
 				case "opp":
-					return this.opp === player.team.code;
+					return this.opp === pick.player.team.code;
 				case "game":
-					return this.on === player.team.code || this.opp === player.team.code;
+					return this.on === pick.player.team.code || this.opp === pick.player.team.code;
 				case "none":
 					return false;
 			}
@@ -231,14 +231,6 @@ export const calculateStats = (
 		- streak = all picks from different games
 		- points = two picks from the same team, one pick from another game
 		- leaderboard = all three picks from the same team
-
-		2 games:
-		- streak = same as points
-
-		1 game:
-		- streak = two picks from the same team, one pick from the opposing team
-			Select top picks from opposing teams, and the 3rd from the same team as the stonger player
-		- points = same as leaderboard
 	*/
 	const calcCombos = (): { top: ComboGroup, streak: ComboGroup, points: ComboGroup, leader: ComboGroup } => {
 		const top = new ComboGroup();
@@ -250,48 +242,22 @@ export const calculateStats = (
 				for (const pick3 of choices3) {
 					top.add(pick1, pick2, pick3);
 					if (gamesList.length >= 3) {
-						if (!pick1.collides(pick2.pick.player, 'game') &&
-							!pick2.collides(pick3.pick.player, 'game') &&
-							!pick1.collides(pick3.pick.player, 'game')) {
+						if (!pick1.collides(pick2.pick, 'game') &&
+							!pick2.collides(pick3.pick, 'game') &&
+							!pick1.collides(pick3.pick, 'game')) {
 							streak.add(pick1, pick2, pick3);
 						}
+					} else if (gamesList.length === 1) {
+						if (pick1.collides(pick2.pick, 'on') && pick3.collides(pick1.pick, 'opp')) streak.add(pick1, pick2, pick3);
+						if (pick1.collides(pick3.pick, 'on') && pick2.collides(pick1.pick, 'opp')) streak.add(pick1, pick2, pick3);
+						if (pick2.collides(pick3.pick, 'on') && pick1.collides(pick2.pick, 'opp')) streak.add(pick1, pick2, pick3);
 					}
 
-					if (pick1.collides(pick2.pick.player, 'on') &&
-						!pick3.collides(pick1.pick.player, 'game')) {
-						points.add(pick1, pick2, pick3);
-						if (gamesList.length === 2) streak.add(pick1, pick2, pick3);
-					}
-					if (pick1.collides(pick3.pick.player, 'on') &&
-						!pick2.collides(pick1.pick.player, 'game')) {
-						points.add(pick1, pick2, pick3);
-						if (gamesList.length === 2) streak.add(pick1, pick2, pick3);
-					}
-					if (pick2.collides(pick3.pick.player, 'on') &&
-						!pick1.collides(pick2.pick.player, 'game')) {
-						points.add(pick1, pick2, pick3);
-						if (gamesList.length === 2) streak.add(pick1, pick2, pick3);
-					}
+					if (pick1.collides(pick2.pick, 'on') && !pick3.collides(pick1.pick, 'game')) points.add(pick1, pick2, pick3);
+					if (pick1.collides(pick3.pick, 'on') && !pick2.collides(pick1.pick, 'game')) points.add(pick1, pick2, pick3);
+					if (pick2.collides(pick3.pick, 'on') && !pick1.collides(pick2.pick, 'game')) points.add(pick1, pick2, pick3);
 
-					if (pick1.collides(pick2.pick.player, 'on') && pick2.collides(pick3.pick.player, 'on')) {
-						leader.add(pick1, pick2, pick3);
-						if (gamesList.length === 1) points.add(pick1, pick2, pick3);
-					}
-
-					if (gamesList.length === 1) {
-						if (pick1.collides(pick2.pick.player, 'on') &&
-							pick3.collides(pick1.pick.player, 'opp')) {
-							streak.add(pick1, pick2, pick3);
-						}
-						if (pick1.collides(pick3.pick.player, 'on') &&
-							pick2.collides(pick1.pick.player, 'opp')) {
-							streak.add(pick1, pick2, pick3);
-						}
-						if (pick2.collides(pick3.pick.player, 'on') &&
-							pick1.collides(pick2.pick.player, 'opp')) {
-							streak.add(pick1, pick2, pick3);
-						}
-					}
+					if (pick1.collides(pick2.pick, 'on') && pick2.collides(pick3.pick, 'on')) leader.add(pick1, pick2, pick3);
 				}
 			}
 		}
@@ -389,7 +355,17 @@ export const calculateStats = (
 		addStrategyHighlights(avgResult, 'top');
 	}
 
-	if (gamesList.length > 2 && streak.total > 0) {
+	/*
+		2 games:
+		- streak = same as points
+
+		1 game:
+		- streak = two picks from the same team, one pick from the opposing team
+			Select top picks from opposing teams, and the 3rd from the same team as the stonger player
+		- points = same as leaderboard
+	*/
+
+	if (gamesList.length !== 2 && streak.total > 0) {
 		addLogTitle("Streak");
 		for (const avgResult of streakResult) {
 			logReduced(avgResult, maxResult, top.total);
