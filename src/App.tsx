@@ -3,6 +3,7 @@ import './App.css';
 import * as Picks from './components/Table';
 import Popup from './components/Popup';
 import InfoPopupContent, { LegendPopupContent } from './components/InfoPopupContent';
+import StatsPopupContent from './components/StatsPopupContent';
 import SettingsPanel from './components/Settings';
 import { poissonChance, roundToPercent, probabilityToAmerican } from './utility';
 import { loadInitialData, buildGamesList, buildPlayerList, buildNormalizedNameMap, mapPlayers, compilePlayerList } from './dataProcessor';
@@ -460,22 +461,7 @@ function App() {
 							onStrategyEnabledChange={handleStrategyEnabledChange}
 						/>
 					) : (
-						<div className="stats-popup-layout">
-							{
-								popupStats.map((stat, i) => {
-									let className = 'stats-popup-section';
-									if (stat.break) className += ' stats-popup-section-break';
-									if (stat.isTitle) className += ' stats-popup-section-title';
-									return (
-										<div key={i} className={className} style={{ textAlign: stat.align }}>
-											{stat.lines.map((line, j) => (
-												<div key={j}>{line}</div>
-											))}
-										</div>
-									)
-								})
-							}
-						</div>
+						<StatsPopupContent stats={popupStats} />
 					)}
 				</Popup>
 

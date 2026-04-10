@@ -1,0 +1,19 @@
+.layout {
+  font-family: monospace;
+  white-space: pre-wrap;
+}
+
+.section {
+  width: fit-content;
+  max-width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.sectionBreak {
+  margin-bottom: 1rem;
+}
+
+.sectionTitle {
+  font-weight: bold;
+}
