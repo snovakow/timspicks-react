@@ -56,3 +56,23 @@
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
 }
+
+.stats-popup-layout {
+  font-family: monospace;
+  white-space: pre-wrap;
+}
+
+.stats-popup-section {
+  width: fit-content;
+  max-width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.stats-popup-section-break {
+  margin-bottom: 1rem;
+}
+
+.stats-popup-section-title {
+  font-weight: bold;
+}

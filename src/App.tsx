@@ -1,6 +1,5 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import './App.css';
-import './Stats.css';
 import * as Picks from './components/Table';
 import Popup from './components/Popup';
 import InfoPopupContent, { LegendPopupContent } from './components/InfoPopupContent';
@@ -461,12 +460,12 @@ function App() {
 							onStrategyEnabledChange={handleStrategyEnabledChange}
 						/>
 					) : (
-						<>
+						<div className="stats-popup-layout">
 							{
 								popupStats.map((stat, i) => {
-									let className = 'popup-section';
-									if (stat.break) className += ' popup-section-break';
-									if (stat.isTitle) className += ' popup-section-title';
+									let className = 'stats-popup-section';
+									if (stat.break) className += ' stats-popup-section-break';
+									if (stat.isTitle) className += ' stats-popup-section-title';
 									return (
 										<div key={i} className={className} style={{ textAlign: stat.align }}>
 											{stat.lines.map((line, j) => (
@@ -476,7 +475,7 @@ function App() {
 									)
 								})
 							}
-						</>
+						</div>
 					)}
 				</Popup>
 
