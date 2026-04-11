@@ -111,7 +111,7 @@ function App() {
 		streak: false,
 		point: false,
 		leaderboard: false,
-		hybrid: false,
+		hybrid: true,
 		top: true,
 	});
 
