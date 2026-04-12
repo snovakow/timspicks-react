@@ -207,7 +207,13 @@ export const calculateStats = (
 		- points = two picks from the same team, one pick from another game
 		- leaderboard = all three picks from the same team
 	*/
-	const calcCombos = (): { top: ComboGroup, streak: ComboGroup, points: ComboGroup, leader: ComboGroup, opposing: ComboGroup } => {
+	const calcCombos = (gameCount: number): {
+		top: ComboGroup,
+		streak: ComboGroup,
+		points: ComboGroup,
+		leader: ComboGroup,
+		opposing: ComboGroup
+	} => {
 		const top = new ComboGroup();
 		const streak = new ComboGroup();
 		const points = new ComboGroup();
@@ -217,19 +223,19 @@ export const calculateStats = (
 			for (const pick2 of choices2) {
 				for (const pick3 of choices3) {
 					top.add(pick1, pick2, pick3);
-					if (gamesList.length >= 3) {
+					if (gameCount >= 3) {
 						if (!pick1.same(pick2, 'game') &&
 							!pick2.same(pick3, 'game') &&
 							!pick1.same(pick3, 'game')) {
 							streak.add(pick1, pick2, pick3);
 						}
-					} else if (gamesList.length === 1) {
+					} else if (gameCount === 1) {
 						if (pick1.same(pick2, 'on') && pick3.same(pick1, 'opp')) streak.add(pick1, pick2, pick3);
 						if (pick1.same(pick3, 'on') && pick2.same(pick1, 'opp')) streak.add(pick1, pick2, pick3);
 						if (pick2.same(pick3, 'on') && pick1.same(pick2, 'opp')) streak.add(pick1, pick2, pick3);
 					}
 
-					if (gamesList.length >= 2) {
+					if (gameCount >= 2) {
 						if (pick1.same(pick2, 'opp') && !pick3.same(pick1, 'game')) opposing.add(pick1, pick2, pick3);
 						if (pick1.same(pick3, 'opp') && !pick2.same(pick1, 'game')) opposing.add(pick1, pick2, pick3);
 						if (pick2.same(pick3, 'opp') && !pick1.same(pick2, 'game')) opposing.add(pick1, pick2, pick3);
@@ -310,7 +316,7 @@ export const calculateStats = (
 
 	const logFooter = () => {
 		addLogTitle("Good Ranges");
-		addLog("Any: 66-67% - Avg: 30-31% - All: 2-3%", 'center');
+		addLog("Any: 66-69% - Avg: 30-32% - All: 2-3%", 'center');
 	}
 
 	const setStrategy = (pick: Picks.PickOdds, mode: Picks.StrategyMode) => {
@@ -326,7 +332,20 @@ export const calculateStats = (
 		for (const pick of result.players3) setStrategy(pick, strategy);
 	}
 
-	const { top, opposing, streak, points, leader } = calcCombos();
+	// calculate available games from players, rather than use the gamesList.
+	// Some games may have started, or players may not be available from a game.
+	const gamesSet = new Set<Team>();
+	let gameCount = 0;
+	for (const pick of table1Rows) {
+		const team = pick.player.team.code;
+		if (gamesSet.has(team)) continue;
+		gamesSet.add(team);
+		const opponent = gamesMap.get(team);
+		if (opponent) gamesSet.add(opponent);
+		gameCount++;
+	}
+
+	const { top, opposing, streak, points, leader } = calcCombos(gameCount);
 	if (top.combos.length === 0) return;
 
 	const topResult: Result[] = top.merge();
@@ -354,6 +373,15 @@ export const calculateStats = (
 		- points = same as leaderboard
 	*/
 
+	if (gameCount !== 2 && streak.total > 0) {
+		addLogTitle("Streak");
+		for (const avgResult of streakResult) {
+			logReduced(avgResult, maxResult, top.total);
+			logHighlights(avgResult);
+			addStrategyHighlights(avgResult, 'streak');
+		}
+	}
+
 	if (opposing.total > 0) {
 		addLogTitle("Opposing");
 		for (const avgResult of opposingResult) {
@@ -363,31 +391,23 @@ export const calculateStats = (
 		}
 	}
 
-	if (gamesList.length !== 2 && streak.total > 0) {
-		addLogTitle("Streak");
-		for (const avgResult of streakResult) {
-			logReduced(avgResult, maxResult, top.total);
-			logHighlights(avgResult);
-			addStrategyHighlights(avgResult, 'streak');
-		}
-	}
-	if (gamesList.length > 1 && points.total > 0) {
-		if (gamesList.length === 2) addLogTitle("Streak/Points");
+	if (gameCount > 1 && points.total > 0) {
+		if (gameCount === 2) addLogTitle("Streak/Points");
 		else addLogTitle("Points");
 		for (const avgResult of pointsResult) {
 			logReduced(avgResult, maxResult, top.total);
 			logHighlights(avgResult);
-			if (gamesList.length === 2) addStrategyHighlights(avgResult, 'streak');
+			if (gameCount === 2) addStrategyHighlights(avgResult, 'streak');
 			addStrategyHighlights(avgResult, 'point');
 		}
 	}
 	if (leader.total > 0) {
-		if (gamesList.length === 1) addLogTitle("Points/Leaderboard");
+		if (gameCount === 1) addLogTitle("Points/Leaderboard");
 		else addLogTitle("Leaderboard");
 		for (const avgResult of leaderResult) {
 			logReduced(avgResult, maxResult, top.total);
 			logHighlights(avgResult);
-			if (gamesList.length === 1) addStrategyHighlights(avgResult, 'point');
+			if (gameCount === 1) addStrategyHighlights(avgResult, 'point');
 			addStrategyHighlights(avgResult, 'leaderboard');
 		}
 	}
