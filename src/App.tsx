@@ -293,7 +293,7 @@ function App() {
 		playerList.sort(sortFunctionPlayer);
 
 		return { gamesList, playerList, table1Rows, table2Rows, table3Rows };
-	}, [data, showPercentage, deVigEnabled, needsSort1, needsSort2, needsSort3, needsSortPlayer]);
+	}, [data, showPercentage, deVigEnabled, needsSort1, needsSort2, needsSort3, needsSortPlayer, minSportsbooks]);
 
 	// Memoize stats calculations - expensive O(n³) combo calculations
 	// Also applies stats-based highlights (opp/any) to rows after 'top' highlights are set
