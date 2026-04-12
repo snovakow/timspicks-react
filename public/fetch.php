@@ -163,10 +163,45 @@ if ($live && isset($_GET['players']) && isset($_GET['team'])) {
 	die($filename . '<br>');
 }
 
-echo '<h1>Data Downloader</h1>';
-
 $basePath = './data';
 if (!is_dir($basePath)) mkdir($basePath, 0755, true);
+
+/*
+
+   Backup
+
+*/
+if ($live && isset($_GET['backup'])) {
+	// Backup the current data directory before fetching picks
+	if (is_dir($basePath)) {
+		$timezone = new DateTimeZone('America/New_York');
+		$timestamp = new DateTime('now', $timezone);
+
+		$date = $timestamp->format('Y-m-d');
+		$time = $timestamp->format('Hi');
+		$backupPath = $basePath . '/' . $date;
+		$backupSubPath = $basePath . '/' . $date . '/' . $time;
+		if (!is_dir($backupPath)) mkdir($backupPath, 0755, true);
+		if (!is_dir($backupSubPath)) mkdir($backupSubPath, 0755, true);
+		$bet1file = '/bet1.json';
+		$bet2file = '/bet2.json';
+		$bet3file = '/bet3.json';
+		$bet4file = '/bet4.json';
+		$gamesfile = '/games.json';
+		$helperfile = '/helper.json';
+		copy($basePath . $gamesfile, $backupPath . $gamesfile);
+		copy($basePath . $bet1file, $backupSubPath . $bet1file);
+		copy($basePath . $bet2file, $backupSubPath . $bet2file);
+		copy($basePath . $bet3file, $backupSubPath . $bet3file);
+		copy($basePath . $bet4file, $backupSubPath . $bet4file);
+		copy($basePath . $helperfile, $backupSubPath . $helperfile);
+
+		die("<h2>Backup: $backupSubPath</h2>");
+	}
+	die;
+}
+
+echo '<h1>Data Downloader</h1>';
 
 /*
 
@@ -276,31 +311,6 @@ $ch = curl_init();
 
 */
 if ($live && isset($_GET['picks'])) {
-	// Backup the current data directory before fetching picks
-	if (is_dir($basePath)) {
-		$timezone = new DateTimeZone('America/New_York');
-		$timestamp = new DateTime('now', $timezone);
-
-		$date = $timestamp->format('Y-m-d');
-		$time = $timestamp->format('Hi');
-		$backupPath = $basePath . '/' . $date;
-		$backupSubPath = $basePath . '/' . $date . '/' . $time;
-		if (!is_dir($backupPath)) mkdir($backupPath, 0755, true);
-		if (!is_dir($backupSubPath)) mkdir($backupSubPath, 0755, true);
-		$bet1file = '/bet1.json';
-		$bet2file = '/bet2.json';
-		$bet3file = '/bet3.json';
-		$bet4file = '/bet4.json';
-		$gamesfile = '/games.json';
-		$helperfile = '/helper.json';
-		copy($basePath . $gamesfile, $backupPath . $gamesfile);
-		copy($basePath . $bet1file, $backupSubPath . $bet1file);
-		copy($basePath . $bet2file, $backupSubPath . $bet2file);
-		copy($basePath . $bet3file, $backupSubPath . $bet3file);
-		copy($basePath . $bet4file, $backupSubPath . $bet4file);
-		copy($basePath . $helperfile, $backupSubPath . $helperfile);
-	}
-
 	echo '<h2>Picks</h2>';
 
 	$helper = 'https://api.hockeychallengehelper.com/api/picks';
