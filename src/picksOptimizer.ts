@@ -409,8 +409,8 @@ class ResultTotal {
         return {
             count: this.count,
             title: this.title,
-            least1: (this.least1 / this.count) * 100 + '%',
-            all3: (this.all3 / this.count) * 100 + '%',
+            least1: this.least1 / this.count,
+            all3: this.all3 / this.count,
             hitsAvg: this.hits / this.count,
             pointsAvg: this.points / this.count,
         };
@@ -473,12 +473,22 @@ const simulateOpposing = (set1: PlayerSet, set2: PlayerSet, set3: PlayerSet): Re
     return new Result(pick1.scored, pick2.scored, pick3.scored);
 
 }
+
+/*
+    sss = stacked
+    iii = independent
+    sso = stacked + opposing - s vs o order
+    ssi = stacked + independent - s vs i order
+    ooi = opposing - i vs o order
+    # of games
+*/
 export const runSimulation = async () => {
+    const ITERATIONS_PER_FILE = 10000;
     const response = await fetch('./history/history.json');
     const data = await response.json();
+    const randomResults = new ResultTotal("Random");
     const independentResults = new ResultTotal("Independent");
     const opposingResults = new ResultTotal("Opposing");
-    const randomResults = new ResultTotal("Random");
     const stackedResults = new ResultTotal("Stacked");
     let totalCount = 0;
     for (const item of data) {
@@ -489,45 +499,85 @@ export const runSimulation = async () => {
             const set1: Map<number, HistoryPlayer> = new Map();
             const set2: Map<number, HistoryPlayer> = new Map();
             const set3: Map<number, HistoryPlayer> = new Map();
+            const teams = new Set<string>();
+            let gameCount = 0;
             for (const playerList of fileData.playerLists) {
                 const set = playerList.id === 1 ? set1 : playerList.id === 2 ? set2 : set3;
                 for (const player of playerList.players) {
                     set.set(player.nhlPlayerId, player);
+                    if (!teams.has(player.team)) {
+                        gameCount++;
+                        teams.add(player.team);
+                        teams.add(player.opponent);
+                    }
                 }
             }
+            if (gameCount !== 1) continue;
             if (set1.size === 0 || set2.size === 0 || set3.size === 0) continue;
             const array1 = Array.from(set1.values());
             const array2 = Array.from(set2.values());
             const array3 = Array.from(set3.values());
 
-            // const streakRandom = 0.4097; // 1000000 repeats 40.97%
-            // const streakIndependent = 0.4126; // 1000000 repeats 41.26%
-
-            for (let i = 0; i < 1000000; i++) {
+            for (let i = 0; i < ITERATIONS_PER_FILE; i++) {
                 const resultRandom = simulateRandom(array1, array2, array3);
-                if (resultRandom !== null) {
-                    randomResults.add(resultRandom);
-                }
+                if (resultRandom !== null) randomResults.add(resultRandom);
                 const resultIndependent = simulateIndependent(array1, array2, array3);
-                if (resultIndependent !== null) {
-                    independentResults.add(resultIndependent);
-                }
+                if (resultIndependent !== null) independentResults.add(resultIndependent);
                 const resultStacked = simulateStacked(array1, array2, array3);
-                if (resultStacked !== null) {
-                    stackedResults.add(resultStacked);
-                }
+                if (resultStacked !== null) stackedResults.add(resultStacked);
                 const resultOpposing = simulateOpposing(array1, array2, array3);
-                if (resultOpposing !== null) {
-                    opposingResults.add(resultOpposing);
-                }
+                if (resultOpposing !== null) opposingResults.add(resultOpposing);
                 totalCount++;
             }
         }
     }
     if (totalCount > 0) {
-        console.log(independentResults.getTotal());
-        console.log(opposingResults.getTotal());
-        console.log(randomResults.getTotal());
-        console.log(stackedResults.getTotal());
+        const rand = randomResults.getTotal();
+        const ind = independentResults.getTotal();
+        const opp = opposingResults.getTotal();
+        const stack = stackedResults.getTotal();
+
+        // Correlation factors for each goal
+        const corr = {
+            all3: {
+                sameTeam: (rand.all3 && stack.all3) ? stack.all3 / rand.all3 : null,
+                opposing: (rand.all3 && opp.all3) ? opp.all3 / rand.all3 : null,
+                independent: (rand.all3 && ind.all3) ? ind.all3 / rand.all3 : null
+            },
+            least1: {
+                sameTeam: (rand.least1 && stack.least1) ? stack.least1 / rand.least1 : null,
+                opposing: (rand.least1 && opp.least1) ? opp.least1 / rand.least1 : null,
+                independent: (rand.least1 && ind.least1) ? ind.least1 / rand.least1 : null
+            },
+            hitsAvg: {
+                sameTeam: (rand.hitsAvg && stack.hitsAvg) ? stack.hitsAvg / rand.hitsAvg : null,
+                opposing: (rand.hitsAvg && opp.hitsAvg) ? opp.hitsAvg / rand.hitsAvg : null,
+                independent: (rand.hitsAvg && ind.hitsAvg) ? ind.hitsAvg / rand.hitsAvg : null
+            },
+            pointsAvg: {
+                sameTeam: (rand.pointsAvg && stack.pointsAvg) ? stack.pointsAvg / rand.pointsAvg : null,
+                opposing: (rand.pointsAvg && opp.pointsAvg) ? opp.pointsAvg / rand.pointsAvg : null,
+                independent: (rand.pointsAvg && ind.pointsAvg) ? ind.pointsAvg / rand.pointsAvg : null
+            }
+        };
+
+        // console.log(rand);
+        // console.log(ind);
+        // console.log(opp);
+        // console.log(stack);
+
+        console.log('--- Correlation Factors (relative to Independent) ---');
+        console.log('All 3 hit:', corr.all3);
+        console.log('At least 1 hit:', corr.least1);
+        console.log('Average hits:', corr.hitsAvg);
+        console.log('Average points:', corr.pointsAvg);
+
+        return {
+            independent: ind,
+            opposing: opp,
+            random: rand,
+            stacked: stack,
+            correlation: corr
+        };
     }
 }
