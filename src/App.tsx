@@ -171,6 +171,7 @@ function App() {
 		setEnabledStrategies((prev) => ({ ...prev, [strategy]: value }));
 	}, []);
 
+
 	const memoizedDisplayData = useMemo(() => {
 		if (!data) return null;
 
@@ -292,7 +293,8 @@ function App() {
 		makeSortPlayer(needsSortPlayer);
 		playerList.sort(sortFunctionPlayer);
 
-		return { gamesList, playerList, table1Rows, table2Rows, table3Rows };
+		// Expose minSportsbooks in the returned object for downstream consumers
+		return { gamesList, playerList, table1Rows, table2Rows, table3Rows, minSportsbooks };
 	}, [data, showPercentage, deVigEnabled, needsSort1, needsSort2, needsSort3, needsSortPlayer, minSportsbooks]);
 
 	// Memoize stats calculations - expensive O(n³) combo calculations
