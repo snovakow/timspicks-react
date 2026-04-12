@@ -171,7 +171,6 @@ function App() {
 		setEnabledStrategies((prev) => ({ ...prev, [strategy]: value }));
 	}, []);
 
-
 	const memoizedDisplayData = useMemo(() => {
 		if (!data) return null;
 
