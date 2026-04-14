@@ -57,8 +57,8 @@ function Popup({ showPopUp, title, closePopUp, children }: PopupProps) {
             const deltaX = lastX - touch.clientX;
             lastY = touch.clientY;
             lastX = touch.clientX;
-            // Always block horizontal scroll gestures
-            if (Math.abs(deltaX) > 0) {
+            // Always block horizontal scroll gestures, even if small
+            if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 2) {
                 e.preventDefault();
                 return;
             }
