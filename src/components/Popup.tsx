@@ -40,13 +40,16 @@ function Popup({ showPopUp, title, closePopUp, children }: PopupProps) {
             document.body.style.paddingRight = `${scrollbarWidth}px`;
         }
 
-        // Prevent horizontal scroll from passing through, and vertical bounce at edges
+        // Block all scrolling on overlay unless popup-body is scrollable and gesture is allowed
         const overlay = overlayRef.current;
-        const popupBody = overlay?.querySelector('.popup-body') as HTMLElement | null;
         let lastY: number | undefined = undefined;
         let lastX: number | undefined = undefined;
         const handleTouchMove = (e: TouchEvent) => {
-            if (!popupBody) return;
+            const popupBody = overlay?.querySelector('.popup-body') as HTMLElement | null;
+            if (!popupBody) {
+                e.preventDefault();
+                return;
+            }
             const touch = e.touches[0];
             if (lastY === undefined) lastY = touch.clientY;
             if (lastX === undefined) lastX = touch.clientX;
@@ -54,28 +57,29 @@ function Popup({ showPopUp, title, closePopUp, children }: PopupProps) {
             const deltaX = lastX - touch.clientX;
             lastY = touch.clientY;
             lastX = touch.clientX;
-            // Always prevent horizontal scroll from passing through
+            // If popup-body is not scrollable vertically, always block
+            if (popupBody.scrollHeight <= popupBody.clientHeight) {
+                e.preventDefault();
+                return;
+            }
+            // If horizontal gesture, always block
             if (Math.abs(deltaX) > Math.abs(deltaY)) {
                 e.preventDefault();
                 return;
             }
-            // For vertical scroll, only prevent if at edge
-            if (popupBody.scrollHeight > popupBody.clientHeight) {
-                const atTop = popupBody.scrollTop === 0;
-                const atBottom = popupBody.scrollTop + popupBody.clientHeight >= popupBody.scrollHeight - 1;
-                if ((atTop && deltaY < 0) || (atBottom && deltaY > 0)) {
-                    e.preventDefault();
-                }
-            } else {
-                // Not scrollable vertically, always prevent
+            // For vertical scroll, only allow if not at edge
+            const atTop = popupBody.scrollTop === 0;
+            const atBottom = popupBody.scrollTop + popupBody.clientHeight >= popupBody.scrollHeight - 1;
+            if ((atTop && deltaY < 0) || (atBottom && deltaY > 0)) {
                 e.preventDefault();
             }
+            // Otherwise, allow native scroll
         };
         const resetTouch = () => { lastY = undefined; lastX = undefined; };
-        if (popupBody) {
-            popupBody.addEventListener('touchmove', handleTouchMove, { passive: false });
-            popupBody.addEventListener('touchend', resetTouch, { passive: false });
-            popupBody.addEventListener('touchcancel', resetTouch, { passive: false });
+        if (overlay) {
+            overlay.addEventListener('touchmove', handleTouchMove, { passive: false });
+            overlay.addEventListener('touchend', resetTouch, { passive: false });
+            overlay.addEventListener('touchcancel', resetTouch, { passive: false });
         }
 
         return () => {
@@ -87,10 +91,10 @@ function Popup({ showPopUp, title, closePopUp, children }: PopupProps) {
             document.body.style.right = '';
             document.body.style.paddingRight = '';
             window.scrollTo(0, scrollY);
-            if (popupBody) {
-                popupBody.removeEventListener('touchmove', handleTouchMove);
-                popupBody.removeEventListener('touchend', resetTouch);
-                popupBody.removeEventListener('touchcancel', resetTouch);
+            if (overlay) {
+                overlay.removeEventListener('touchmove', handleTouchMove);
+                overlay.removeEventListener('touchend', resetTouch);
+                overlay.removeEventListener('touchcancel', resetTouch);
             }
         };
     }, [showPopUp]);
