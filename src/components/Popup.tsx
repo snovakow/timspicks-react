@@ -80,7 +80,7 @@ function Popup({ showPopUp, title, closePopUp, children }: PopupProps) {
                 onClick={(e) => e.stopPropagation()}
             >
                 <div className="popup-header">
-                    {title}
+                    <span className="popup-header-title">{title}</span>
                     <button className="close-button" onClick={closePopUp} aria-label="Close">
                         &times;
                     </button>
