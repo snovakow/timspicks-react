@@ -173,32 +173,63 @@ if (!is_dir($basePath)) mkdir($basePath, 0755, true);
 */
 if ($live && isset($_GET['backup'])) {
 	// Backup the current data directory before fetching picks
-	if (is_dir($basePath)) {
-		$timezone = new DateTimeZone('America/New_York');
-		$timestamp = new DateTime('now', $timezone);
+	if (!is_dir($basePath)) die("$basePath does not exist.");
 
-		$date = $timestamp->format('Y-m-d');
-		$time = $timestamp->format('Hi');
-		$backupPath = $basePath . '/' . $date;
-		$backupSubPath = $basePath . '/' . $date . '/' . $time;
-		if (!is_dir($backupPath)) mkdir($backupPath, 0755, true);
-		if (!is_dir($backupSubPath)) mkdir($backupSubPath, 0755, true);
-		$bet1file = '/bet1.json';
-		$bet2file = '/bet2.json';
-		$bet3file = '/bet3.json';
-		$bet4file = '/bet4.json';
-		$gamesfile = '/games.json';
-		$helperfile = '/helper.json';
-		copy($basePath . $gamesfile, $backupPath . $gamesfile);
-		copy($basePath . $bet1file, $backupSubPath . $bet1file);
-		copy($basePath . $bet2file, $backupSubPath . $bet2file);
-		copy($basePath . $bet3file, $backupSubPath . $bet3file);
-		copy($basePath . $bet4file, $backupSubPath . $bet4file);
-		copy($basePath . $helperfile, $backupSubPath . $helperfile);
+	$local_file = $basePath . '/games.json';
+	if (!file_exists($local_file)) die("$local_file does not exist.");
 
-		die("<h2>Backup: $backupSubPath</h2>");
+	$data = file_get_contents($local_file);
+	if ($data === false) die("Error reading $local_file");
+
+	$data = json_decode($data, true);
+	if ($data === null) die("Error decoding JSON from $local_file");
+
+	$games = $data["gameWeek"][0]["games"] ?? [];
+	if (empty($games)) die('No games scheduled for today.');
+
+	$timezone = new DateTimeZone('America/New_York');
+	$timestamp = new DateTime('now', $timezone);
+
+	$closestGame = null;
+	$closestTime = null;
+	foreach ($games as $game) {
+		$gameTime = DateTime::createFromFormat('Y-m-d\TH:i:se', $game["startTimeUTC"]);
+
+		if (!$gameTime) continue;
+		if ($gameTime <= $timestamp) continue;
+		if ($closestTime === null || $gameTime < $closestTime) {
+			$closestTime = clone $gameTime;
+			$closestGame = $game;
+		}
 	}
-	die;
+
+	if ($closestGame) {
+		$closestTime->setTimezone($timezone);
+	} else {
+		die('No game found after the current time.');
+	}
+
+	$date = $timestamp->format('Y-m-d');
+	$time = $closestTime->format('Hi');
+
+	$backupPath = $basePath . '/' . $date;
+	$backupSubPath = $basePath . '/' . $date . '/' . $time;
+	if (!is_dir($backupPath)) mkdir($backupPath, 0755, true);
+	if (!is_dir($backupSubPath)) mkdir($backupSubPath, 0755, true);
+	$bet1file = '/bet1.json';
+	$bet2file = '/bet2.json';
+	$bet3file = '/bet3.json';
+	$bet4file = '/bet4.json';
+	$gamesfile = '/games.json';
+	$helperfile = '/helper.json';
+	copy($basePath . $gamesfile, $backupPath . $gamesfile);
+	copy($basePath . $bet1file, $backupSubPath . $bet1file);
+	copy($basePath . $bet2file, $backupSubPath . $bet2file);
+	copy($basePath . $bet3file, $backupSubPath . $bet3file);
+	copy($basePath . $bet4file, $backupSubPath . $bet4file);
+	copy($basePath . $helperfile, $backupSubPath . $helperfile);
+
+	die("<h2>Backup: $backupSubPath</h2>");
 }
 
 echo '<h1>Data Downloader</h1>';
