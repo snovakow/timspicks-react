@@ -40,8 +40,37 @@ function Popup({ showPopUp, title, closePopUp, children }: PopupProps) {
             document.body.style.paddingRight = `${scrollbarWidth}px`;
         }
 
-        // --- Remove custom touchmove preventDefault logic ---
-        // Let .popup-body scroll natively on iOS
+        // Prevent touchmove from passing through overlay when popup is open
+        const overlay = overlayRef.current;
+        let lastY: number | undefined = undefined;
+        const handleTouchMove = (e: TouchEvent) => {
+            const popupBody = overlay?.querySelector('.popup-body') as HTMLElement | null;
+            if (!popupBody) {
+                e.preventDefault();
+                return;
+            }
+            if (popupBody.scrollHeight > popupBody.clientHeight) {
+                // If scrollable, only prevent if at edge
+                const touch = e.touches[0];
+                if (lastY === undefined) lastY = touch.clientY;
+                const deltaY = lastY - touch.clientY;
+                lastY = touch.clientY;
+                const atTop = popupBody.scrollTop === 0;
+                const atBottom = popupBody.scrollTop + popupBody.clientHeight >= popupBody.scrollHeight - 1;
+                if ((atTop && deltaY < 0) || (atBottom && deltaY > 0)) {
+                    e.preventDefault();
+                }
+            } else {
+                // Not scrollable, always prevent
+                e.preventDefault();
+            }
+        };
+        const resetTouch = () => { lastY = undefined; };
+        if (overlay) {
+            overlay.addEventListener('touchmove', handleTouchMove, { passive: false });
+            overlay.addEventListener('touchend', resetTouch, { passive: false });
+            overlay.addEventListener('touchcancel', resetTouch, { passive: false });
+        }
 
         return () => {
             document.documentElement.style.overflow = '';
@@ -52,6 +81,11 @@ function Popup({ showPopUp, title, closePopUp, children }: PopupProps) {
             document.body.style.right = '';
             document.body.style.paddingRight = '';
             window.scrollTo(0, scrollY);
+            if (overlay) {
+                overlay.removeEventListener('touchmove', handleTouchMove);
+                overlay.removeEventListener('touchend', resetTouch);
+                overlay.removeEventListener('touchcancel', resetTouch);
+            }
         };
     }, [showPopUp]);
 
