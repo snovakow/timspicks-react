@@ -113,7 +113,7 @@ function App() {
 		streak: false,
 		point: false,
 		leaderboard: false,
-		hybrid: true,
+		hybrid: false,
 		top: true,
 	});
 
