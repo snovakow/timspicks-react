@@ -6,7 +6,7 @@ import InfoPopupContent, { LegendPopupContent } from './components/InfoPopupCont
 import StatsPopupContent from './components/StatsPopupContent';
 import SettingsPanel from './components/Settings';
 import { poissonChance, roundToPercent, probabilityToAmerican } from './utility';
-import { loadInitialData, buildGamesList, buildPlayerList, buildNormalizedNameMap, mapPlayers, compilePlayerList } from './dataProcessor';
+import { loadInitialData, buildNormalizedNameMap, mapPlayers, compilePlayerList } from './dataProcessor';
 import { precalculateLogStats, cloneLogStats, type LogStatsKey, type LogStat } from './statsCalculations';
 import logo1 from './images/sb-logo-16-draftkings.svg';
 import logo2 from './images/sb-logo-16-fanduel.svg';
@@ -127,8 +127,8 @@ function App() {
 		const initializeData = async () => {
 			try {
 				const initialData = await loadInitialData();
-				const gamesList = buildGamesList(initialData.gamesListing);
-				const playerList = buildPlayerList(initialData.gamesListing);
+				const playerList = initialData.playersListing;
+				const gamesList = initialData.gamesListing;
 				const normalizedNameMap = buildNormalizedNameMap(playerList);
 
 				if (SIMULATE) { runSimulation(gamesList.length, 10000); SIMULATE = false; }
@@ -306,7 +306,6 @@ function App() {
 		if (!memoizedDisplayData) return null;
 		const cache = precalculateLogStats(
 			minSportsbooks,
-			memoizedDisplayData.gamesList,
 			memoizedDisplayData.table1Rows,
 			memoizedDisplayData.table2Rows,
 			memoizedDisplayData.table3Rows

@@ -266,7 +266,7 @@ export const runSimulation = async (gamesCount: number, iterations: number) => {
             pointsAvg: {} as Record<strategyPattern, number | null>
         };
 
-        const cutOff = 0.01; // Only show correlations above 1% (positive or negative)
+        const cutOff = 0.0; // Only show correlations above cutOff (positive or negative)
         const assign = (key: keyof typeof corr, type: strategyPattern, total: Total) => {
             const randVal = baseline[key];
             const totalVal = total[key];

@@ -18,10 +18,6 @@ type GameListingData = {
 		games: GameDataInput[];
 	}[];
 };
-type GamesListingItem = GameDataInput & {
-	homeTeam: GameDataInput["homeTeam"] & { players: PlayerInput[] };
-	awayTeam: GameDataInput["awayTeam"] & { players: PlayerInput[] };
-};
 
 interface SportsbookOddsItem {
 	name: string;
@@ -73,15 +69,16 @@ const isGameDataInput = (value: unknown): value is GameListingData => {
 	return true;
 };
 
-const isPlayerInput = (value: unknown): value is PlayerInput => {
-	if (!isRecord(value)) return false;
-	return (
-		typeof value.playerId === 'number'
-		&& isStringMap(value.firstName)
-		&& typeof value.firstName.default === 'string'
-		&& isStringMap(value.lastName)
-		&& typeof value.lastName.default === 'string'
-	);
+const isPlayersInput = (value: unknown): value is PlayerInput => {
+	if (!Array.isArray(value)) return false;
+	for (const player of value) {
+		if (typeof player.id !== 'number') return false;
+		if (!isStringMap(player.firstName)) return false;
+		if (typeof player.firstName.default !== 'string') return false;
+		if (!isStringMap(player.lastName)) return false;
+		if (typeof player.lastName.default !== 'string') return false;
+	}
+	return true;
 };
 
 const isTeamInput = (value: unknown): boolean => {
@@ -97,14 +94,12 @@ const isTeamInput = (value: unknown): boolean => {
 	);
 };
 
-const isGamesListingItem = (value: unknown): value is GamesListingItem => {
+const isGamesListingItem = (value: unknown): value is GameDataInput => {
 	if (!isRecord(value)) return false;
 	if (typeof value.gameCenterLink !== 'string') return false;
 	if (typeof value.startTimeUTC !== 'string') return false;
 	if (!isRecord(value.homeTeam) || !isRecord(value.awayTeam)) return false;
 	if (!isTeamInput(value.homeTeam) || !isTeamInput(value.awayTeam)) return false;
-	if (!Array.isArray(value.homeTeam.players) || !value.homeTeam.players.every(isPlayerInput)) return false;
-	if (!Array.isArray(value.awayTeam.players) || !value.awayTeam.players.every(isPlayerInput)) return false;
 	return true;
 };
 
@@ -144,7 +139,7 @@ const loadAndValidate = async <T>(
 
 
 // Async loader/validator for games.json that merges players into each game
-export const loadGamesWithPlayers = async (src: string): Promise<GamesListingItem[]> => {
+export const loadGamesAndPlayers = async (src: string): Promise<[Picks.Player[], Picks.GameData[]]> => {
 	const response = await fetchData(src);
 	const gamesJsonRaw = await response.json();
 	if (!isGameDataInput(gamesJsonRaw)) {
@@ -159,44 +154,49 @@ export const loadGamesWithPlayers = async (src: string): Promise<GamesListingIte
 		throw new Error(`No games found for today in ${src}`);
 	}
 
-	async function fetchAndValidatePlayers(team: Picks.TeamInput): Promise<PlayerInput[]> {
-		const code = team.abbrev;
+	if (!Array.isArray(games) || !games.every(isGamesListingItem)) {
+		throw new Error('Invalid games structure');
+	}
+
+	const gamesList: Picks.GameData[] = [];
+	for (const gameData of games) {
+		const game = new Picks.GameData(gameData);
+		gamesList.push(game);
+	}
+
+	async function fetchAndValidatePlayers(
+		team: Picks.TeamData,
+		opponent: Picks.TeamData,
+		homeGame: boolean,
+		gameTime: Date
+	): Promise<Picks.Player[]> {
+		const code = team.code;
 		const url = `./players/players_${code}.json`;
 		const response = await fetch(url);
 		if (!response.ok) throw new Error(`Failed to load ${url}: ${response.status}`);
 		const json = await response.json();
 		if (!isPlayersJson(json)) throw new Error(`Invalid players file: ${url}`);
 		const allPlayers: RawPlayerJson[] = [...json.forwards, ...json.defensemen];
-		return allPlayers.map((p) => ({
-			playerId: p.id,
-			firstName: p.firstName,
-			lastName: p.lastName,
-			headshot: p.headshot,
-		}));
+		if (!isPlayersInput(allPlayers)) throw new Error(`Invalid players listing data format in ${url}`);
+		return allPlayers.map((p) => new Picks.Player(p, team, opponent, homeGame, gameTime));
 	}
 
-	const gamesListing: GamesListingItem[] = await Promise.all(
-		games.map(async (game) => {
-			const homePlayers = await fetchAndValidatePlayers(game.homeTeam);
-			const awayPlayers = await fetchAndValidatePlayers(game.awayTeam);
-			return {
-				...game,
-				homeTeam: {
-					...game.homeTeam,
-					players: homePlayers
-				},
-				awayTeam: {
-					...game.awayTeam,
-					players: awayPlayers
-				}
-			};
-		})
-	);
-
-	if (!Array.isArray(gamesListing) || !gamesListing.every(isGamesListingItem)) {
-		throw new Error('Invalid gamesListing structure after injecting players');
+	const promises = [];
+	for (const game of gamesList) {
+		isGamesListingItem(game); // Type guard for game structure
+		promises.push(fetchAndValidatePlayers(game.home, game.away, true, game.time));
+		promises.push(fetchAndValidatePlayers(game.away, game.home, false, game.time));
 	}
-	return gamesListing;
+	const playersData = await Promise.all(promises);
+	const playersList: Picks.Player[] = playersData.flat();
+
+	gamesList.sort((a: Picks.GameData, b: Picks.GameData): number => {
+		const time = a.time.getTime() - b.time.getTime();
+		if (time !== 0) return time;
+		return a.away.name.localeCompare(b.away.name);
+	});
+
+	return [playersList, gamesList];
 };
 
 // Validate a player object from players_XXX.json
@@ -220,7 +220,8 @@ function isPlayersJson(val: unknown): val is { forwards: RawPlayerJson[]; defens
 
 export interface InitialData {
 	playerData: PlayerDataByPick;
-	gamesListing: GamesListingItem[];
+	playersListing: Picks.Player[];
+	gamesListing: Picks.GameData[];
 	playerOddsDraftKings: SportsbookOddsItem[];
 	playerOddsFanDuel: SportsbookOddsItem[];
 	playerOddsBetMGM: SportsbookOddsItem[];
@@ -228,9 +229,9 @@ export interface InitialData {
 }
 
 export const loadInitialData = async (): Promise<InitialData> => {
-	const [playerData, gamesListing, playerOddsDraftKings, playerOddsFanDuel, playerOddsBetMGM, playerOddsBetRivers] = await Promise.all([
+	const [playerData, [playersListing, gamesListing], playerOddsDraftKings, playerOddsFanDuel, playerOddsBetMGM, playerOddsBetRivers] = await Promise.all([
 		loadAndValidate('./data/helper.json', isPlayerDataByPick, 'helper odds data'),
-		loadGamesWithPlayers('./data/games.json'),
+		loadGamesAndPlayers('./data/games.json'),
 		loadAndValidate('./data/bet1.json', (value): value is SportsbookOddsItem[] => Array.isArray(value) && value.every(isSportsbookOddsItem), 'DraftKings odds data'),
 		loadAndValidate('./data/bet2.json', (value): value is SportsbookOddsItem[] => Array.isArray(value) && value.every(isSportsbookOddsItem), 'FanDuel odds data'),
 		loadAndValidate('./data/bet3.json', (value): value is SportsbookOddsItem[] => Array.isArray(value) && value.every(isSportsbookOddsItem), 'BetMGM odds data'),
@@ -239,6 +240,7 @@ export const loadInitialData = async (): Promise<InitialData> => {
 
 	return {
 		playerData,
+		playersListing,
 		gamesListing,
 		playerOddsDraftKings,
 		playerOddsFanDuel,
@@ -297,36 +299,6 @@ oddsNameMap.set("Zachary Bolduc", "Zack Bolduc"); // DraftKings
 const removeAccentsNormalize = (name: string): string => {
 	return name.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLocaleLowerCase();
 }
-
-export const buildGamesList = (gamesListing: GamesListingItem[]): Picks.GameData[] => {
-	const gamesList: Picks.GameData[] = [];
-	for (const data of gamesListing) {
-		const game = new Picks.GameData(data);
-		gamesList.push(game);
-	}
-	gamesList.sort((a: Picks.GameData, b: Picks.GameData): number => {
-		const time = a.time.getTime() - b.time.getTime();
-		if (time !== 0) return time;
-		return a.away.name.localeCompare(b.away.name);
-	});
-	return gamesList;
-};
-
-export const buildPlayerList = (gamesListing: GamesListingItem[]): Picks.Player[] => {
-	const playerList: Picks.Player[] = [];
-	for (const data of gamesListing) {
-		const game = new Picks.GameData(data);
-		for (const item of data.homeTeam.players) {
-			const player = new Picks.Player(item, game.home, game.time);
-			playerList.push(player);
-		}
-		for (const item of data.awayTeam.players) {
-			const player = new Picks.Player(item, game.away, game.time);
-			playerList.push(player);
-		}
-	}
-	return playerList;
-};
 
 // Build a normalized name map once for fast lookups
 export const buildNormalizedNameMap = (playerList: Picks.Player[]): Map<string, Picks.Player> => {

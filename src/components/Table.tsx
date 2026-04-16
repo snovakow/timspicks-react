@@ -24,7 +24,7 @@ interface GameInput {
 }
 
 interface PlayerInput {
-	playerId: number;
+	id: number;
 	firstName: LocalizedText;
 	lastName: LocalizedText;
 }
@@ -113,9 +113,11 @@ export class Player {
 	link: string;
 
 	team: TeamData;
+	opponent: TeamData;
 	logoLight: string;
 	logoDark: string;
 	gameTime: Date;
+	homeGame: boolean;
 
 	fullName: string;
 	betRaw1: number | null = null;
@@ -136,13 +138,15 @@ export class Player {
 
 	pick: 0 | 1 | 2 | 3 = 0;
 
-	constructor(data: PlayerInput, team: TeamData, gameTime: Date) {
-		this.playerId = data.playerId;
+	constructor(data: PlayerInput, team: TeamData, opponent: TeamData, homeGame: boolean, gameTime: Date) {
+		this.playerId = data.id;
 
 		this.firstName = data.firstName;
 		this.lastName = data.lastName;
 		this.team = team;
+		this.opponent = opponent;
 		this.gameTime = gameTime;
+		this.homeGame = homeGame;
 
 		this.logoLight = this.team.logoLight;
 		this.logoDark = this.team.logoDark;
@@ -154,6 +158,15 @@ export class Player {
 		this.link = `https://www.nhl.com/${linkteam}/player/${first}-${last}-${this.playerId}`;
 
 		this.fullName = `${this.firstName.default} ${this.lastName.default}`;
+	}
+	sameTeam(other: Player): boolean {
+		return this.team.code === other.team.code;
+	}
+	opponentTeam(other: Player): boolean {
+		return this.team.code === other.opponent.code;
+	}
+	sameGame(other: Player): boolean {
+		return this.sameTeam(other) || this.opponentTeam(other);
 	}
 }
 

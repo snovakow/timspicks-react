@@ -29,7 +29,6 @@ export const cloneLogStats = (stats: LogStat[]): LogStat[] => {
 export const calculateStats = (
 	betKey: LogStatsKey,
 	minSportsbooks: number,
-	gamesList: Picks.GameData[],
 	table1Rows: Picks.PickOdds[],
 	table2Rows: Picks.PickOdds[],
 	table3Rows: Picks.PickOdds[],
@@ -91,32 +90,22 @@ export const calculateStats = (
 		return max1 * max2 * max3;
 	}
 
-	const gamesMap = new Map<Team, Team>();
-	for (const game of gamesList) {
-		gamesMap.set(game.home.code, game.away.code);
-		gamesMap.set(game.away.code, game.home.code);
-	}
-
 	type Collide = 'on' | 'opp' | 'game' | 'none';
 	class Choice {
 		avg: number;
 		pick: Picks.PickOdds;
-		on: Team;
-		opp: Team;
-		constructor(pick: Picks.PickOdds, avg: number, opp: Team) {
+		constructor(pick: Picks.PickOdds, avg: number) {
 			this.avg = avg;
 			this.pick = pick;
-			this.on = pick.player.team.code;
-			this.opp = opp;
 		}
 		same(choice: Choice, mode: Collide): boolean {
 			switch (mode) {
 				case "on":
-					return this.on === choice.pick.player.team.code;
+					return this.pick.player.sameTeam(choice.pick.player);
 				case "opp":
-					return this.opp === choice.pick.player.team.code;
+					return this.pick.player.opponentTeam(choice.pick.player);
 				case "game":
-					return this.on === choice.pick.player.team.code || this.opp === choice.pick.player.team.code;
+					return this.pick.player.sameGame(choice.pick.player);
 				case "none":
 					return false;
 			}
@@ -129,9 +118,7 @@ export const calculateStats = (
 			const avg = row.player[betKey];
 			if (avg === null) continue;
 			if (betKey === 'betAvg' && row.player.betCount < minSportsbooks) continue;
-			const opp = gamesMap.get(row.player.team.code);
-			if (opp === undefined) continue;
-			choices.push(new Choice(row, avg, opp));
+			choices.push(new Choice(row, avg));
 		}
 		return choices;
 	};
@@ -334,12 +321,10 @@ export const calculateStats = (
 	// Some games may have started, or players may not be available from a game.
 	const gamesSet = new Set<Team>();
 	let gameCount = 0;
-	for (const pick of table1Rows) {
-		const team = pick.player.team.code;
-		if (gamesSet.has(team)) continue;
-		gamesSet.add(team);
-		const opponent = gamesMap.get(team);
-		if (opponent) gamesSet.add(opponent);
+	for (const pick of [...table1Rows, ...table2Rows, ...table3Rows]) {
+		if (gamesSet.has(pick.player.team.code)) continue;
+		gamesSet.add(pick.player.team.code);
+		gamesSet.add(pick.player.opponent.code);
 		gameCount++;
 	}
 
@@ -415,7 +400,6 @@ export const calculateStats = (
 
 export const precalculateLogStats = (
 	minSportsbooks: number,
-	gamesList: Picks.GameData[],
 	table1Rows: Picks.PickOdds[],
 	table2Rows: Picks.PickOdds[],
 	table3Rows: Picks.PickOdds[]
@@ -425,7 +409,7 @@ export const precalculateLogStats = (
 
 	for (const key of keys) {
 		const stats: LogStat[] = [];
-		calculateStats(key, minSportsbooks, gamesList, table1Rows, table2Rows, table3Rows, stats);
+		calculateStats(key, minSportsbooks, table1Rows, table2Rows, table3Rows, stats);
 		cache[key] = {
 			stats: cloneLogStats(stats),
 		};
