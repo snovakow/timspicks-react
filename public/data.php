@@ -108,7 +108,7 @@ $csrfToken = $_SESSION['csrf_token'];
 							processTeam();
 						}, 1000);
 					} else {
-						responseElement.insertAdjacentHTML('beforeend', "<h2>All teams processed.</h2>");
+						responseElement.insertAdjacentHTML('beforeend', "<h2>All teams processed</h2>");
 						scrollResponseToBottom(responseElement);
 					}
 				}
