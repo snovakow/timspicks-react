@@ -26,6 +26,14 @@ export const cloneLogStats = (stats: LogStat[]): LogStat[] => {
 	}));
 };
 
+export const allStrategies = [
+	'iii', 'sss',
+	'iss', 'sis', 'ssi',
+	'ioo', 'oio', 'ooi',
+	'oso', 'soo', 'sos', 'oss'
+] as const;
+export type strategyPattern = typeof allStrategies[number];
+
 export const calculateStats = (
 	betKey: LogStatsKey,
 	minSportsbooks: number,
@@ -90,25 +98,12 @@ export const calculateStats = (
 		return max1 * max2 * max3;
 	}
 
-	type Collide = 'on' | 'opp' | 'game' | 'none';
 	class Choice {
 		avg: number;
 		pick: Picks.PickOdds;
 		constructor(pick: Picks.PickOdds, avg: number) {
 			this.avg = avg;
 			this.pick = pick;
-		}
-		same(choice: Choice, mode: Collide): boolean {
-			switch (mode) {
-				case "on":
-					return this.pick.player.sameTeam(choice.pick.player);
-				case "opp":
-					return this.pick.player.opponentTeam(choice.pick.player);
-				case "game":
-					return this.pick.player.sameGame(choice.pick.player);
-				case "none":
-					return false;
-			}
 		}
 	}
 
@@ -182,68 +177,276 @@ export const calculateStats = (
 		}
 	}
 
+	// 1000000 iterations per night
 	/*
-		- opposing: 2 picks from opposing teams in the same game, one pick from another game
-		- streak: independent games
-		- points: hybrid, best balance, still good for streaks, but leaderboard upside
-		- leaderboard: stacking, high variance, bad for streaks
-
-		- streak = all picks from different games
-		- points = two picks from the same team, one pick from another game
-		- leaderboard = all three picks from the same team
+		1 Game Night
+		aa71 nights simulated
 	*/
-	const calcCombos = (gameCount: number): {
+	const historical1Night = {
+		all3: {
+			"sss": 0.3540804309550738,
+			"iii": null,
+			"ssi": null,
+			"sis": null,
+			"iss": null,
+			"oso": -0.19852383895152925,
+			"soo": -0.201339738581906,
+			"sos": -0.4216911721838089,
+			"oss": 0.34408194676025783,
+			"ooi": null,
+			"oio": null,
+			"ioo": null
+		},
+		least1: {
+			"sss": -0.004014311640537005,
+			"iii": null,
+			"ssi": null,
+			"sis": null,
+			"iss": null,
+			"oso": 0.0006240918487641078,
+			"soo": 0.00044823245447056514,
+			"sos": 0.0032392539068162307,
+			"oss": -0.012501356173756362,
+			"ooi": null,
+			"oio": null,
+			"ioo": null
+		},
+		points: {
+			"sss": 0.0002046458851772126,
+			"iii": null,
+			"ssi": null,
+			"sis": null,
+			"iss": null,
+			"oso": -0.001494086335342537,
+			"soo": -0.0016537224129409278,
+			"sos": -0.007361560971168135,
+			"oss": -0.0016649101955718004,
+			"ooi": null,
+			"oio": null,
+			"ioo": null
+		},
+		avg: {
+			"sss": -0.0017689767998229078,
+			"iii": null,
+			"ssi": null,
+			"sis": null,
+			"iss": null,
+			"oso": -0.00039521942839537694,
+			"soo": -0.000540041093066046,
+			"sos": -0.005050777486519498,
+			"oss": -0.003593196529209308,
+			"ooi": null,
+			"oio": null,
+			"ioo": null
+		}
+	};
+
+	/*
+		2 Game Nights
+		66 nights simulated
+	*/
+	const historical2Night = {
+		all3: {
+			"sss": -0.03643002717391297,
+			"iii": null,
+			"ssi": 0.2025220788043478,
+			"sis": -0.021849524456521774,
+			"iss": 0.10036514945652186,
+			"oso": 0.10313349184782616,
+			"soo": 0.1059103260869565,
+			"sos": 0.02137398097826093,
+			"oss": 0.1704313858695652,
+			"ooi": -0.23429008152173914,
+			"oio": -0.3779976222826087,
+			"ioo": -0.04595788043478266
+		},
+		least1: {
+			"sss": 0.0016397614909724467,
+			"iii": null,
+			"ssi": 0.0013562708324488248,
+			"sis": -0.0021483034211132734,
+			"iss": -0.005404490402980411,
+			"oso": -0.004019675706722903,
+			"soo": -0.0037126105200119275,
+			"sos": 0.0018256941525787163,
+			"oss": -0.00005374833407989499,
+			"ooi": 0.0017901137095304165,
+			"oio": -0.00834558175177258,
+			"ioo": -0.01120867440865303
+		},
+		points: {
+			"sss": 0.004839322553280123,
+			"iii": null,
+			"ssi": 0.0024313139969136532,
+			"sis": -0.004613398916930134,
+			"iss": -0.006105781933706034,
+			"oso": -0.002110325033674698,
+			"soo": -0.0017824835752299206,
+			"sos": 0.001245449699693646,
+			"oss": -0.005322684347078277,
+			"ooi": -0.003089953574170967,
+			"oio": -0.013505676718338022,
+			"ioo": -0.012041538504135696
+		},
+		avg: {
+			"sss": 0.005009065033670712,
+			"iii": null,
+			"ssi": 0.0016083327058060704,
+			"sis": -0.004542506045567829,
+			"iss": -0.006543701118358447,
+			"oso": -0.0025431970474408816,
+			"soo": -0.0022254283939180386,
+			"sos": 0.0011626602482381898,
+			"oss": -0.0060455678432931315,
+			"ooi": -0.002139018232474199,
+			"oio": -0.012006506817880513,
+			"ioo": -0.011902039237897233
+		}
+	};
+
+	/*
+		3+ Game Nights
+		485 nights simulated
+	*/
+	const historical3PlusNight = {
+		all3: {
+			"sss": -0.042778741322703095,
+			"iii": 0,
+			"ssi": -0.024463727323760676,
+			"sis": 0.009448673264365492,
+			"iss": 0.014592796009131659,
+			"oso": -0.13929147748737547,
+			"soo": -0.14124097649865808,
+			"sos": -0.14448844247218962,
+			"oss": -0.09945674200013654,
+			"ooi": -0.014805137860949391,
+			"oio": -0.05420164062392663,
+			"ioo": -0.08925221000885031
+		},
+		least1: {
+			"sss": -0.004487664487160314,
+			"iii": 0,
+			"ssi": -0.0011402301686510574,
+			"sis": -0.0027711255369844423,
+			"iss": -0.0038676938477631984,
+			"oso": -0.0007725094821269263,
+			"soo": -0.0008237897360976465,
+			"sos": 0.007887930616157668,
+			"oss": 0.0030079576305068745,
+			"ooi": 0.00831744099696663,
+			"oio": -0.0036962289353361655,
+			"ioo": 0.0009114296235401831
+		},
+		points: {
+			"sss": -0.008335966295803243,
+			"iii": 0,
+			"ssi": -0.0041025072419969,
+			"sis": -0.003243947202320685,
+			"iss": -0.004081121056163983,
+			"oso": -0.00782972486973732,
+			"soo": -0.007899117334319472,
+			"sos": 0.0006387309014401765,
+			"oss": -0.0028583877077610342,
+			"ooi": 0.004594460748213791,
+			"oio": -0.0057273489073904615,
+			"ioo": -0.0017902885106692024
+		},
+		avg: {
+			"sss": -0.008111914990911684,
+			"iii": 0,
+			"ssi": -0.003970056882670714,
+			"sis": -0.0033265130866270143,
+			"iss": -0.004202595457766356,
+			"oso": -0.006974562148547747,
+			"soo": -0.00703172446254563,
+			"sos": 0.0015827876025682475,
+			"oss": -0.0022300124588825465,
+			"ooi": 0.004720655730451995,
+			"oio": -0.005412022157315843,
+			"ioo": -0.0012213460365309015
+		}
+	};
+
+	/*	
+		iii = independent
+		sss = stacked
+		iss = stacked + independent
+		sis = stacked + independent
+		ssi = stacked + independent
+		ioo = opposing + independent
+		oio = opposing + independent
+		ooi = opposing + independent
+		oso = ss + o to 1
+		soo = ss + o to 2
+		sos = oo + s as 1
+		oss = oo + s as 2
+	*/
+
+	const strategyTitle = (strategy: strategyPattern): string => {
+		if (strategy === 'iii') return "Independent";
+		if (strategy === 'sss') return "Stacked";
+		if (strategy === 'iss') return "Stacked + Pick 1 Independent";
+		if (strategy === 'sis') return "Stacked + Pick 2 Independent";
+		if (strategy === 'ssi') return "Stacked + Pick 3 Independent";
+		if (strategy === 'ioo') return "Opposing + Pick 1 Independent";
+		if (strategy === 'oio') return "Opposing + Pick 2 Independent";
+		if (strategy === 'ooi') return "Opposing + Pick 3 Independent";
+		if (strategy === 'oso') return "Stacked + Pick 3 Opposing Pick 1";
+		if (strategy === 'soo') return "Stacked + Pick 3 Opposing Pick 2";
+		if (strategy === 'sos') return "Opposing + Pick 3 Stacked Pick 1";
+		if (strategy === 'oss') return "Opposing + Pick 3 Stacked Pick 2";
+		return strategy;
+	}
+
+	const getStrategy = (pick1: Choice, pick2: Choice, pick3: Choice): strategyPattern | null => {
+		const p1 = pick1.pick.player;
+		const p2 = pick2.pick.player;
+		const p3 = pick3.pick.player;
+
+		if (!p1.sameGame(p2) && !p2.sameGame(p3) && !p1.sameGame(p3)) return 'iii';
+		if (p1.sameGame(p2) && p2.sameGame(p3)) return 'sss';
+
+		if (p2.sameTeam(p3) && !p1.sameGame(p2)) return 'iss';
+		if (p1.sameTeam(p3) && !p2.sameGame(p1)) return 'sis';
+		if (p1.sameTeam(p2) && !p3.sameGame(p1)) return 'ssi';
+
+		if (p2.opponentTeam(p3) && !p1.sameGame(p2)) return 'ioo';
+		if (p1.opponentTeam(p3) && !p2.sameGame(p1)) return 'oio';
+		if (p1.opponentTeam(p2) && !p3.sameGame(p1)) return 'ooi';
+
+		if (p1.sameTeam(p2) && p3.opponentTeam(p1)) return 'oso';
+		if (p1.sameTeam(p2) && p3.opponentTeam(p2)) return 'soo';
+		if (p1.sameTeam(p3) && p1.opponentTeam(p2)) return 'sos';
+		if (p2.sameTeam(p3) && p1.opponentTeam(p2)) return 'oss';
+
+		return null;
+	}
+	type strategyMap = Map<strategyPattern, ComboGroup>;
+	const addStrategy = (strategies: strategyMap, pick1: Choice, pick2: Choice, pick3: Choice) => {
+		let strategy = getStrategy(pick1, pick2, pick3);
+		if (!strategy) return;
+		const combo = strategies.get(strategy);
+		if (combo) combo.add(pick1, pick2, pick3);
+	}
+	const calcCombos = (): {
 		top: ComboGroup,
-		streak: ComboGroup,
-		points: ComboGroup,
-		leader: ComboGroup,
-		opposing: ComboGroup
+		strategies: strategyMap
 	} => {
 		const top = new ComboGroup();
-		const streak = new ComboGroup();
-		const points = new ComboGroup();
-		const leader = new ComboGroup();
-		const opposing = new ComboGroup();
+		const strategies = new Map<strategyPattern, ComboGroup>();
+		for (const strategy of allStrategies) strategies.set(strategy, new ComboGroup());
+
 		for (const pick1 of choices1) {
 			for (const pick2 of choices2) {
 				for (const pick3 of choices3) {
 					top.add(pick1, pick2, pick3);
-					if (gameCount >= 3) {
-						if (!pick1.same(pick2, 'game') &&
-							!pick2.same(pick3, 'game') &&
-							!pick1.same(pick3, 'game')) {
-							streak.add(pick1, pick2, pick3);
-						}
-					} else if (gameCount === 1) {
-						if (pick1.same(pick2, 'on') && pick3.same(pick1, 'opp')) streak.add(pick1, pick2, pick3);
-						if (pick1.same(pick3, 'on') && pick2.same(pick1, 'opp')) streak.add(pick1, pick2, pick3);
-						if (pick2.same(pick3, 'on') && pick1.same(pick2, 'opp')) streak.add(pick1, pick2, pick3);
-					}
-
-					if (gameCount >= 2) {
-						if (pick1.same(pick2, 'opp') && !pick3.same(pick1, 'game')) opposing.add(pick1, pick2, pick3);
-						if (pick1.same(pick3, 'opp') && !pick2.same(pick1, 'game')) opposing.add(pick1, pick2, pick3);
-						if (pick2.same(pick3, 'opp') && !pick1.same(pick2, 'game')) opposing.add(pick1, pick2, pick3);
-					} else {
-						if (pick1.same(pick2, 'opp')) opposing.add(pick1, pick2, pick3);
-						if (pick1.same(pick3, 'opp')) opposing.add(pick1, pick2, pick3);
-						if (pick2.same(pick3, 'opp')) opposing.add(pick1, pick2, pick3);
-					}
-
-					if (pick1.same(pick2, 'on') && !pick3.same(pick1, 'game')) points.add(pick1, pick2, pick3);
-					if (pick1.same(pick3, 'on') && !pick2.same(pick1, 'game')) points.add(pick1, pick2, pick3);
-					if (pick2.same(pick3, 'on') && !pick1.same(pick2, 'game')) points.add(pick1, pick2, pick3);
-
-					if (pick1.same(pick2, 'on') && pick2.same(pick3, 'on')) leader.add(pick1, pick2, pick3);
+					addStrategy(strategies, pick1, pick2, pick3);
 				}
 			}
 		}
 		return {
 			top,
-			opposing,
-			streak,
-			points,
-			leader
+			strategies
 		};
 	}
 
@@ -328,15 +531,19 @@ export const calculateStats = (
 		gameCount++;
 	}
 
-	const { top, opposing, streak, points, leader } = calcCombos(gameCount);
+	if (gameCount === 0) return;
+
+	const ref = gameCount === 1 ? historical1Night : gameCount === 2 ? historical2Night : historical3PlusNight;
+
+	const { top, strategies } = calcCombos();
 	if (top.combos.length === 0) return;
 
 	const topResult: Result[] = top.merge();
-	const opposingResult: Result[] = opposing.merge();
-	const streakResult: Result[] = streak.merge();
-	const pointsResult: Result[] = points.merge();
-	const leaderResult: Result[] = leader.merge();
 	const maxResult: Result = topResult[0];
+	const strategyResults: Map<strategyPattern, Result[]> = new Map();
+	for (const [strategy, combo] of strategies) {
+		if (combo.total > 0) strategyResults.set(strategy, combo.merge());
+	}
 
 	addLogTitle("Top Picks");
 	for (const avgResult of topResult) {
@@ -345,55 +552,15 @@ export const calculateStats = (
 		addStrategyHighlights(avgResult, 'top');
 	}
 
-	/*
-		2 games:
-		- streak = same as points
-
-		1 game:
-		- opposing = 2 picks from opposing teams in the same game, one pick from a same team
-		- streak = two picks from the same team, one pick from the opposing team
-			Select top picks from opposing teams, and the 3rd from the same team as the stonger player
-		- points = same as leaderboard
-	*/
-
-	if (gameCount !== 2 && streak.total > 0) {
-		addLogTitle("Streak");
-		for (const avgResult of streakResult) {
+	for (const [strategy, result] of strategyResults.entries()) {
+		addLogTitle(strategyTitle(strategy));
+		for (const avgResult of result) {
 			logReduced(avgResult, maxResult, top.total);
-			logHighlights(avgResult);
-			addStrategyHighlights(avgResult, 'streak');
+			// logHighlights(avgResult);
+			// addStrategyHighlights(avgResult, 'streak');
 		}
 	}
-
-	if (opposing.total > 0) {
-		addLogTitle("Opposing");
-		for (const avgResult of opposingResult) {
-			logReduced(avgResult, maxResult, top.total);
-			logHighlights(avgResult);
-			addStrategyHighlights(avgResult, 'hybrid');
-		}
-	}
-
-	if (gameCount > 1 && points.total > 0) {
-		if (gameCount === 2) addLogTitle("Streak/Points");
-		else addLogTitle("Points");
-		for (const avgResult of pointsResult) {
-			logReduced(avgResult, maxResult, top.total);
-			logHighlights(avgResult);
-			if (gameCount === 2) addStrategyHighlights(avgResult, 'streak');
-			addStrategyHighlights(avgResult, 'point');
-		}
-	}
-	if (leader.total > 0) {
-		if (gameCount === 1) addLogTitle("Points/Leaderboard");
-		else addLogTitle("Leaderboard");
-		for (const avgResult of leaderResult) {
-			logReduced(avgResult, maxResult, top.total);
-			logHighlights(avgResult);
-			if (gameCount === 1) addStrategyHighlights(avgResult, 'point');
-			addStrategyHighlights(avgResult, 'leaderboard');
-		}
-	}
+	console.log(ref);
 
 	logFooter();
 };

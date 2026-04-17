@@ -1,3 +1,5 @@
+import { allStrategies, type strategyPattern } from "./statsCalculations";
+
 interface HistoryPlayer {
     "nhlPlayerId": number;
     "fullName": string;
@@ -90,33 +92,7 @@ function oSet(player: HistoryPlayer, set: PlayerSet): PlayerSet {
     const opposing = set.filter((p) => p.team === player.opponent);
     return opposing;
 }
-/*
-    sss = stacked
-    iii = independent
-    ssi = stacked + independent
-    sis = stacked + independent
-    iss = stacked + independent
-    oso = ss + o to 1
-    soo = ss + o to 2
-    sos = oo + s as 1
-    oss = oo + s as 2
-    ooi = opposing + independent
-    oio = opposing + independent
-    ioo = opposing + independent
-    # of games
-*/
-type strategyPattern =
-    'sss' | 'iii' |
-    'ssi' | 'sis' | 'iss' |
-    'oso' | 'soo' | 'sos' | 'oss' |
-    'ooi' | 'oio' | 'ioo';
 
-const allStrategies: strategyPattern[] = [
-    'sss', 'iii',
-    'ssi', 'sis', 'iss',
-    'oso', 'soo', 'sos', 'oss',
-    'ooi', 'oio', 'ioo'
-];
 /**
  * Simulate a pick combination according to the given strategy pattern.
  * @param set1 PlayerSet for pick 1
@@ -130,67 +106,45 @@ function simulateCombo(set1: PlayerSet, set2: PlayerSet, set3: PlayerSet, patter
     if (!pick1) return null;
     let pick2: HistoryPlayer | undefined;
     let pick3: HistoryPlayer | undefined;
-    if (pattern === 'sss') {
-        pick2 = getRandomEntry(sSet(pick1, set2));
-        if (!pick2) return null;
-        pick3 = getRandomEntry(sSet(pick1, set3));
-        if (!pick3) return null;
-    } else if (pattern === 'iii') {
+    if (pattern === 'iii') {
         pick2 = getRandomEntry(iSet(pick1, set2));
-        if (!pick2) return null;
-        pick3 = getRandomEntry(iSet(pick2, iSet(pick1, set3)));
-        if (!pick3) return null;
-    } else if (pattern === 'ssi') {
+        if (pick2) pick3 = getRandomEntry(iSet(pick2, iSet(pick1, set3)));
+    } else if (pattern === 'sss') {
         pick2 = getRandomEntry(sSet(pick1, set2));
-        if (!pick2) return null;
-        pick3 = getRandomEntry(iSet(pick1, set3));
-        if (!pick3) return null;
-    } else if (pattern === 'sis') {
-        pick2 = getRandomEntry(iSet(pick1, set2));
-        if (!pick2) return null;
-        pick3 = getRandomEntry(sSet(pick1, set3));
-        if (!pick3) return null;
+        if (pick2) pick3 = getRandomEntry(sSet(pick2, set3));
     } else if (pattern === 'iss') {
         pick2 = getRandomEntry(iSet(pick1, set2));
-        if (!pick2) return null;
-        pick3 = getRandomEntry(sSet(pick2, set3));
-        if (!pick3) return null;
-    } else if (pattern === 'oso') {
+        if (pick2) pick3 = getRandomEntry(sSet(pick2, set3));
+    } else if (pattern === 'sis') {
+        pick2 = getRandomEntry(iSet(pick1, set2));
+        if (pick2) pick3 = getRandomEntry(sSet(pick1, set3));
+    } else if (pattern === 'ssi') {
         pick2 = getRandomEntry(sSet(pick1, set2));
-        if (!pick2) return null;
-        pick3 = getRandomEntry(oSet(pick1, set3));
-        if (!pick3) return null;
-    } else if (pattern === 'soo') {
-        pick2 = getRandomEntry(sSet(pick1, set2));
-        if (!pick2) return null;
-        pick3 = getRandomEntry(oSet(pick2, set3));
-        if (!pick3) return null;
-    } else if (pattern === 'sos') {
-        pick2 = getRandomEntry(oSet(pick1, set2));
-        if (!pick2) return null;
-        pick3 = getRandomEntry(sSet(pick1, set3));
-        if (!pick3) return null;
-    } else if (pattern === 'oss') {
-        pick2 = getRandomEntry(oSet(pick1, set2));
-        if (!pick2) return null;
-        pick3 = getRandomEntry(sSet(pick2, set3));
-        if (!pick3) return null;
-    } else if (pattern === 'ooi') {
-        pick2 = getRandomEntry(oSet(pick1, set2));
-        if (!pick2) return null;
-        pick3 = getRandomEntry(iSet(pick1, set3));
-        if (!pick3) return null;
+        if (pick2) pick3 = getRandomEntry(iSet(pick1, set3));
+    } else if (pattern === 'ioo') {
+        pick2 = getRandomEntry(iSet(pick1, set2));
+        if (pick2) pick3 = getRandomEntry(oSet(pick2, set3));
     } else if (pattern === 'oio') {
         pick2 = getRandomEntry(iSet(pick1, set2));
-        if (!pick2) return null;
-        pick3 = getRandomEntry(oSet(pick1, set3));
-        if (!pick3) return null;
-    } else { // if (pattern === 'ioo') {
-        pick2 = getRandomEntry(iSet(pick1, set2));
-        if (!pick2) return null;
-        pick3 = getRandomEntry(oSet(pick2, set3));
-        if (!pick3) return null;
+        if (pick2) pick3 = getRandomEntry(oSet(pick1, set3));
+    } else if (pattern === 'ooi') {
+        pick2 = getRandomEntry(oSet(pick1, set2));
+        if (pick2) pick3 = getRandomEntry(iSet(pick1, set3));
+    } else if (pattern === 'oso') {
+        pick2 = getRandomEntry(sSet(pick1, set2));
+        if (pick2) pick3 = getRandomEntry(oSet(pick1, set3));
+    } else if (pattern === 'soo') {
+        pick2 = getRandomEntry(sSet(pick1, set2));
+        if (pick2) pick3 = getRandomEntry(oSet(pick2, set3));
+    } else if (pattern === 'sos') {
+        pick2 = getRandomEntry(oSet(pick1, set2));
+        if (pick2) pick3 = getRandomEntry(sSet(pick1, set3));
+    } else if (pattern === 'oss') {
+        pick2 = getRandomEntry(oSet(pick1, set2));
+        if (pick2) pick3 = getRandomEntry(sSet(pick2, set3));
     }
+    if (!pick2) return null;
+    if (!pick3) return null;
     return new Result(pick1.scored, pick2.scored, pick3.scored);
 }
 
@@ -239,7 +193,7 @@ export const runSimulation = async (gamesCount: number, iterations: number) => {
                 }
             }
 
-            if(gameResults.gamesMin > gameCount || gameResults.gamesMax < gameCount) continue;
+            if (gameResults.gamesMin > gameCount || gameResults.gamesMax < gameCount) continue;
             gameResults.nightsCount++;
 
             if (set1.size === 0 || set2.size === 0 || set3.size === 0) continue;
