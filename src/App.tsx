@@ -326,7 +326,17 @@ function App() {
 	};
 
 	const openStatsPopup = (key: LogStatsKey, title: string) => {
-		if (statsCache) {
+		// If there are no games, show a message in the popup
+		if (gamesList.length === 0) {
+			setPopupStats([
+				{
+					isTitle: true,
+					align: 'center',
+					lines: ['No stats available'],
+					break: false,
+				},
+			]);
+		} else if (statsCache) {
 			const cached = statsCache[key];
 			setPopupStats(cloneLogStats(cached.stats));
 		}
