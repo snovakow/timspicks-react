@@ -149,9 +149,13 @@ function App() {
 
 				setData({ gamesList, playerList, table1Rows, table2Rows, table3Rows });
 				setError(null);
-			} catch (error) {
-				console.error('Failed to load initial data:', error);
-				setError('Failed to load game data. Please refresh the page.');
+			} catch (error: unknown) {
+				if (error instanceof Error && error.message === "NO GAMES") {
+					console.warn('No games found for today. Displaying empty tables.');
+				} else {
+					console.error('Failed to load initial data:', error);
+					setError('Failed to load game data. Please refresh the page.');
+				}
 				setData({ gamesList: [], playerList: [], table1Rows: [], table2Rows: [], table3Rows: [] });
 			} finally {
 				setIsLoading(false);
@@ -487,7 +491,11 @@ function App() {
 				</div>
 				<div className="table-container">
 					<h2>Games</h2>
-					<Picks.Basic games={gamesList} darkTheme={darkTheme} />
+					{gamesList.length === 0 ? (
+						<div style={{ textAlign: 'center', fontSize: '1.2rem', margin: '1.5rem 0' }}>No games today</div>
+					) : (
+						<Picks.Basic games={gamesList} darkTheme={darkTheme} />
+					)}
 				</div>
 				<div className="table-container">
 					<h2>Pick #1</h2>

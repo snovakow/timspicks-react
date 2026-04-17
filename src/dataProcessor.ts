@@ -151,7 +151,7 @@ export const loadGamesAndPlayers = async (src: string): Promise<[Picks.Player[],
 	}
 	const games: GameDataInput[] = gamesJson.gameWeek[0].games || [];
 	if (!Array.isArray(games) || games.length === 0) {
-		throw new Error(`No games found for today in ${src}`);
+		throw new Error("NO GAMES");
 	}
 
 	if (!Array.isArray(games) || !games.every(isGamesListingItem)) {
