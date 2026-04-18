@@ -186,7 +186,8 @@ export interface OddsItem {
 	goals: number;
 }
 
-export type StrategyMode = 'streak' | 'point' | 'leaderboard' | 'hybrid' | 'top';
+export type Strategy = 'least1' | 'points' | 'hits' | 'all3';
+export type StrategyMode = Strategy | 'top';
 export class PickOdds {
 	player: Player;
 
@@ -224,13 +225,13 @@ export function Table(props: {
 	enabledStrategies: Record<StrategyMode, boolean>
 }) {
 	const { columns, sortedRows, requestSort, sortConfig, darkTheme, enabledStrategies } = props;
-	const orderedModes: StrategyMode[] = ['streak', 'point', 'leaderboard', 'hybrid', 'top'];
+	const orderedModes: StrategyMode[] = ['least1', 'points', 'hits', 'all3', 'top'];
 	const enabledModes = orderedModes.filter((mode) => enabledStrategies[mode]);
 	const strategyLabel = (mode: StrategyMode): string => {
-		if (mode === 'streak') return 'Streak';
-		if (mode === 'point') return 'Points';
-		if (mode === 'leaderboard') return 'Leaderboard';
-		if (mode === 'hybrid') return 'Hybrid';
+		if (mode === 'least1') return 'Streak';
+		if (mode === 'points') return 'Points';
+		if (mode === 'hits') return 'Leaderboard';
+		if (mode === 'all3') return 'All 3';
 		return 'Top';
 	};
 	const strategyTitle = (strategy: Set<StrategyMode>): string => {
