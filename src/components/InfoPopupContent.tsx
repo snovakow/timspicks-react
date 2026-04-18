@@ -76,10 +76,10 @@ export function LegendPopupContent() {
 				<p className="legend-pick-row"><span className="cell-bet-with-dots legend-badge-cell highlight-top-bg">
 					<span className="cell-bet-value">Pick</span>
 					<span className="cell-strategy-dots" aria-hidden="true">
-						<span className="cell-strategy-dot cell-strategy-dot-streak cell-strategy-dot-active" />
-						<span className="cell-strategy-dot cell-strategy-dot-point cell-strategy-dot-active" />
-						<span className="cell-strategy-dot cell-strategy-dot-leaderboard cell-strategy-dot-active" />
-						<span className="cell-strategy-dot cell-strategy-dot-hybrid cell-strategy-dot-active" />
+						<span className="cell-strategy-dot cell-strategy-dot-least1 cell-strategy-dot-active" />
+						<span className="cell-strategy-dot cell-strategy-dot-points cell-strategy-dot-active" />
+						<span className="cell-strategy-dot cell-strategy-dot-hits cell-strategy-dot-active" />
+						<span className="cell-strategy-dot cell-strategy-dot-all3 cell-strategy-dot-active" />
 						<span className="cell-strategy-dot cell-strategy-dot-top cell-strategy-dot-active" />
 					</span>
 				</span>
@@ -88,16 +88,26 @@ export function LegendPopupContent() {
 
 			<section className="info-popup-section">
 				<h3>Strategy</h3>
-				<p className="legend-strategy-row"><span className="legend-strategy-dot info-chip-streak-left-dot" aria-hidden="true" />
-					<span className="legend-strategy-text"><strong>Streak (Green):</strong> Best picks for streaks. Getting at least one pick correct for 7 straight days earns free coffee for a week.</span></p>
-				<p className="legend-strategy-row"><span className="legend-strategy-dot info-chip-point-left-dot" aria-hidden="true" />
-					<span className="legend-strategy-text"><strong>Points (Magenta):</strong> Best picks for maximum points. 1 correct = 25 points, 2 correct = 50 points, 3 correct = 100 points. Also strong for streaks and the best overall strategy.</span></p>
-				<p className="legend-strategy-row"><span className="legend-strategy-dot info-chip-leaderboard-left-dot" aria-hidden="true" />
-					<span className="legend-strategy-text"><strong>Leaderboard (Amber):</strong> Best picks for competing on the leaderboard. High-risk, high-reward strategy.</span></p>
-				<p className="legend-strategy-row"><span className="legend-strategy-dot info-chip-hybrid-left-dot" aria-hidden="true" />
-					<span className="legend-strategy-text"><strong>Hybrid (Blue):</strong> Hybrid strategy balanced between streak safety and point upside. Points strategy is the best hybrid solution.</span></p>
+				<p className="legend-strategy-row"><span className="legend-strategy-dot info-chip-least1-left-dot" aria-hidden="true" />
+					<span className="legend-strategy-text"><strong>Streak (Green): </strong>
+						Best picks for streaks. Getting at least one pick correct for 7 straight days earns free coffee for a week.
+					</span></p>
+				<p className="legend-strategy-row"><span className="legend-strategy-dot info-chip-points-left-dot" aria-hidden="true" />
+					<span className="legend-strategy-text"><strong>Points (Magenta): </strong>
+						Best picks for maximum points. 1 correct = 25 points, 2 correct = 50 points, 3 correct = 100 points.
+					</span></p>
+				<p className="legend-strategy-row"><span className="legend-strategy-dot info-chip-hits-left-dot" aria-hidden="true" />
+					<span className="legend-strategy-text"><strong>Leaderboard (Amber): </strong>
+						Best picks for competing on the leaderboard.
+					</span></p>
+				<p className="legend-strategy-row"><span className="legend-strategy-dot info-chip-all3-left-dot" aria-hidden="true" />
+					<span className="legend-strategy-text"><strong>All 3 (Blue): </strong>
+						Best picks for getting all three correct.
+					</span></p>
 				<p className="legend-strategy-row"><span className="legend-strategy-dot info-chip-top-left-dot" aria-hidden="true" />
-					<span className="legend-strategy-text"><strong>Top (Navy):</strong> Highest-probability pick.</span></p>
+					<span className="legend-strategy-text"><strong>Top (Navy): </strong>
+						Highest-probability pick.
+					</span></p>
 			</section>
 		</div>
 	);
