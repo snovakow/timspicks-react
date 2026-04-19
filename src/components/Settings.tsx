@@ -35,14 +35,13 @@ export default function SettingsPanel(props: SettingsPanelProps) {
 	return (
 		<div className="settings-container">
 			<div className="settings-group">
-				<label className="settings-checkbox-item settings-checkbox-hoverable single-checkbox" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer', userSelect: 'none', margin: 0 }}>
+				<label className="settings-checkbox-item settings-checkbox-hoverable">
 					<input
 						type="checkbox"
 						checked={showPercentage}
 						onChange={(e) => onShowPercentageChange(e.target.checked)}
-						style={{ cursor: 'pointer', width: 18, height: 18 }}
 					/>
-					<span style={{ fontWeight: 500, fontSize: '1rem' }}>Show Probabilities</span>
+					<span>Show Probabilities</span>
 				</label>
 				<div className="settings-description">
 					Show values as probability percentages. Sportsbook odds are displayed as implied probabilities, otherwise are displayed as American odds.
@@ -50,14 +49,13 @@ export default function SettingsPanel(props: SettingsPanelProps) {
 			</div>
 
 			<div className="settings-group">
-				<label className="settings-checkbox-item settings-checkbox-hoverable single-checkbox" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer', userSelect: 'none', margin: 0 }}>
+				<label className="settings-checkbox-item settings-checkbox-hoverable">
 					<input
 						type="checkbox"
 						checked={deVigEnabled}
 						onChange={(e) => onDeVigEnabledChange(e.target.checked)}
-						style={{ cursor: 'pointer', width: 18, height: 18 }}
 					/>
-					<span style={{ fontWeight: 500, fontSize: '1rem' }}>Normalize Sportsbooks</span>
+					<span>Normalize Sportsbooks</span>
 				</label>
 				<div className="settings-description">
 					Remove sportsbook bias by adjusting odds to a consensus value.
