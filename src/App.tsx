@@ -227,7 +227,7 @@ function App() {
 		const key4 = deVigEnabled ? 'bet4' : 'betRaw4';
 
 		for (const player of playerList) {
-			const values = [player[key1 as keyof typeof player], player[key2 as keyof typeof player], player[key3 as keyof typeof player], player[key4 as keyof typeof player]];
+			const values = [player[key1], player[key2], player[key3], player[key4]];
 			const rawValues = [player.betRaw1, player.betRaw2, player.betRaw3, player.betRaw4];
 			const displays = ['betDisplay1', 'betDisplay2', 'betDisplay3', 'betDisplay4'] as const;
 
