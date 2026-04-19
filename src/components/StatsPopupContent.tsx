@@ -12,7 +12,6 @@ export default function StatsPopupContent({ stats }: StatsPopupContentProps) {
 			{stats.map((stat, index) => {
 				const className = [
 					styles.section,
-					stat.break ? styles.sectionBreak : '',
 					stat.isTitle ? styles.sectionTitle : '',
 				].filter(Boolean).join(' ');
 

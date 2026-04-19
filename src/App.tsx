@@ -329,7 +329,6 @@ function App() {
 					isTitle: true,
 					align: 'center',
 					lines: ['No stats available'],
-					break: false,
 				},
 			]);
 		} else if (statsCache) {
