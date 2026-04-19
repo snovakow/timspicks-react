@@ -44,7 +44,7 @@ export default function SettingsPanel(props: SettingsPanelProps) {
 					<span>Show Probabilities</span>
 				</label>
 				<div className="settings-description">
-					Show values as probability percentages. Sportsbook odds are displayed as implied probabilities, otherwise are displayed as American odds.
+					Show sportsbook odds as implied probability percentages, otherwise as American odds.
 				</div>
 			</div>
 
@@ -78,7 +78,7 @@ export default function SettingsPanel(props: SettingsPanelProps) {
 					<option value="4">All 4 sportsbooks</option>
 				</select>
 				<div className="settings-description">
-					Highlight Avg when at least this many sportsbooks have values.
+					Highlight top Avg with at least this many sportsbooks having values.
 				</div>
 			</div>
 
