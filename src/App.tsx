@@ -495,27 +495,37 @@ function App() {
 				</div>
 				<div className="table-container">
 					<h2>Games</h2>
-					{gamesList.length === 0 ? (
-						<div style={{ textAlign: 'center', fontSize: '1.2rem', margin: '1.5rem 0' }}>No games today</div>
-					) : (
-						<Picks.Basic games={gamesList} darkTheme={darkTheme} />
-					)}
+					<div className="scrollable-table-wrapper">
+						{gamesList.length === 0 ? (
+							<div style={{ textAlign: 'center', fontSize: '1.2rem', margin: '1.5rem 0' }}>No games today</div>
+						) : (
+							<Picks.Basic games={gamesList} darkTheme={darkTheme} />
+						)}
+					</div>
 				</div>
 				<div className="table-container">
 					<h2>Pick #1</h2>
-					<Picks.Table columns={columns} sortedRows={table1Rows} requestSort={requestSort1} sortConfig={sortConfig1Ref.current} darkTheme={darkTheme} enabledStrategies={enabledStrategies} />
+					<div className="scrollable-table-wrapper">
+						<Picks.Table columns={columns} sortedRows={table1Rows} requestSort={requestSort1} sortConfig={sortConfig1Ref.current} darkTheme={darkTheme} enabledStrategies={enabledStrategies} />
+					</div>
 				</div>
 				<div className="table-container">
 					<h2>Pick #2</h2>
-					<Picks.Table columns={columns} sortedRows={table2Rows} requestSort={requestSort2} sortConfig={sortConfig2Ref.current} darkTheme={darkTheme} enabledStrategies={enabledStrategies} />
+					<div className="scrollable-table-wrapper">
+						<Picks.Table columns={columns} sortedRows={table2Rows} requestSort={requestSort2} sortConfig={sortConfig2Ref.current} darkTheme={darkTheme} enabledStrategies={enabledStrategies} />
+					</div>
 				</div>
 				<div className="table-container">
 					<h2>Pick #3</h2>
-					<Picks.Table columns={columns} sortedRows={table3Rows} requestSort={requestSort3} sortConfig={sortConfig3Ref.current} darkTheme={darkTheme} enabledStrategies={enabledStrategies} />
+					<div className="scrollable-table-wrapper">
+						<Picks.Table columns={columns} sortedRows={table3Rows} requestSort={requestSort3} sortConfig={sortConfig3Ref.current} darkTheme={darkTheme} enabledStrategies={enabledStrategies} />
+					</div>
 				</div>
 				<div className="table-container">
 					<h2>Players</h2>
-					<Picks.Table columns={columnsPlayer} sortedRows={displayPlayerList} requestSort={requestSortPlayer} sortConfig={sortConfigPlayerRef.current} darkTheme={darkTheme} enabledStrategies={enabledStrategies} />
+					<div className="scrollable-table-wrapper">
+						<Picks.Table columns={columnsPlayer} sortedRows={displayPlayerList} requestSort={requestSortPlayer} sortConfig={sortConfigPlayerRef.current} darkTheme={darkTheme} enabledStrategies={enabledStrategies} />
+					</div>
 				</div>
 			</main>
 		</>

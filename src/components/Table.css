@@ -52,6 +52,13 @@ table {
   margin-right: auto;
 }
 
+.scrollable-table-wrapper {
+  overflow: auto;
+  display: inline-block;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
 th {
   padding: 0.5em;
 }
