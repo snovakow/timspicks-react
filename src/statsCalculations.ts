@@ -160,12 +160,10 @@ export const calculateStats = (
 			this.points = calcPnt(this.prob1, this.prob2, this.prob3);
 			this.hits = calcHit(this.prob1, this.prob2, this.prob3);
 		}
-		merge(combo: BestCombo): boolean {
-			if (this.prob1 !== combo.pick1.prob || this.prob2 !== combo.pick2.prob || this.prob3 !== combo.pick3.prob) return false;
+		merge(combo: BestCombo): void {
 			this.players1.add(combo.pick1.pick);
 			this.players2.add(combo.pick2.pick);
 			this.players3.add(combo.pick3.pick);
-			return true;
 		}
 
 		correlate(strategy: strategyPattern, ref: Correlation) {
@@ -182,26 +180,32 @@ export const calculateStats = (
 
 	class ComboGroup {
 		combos: BestCombo[] = [];
-		total: number = 0;
+		prob1: number = 0;
+		prob2: number = 0;
+		prob3: number = 0;
 		add(pick1: Choice, pick2: Choice, pick3: Choice) {
-			const total = pick1.prob + pick2.prob + pick3.prob;
-			if (total > this.total) {
+			const max1 = pick1.prob >= this.prob1;
+			if (!max1) return;
+			const max2 = pick2.prob >= this.prob2;
+			if (!max2) return;
+			const max3 = pick3.prob >= this.prob3;
+			if (!max3) return;
+			if (pick1.prob > this.prob1 || pick2.prob > this.prob2 || pick3.prob > this.prob3) {
 				this.combos.splice(0, this.combos.length, { pick1, pick2, pick3 });
-				this.total = total;
-			} else if (total === this.total) {
-				this.combos.push({ pick1, pick2, pick3 });
+				this.prob1 = pick1.prob;
+				this.prob2 = pick2.prob;
+				this.prob3 = pick3.prob;
+				return;
 			}
+			this.combos.push({ pick1, pick2, pick3 });
 		}
-		merge(): Result[] {
-			const avgResults: Result[] = [];
-			if (this.combos.length === 0) return avgResults;
+		merge(): Result | null {
 			let prev: Result | null = null;
 			for (const combo of this.combos) {
-				if (prev && prev.merge(combo)) continue;
-				prev = new Result(combo);
-				avgResults.push(prev);
+				if (prev) prev.merge(combo);
+				else prev = new Result(combo);
 			}
-			return avgResults;
+			return prev;
 		}
 	}
 
@@ -494,15 +498,18 @@ export const calculateStats = (
 	const printStrategyDiff = (strategy: Picks.Strategy, top: number, value: number): string => {
 		let diff = value - top;
 		let percent = "";
+		let precision = comboPrecision;
 		if (strategy === 'least1' || strategy === 'all3') {
 			diff *= 100;
 			percent = "%";
 		}
-		const places = Math.pow(10, comboPrecision);
+		if (strategy === 'hits') precision += 1;
+
+		const places = Math.pow(10, precision);
 		diff = Math.round(diff * places) / places;
 		if (diff === 0) return "";
 		const sign = diff > 0 ? "+" : "";
-		return " (" + sign + diff.toFixed(comboPrecision) + percent + ")";
+		return " (" + sign + diff.toFixed(precision) + percent + ")";
 	}
 	const logCalcStats = (avgResult: Result) => {
 		addLog();
@@ -520,15 +527,14 @@ export const calculateStats = (
 		addPlayersToHighlight(avgResult.players3);
 	}
 
-	const logTopPicks = (avgResult: Result, topStrategy: strategyPattern | null) => {
+	const logTopPicks = (avgResult: Result) => {
 		addLog(`1: ${roundToPercent(avgResult.prob1, precision)} - ${names(avgResult.players1)}`);
 		addLog(`2: ${roundToPercent(avgResult.prob2, precision)} - ${names(avgResult.players2)}`);
 		addLog(`3: ${roundToPercent(avgResult.prob3, precision)} - ${names(avgResult.players3)}`);
-		if (topStrategy) addLog(strategyTitle(topStrategy), 'center');
 		logCalcStats(avgResult);
 	}
 
-	const logReduced = (avgResult: Result, topResult: Result, totalMax: number, strategy: strategyPattern): void => {
+	const logReduced = (avgResult: Result, topResult: Result, strategy: strategyPattern): void => {
 		let line1 = `1: ${names(avgResult.players1, true)}`;
 		let reducedCount = 0;
 		if (avgResult.prob1 !== topResult.prob1) {
@@ -552,6 +558,7 @@ export const calculateStats = (
 
 		if (reducedCount > 1) {
 			const total = avgResult.prob1 + avgResult.prob2 + avgResult.prob3;
+			const totalMax = topResult.prob1 + topResult.prob2 + topResult.prob3;
 			addLog(`Total: ${roundToPercent(total - totalMax, comboPrecision)}`, 'center');
 		}
 		addLog(strategyTitle(strategy), 'center');
@@ -595,38 +602,38 @@ export const calculateStats = (
 	const ref = gameCount === 1 ? historical1Night : gameCount === 2 ? historical2Night : historical3PlusNight;
 
 	const { top, strategies } = calcCombos();
-	if (top.combos.length === 0) return;
+	const topResultRaw = top.merge();
+	if (topResultRaw === null) return;
+	const topResult: Result = topResultRaw;
 
-	const topResult: Result[] = top.merge();
-	const maxResult: Result = topResult[0];
-	const strategyResults: Map<strategyPattern, Result[]> = new Map();
-	for (const [strategy, combo] of strategies) {
-		if (combo.total > 0) strategyResults.set(strategy, combo.merge());
+	const strategyResults: Map<strategyPattern, Result> = new Map();
+	for (const [strategy, combos] of strategies) {
+		const combo = combos.merge();
+		if (combo !== null) strategyResults.set(strategy, combo);
 	}
 
 	type strategyGroup = {
 		strategy: strategyPattern;
-		result: Result[];
+		result: Result;
 	}
-	const findMax = (key: Picks.Strategy): strategyGroup => {
+	const findMax = (key: Picks.Strategy): strategyGroup | null => {
 		let max = 0;
-		let maxResult: Result[] | null = null;
+		let maxResult: Result | null = null;
 		let maxStrategy: strategyPattern | null = null;
 		for (const [strategy, result] of strategyResults) {
-			const value = result[0][key];
+			const value = result[key];
 			if (value > max) {
 				max = value;
 				maxResult = result;
 				maxStrategy = strategy;
 			}
 		}
-		return { strategy: maxStrategy!, result: maxResult! };
+		if (maxStrategy === null || maxResult === null) return null;
+		return { strategy: maxStrategy, result: maxResult };
 	}
 
 	for (const [strategy, result] of strategyResults) {
-		for (const avgResult of result) {
-			avgResult.correlate(strategy, ref);
-		}
+		result.correlate(strategy, ref);
 	}
 
 	const isSameSet = (set1: Set<Picks.PickOdds>, set2: Set<Picks.PickOdds>): boolean => {
@@ -640,27 +647,15 @@ export const calculateStats = (
 		if (!isSameSet(top.players3, group.players3)) return false;
 		return true;
 	}
-	const isSameGroup = (top: Result[], group: Result[]): boolean => {
-		if (top.length !== group.length) return false;
-		for (let i = 0; i < top.length; i++) {
-			const topResult = top[i];
-			const groupResult = group[i];
-			const isSame = isSameResult(topResult, groupResult);
-			if (!isSame) return false;
-		}
-		return true;
-	}
 
-	let topStrategy: strategyPattern | null = null;
-	const processSameGroup = (top: Result[], groupKey: Picks.Strategy): strategyGroup | null => {
+	const processSameGroup = (top: Result, groupKey: Picks.Strategy): strategyGroup | null => {
 		const group = findMax(groupKey);
+		if (group === null) return null;
 
-		for (const avgResult of group.result) {
-			logHighlights(avgResult);
-			addStrategyHighlights(avgResult, groupKey);
-		}
+		logHighlights(group.result);
+		addStrategyHighlights(group.result, groupKey);
 
-		const same = isSameGroup(top, group.result);
+		const same = isSameResult(top, group.result);
 		if (!same) return group;
 		return group;
 	}
@@ -670,11 +665,9 @@ export const calculateStats = (
 	const all3 = processSameGroup(topResult, 'all3');
 
 	addLogTitle("Top Picks");
-	for (const avgResult of topResult) {
-		logTopPicks(avgResult, topStrategy);
-		logHighlights(avgResult);
-		addStrategyHighlights(avgResult, 'top');
-	}
+	logTopPicks(topResult);
+	logHighlights(topResult);
+	addStrategyHighlights(topResult, 'top');
 
 	class GroupedPlayer {
 		result: Result;
@@ -687,36 +680,36 @@ export const calculateStats = (
 			this.add(key, result[key]);
 		}
 		add(strategy: Picks.Strategy, value: number) {
-			const diff = printStrategyDiff(strategy, topResult[0][strategy], value);
+			const diff = printStrategyDiff(strategy, topResult[strategy], value);
 			this.strategyCombos.push(printStrategy(strategy, value) + diff);
 		}
 	}
 
 	const groupedMap: Map<Set<Picks.PickOdds>, GroupedPlayer> = new Map();
-	const mergeSameResults = (result: Result, strategy: strategyPattern, key: Picks.Strategy): void => {
+	const mergeSameResults = (group: strategyGroup, key: Picks.Strategy): void => {
 		const combined = new Set<Picks.PickOdds>();
-		for (const pick of result.players1) combined.add(pick);
-		for (const pick of result.players2) combined.add(pick);
-		for (const pick of result.players3) combined.add(pick);
+		for (const pick of group.result.players1) combined.add(pick);
+		for (const pick of group.result.players2) combined.add(pick);
+		for (const pick of group.result.players3) combined.add(pick);
 		for (const [set, groupedPlayer] of groupedMap) {
 			if (isSameSet(combined, set)) {
-				groupedPlayer.add(key, result[key]);
+				groupedPlayer.add(key, group.result[key]);
 				return;
 			};
 		}
-		const groupedPlayer = new GroupedPlayer(result, strategy, key);
+		const groupedPlayer = new GroupedPlayer(group.result, group.strategy, key);
 		groupedMap.set(combined, groupedPlayer);
 	}
 
-	if (least1) for (const avgResult of least1.result) mergeSameResults(avgResult, least1.strategy, 'least1');
-	if (points) for (const avgResult of points.result) mergeSameResults(avgResult, points.strategy, 'points');
-	if (hits) for (const avgResult of hits.result) mergeSameResults(avgResult, hits.strategy, 'hits');
-	if (all3) for (const avgResult of all3.result) mergeSameResults(avgResult, all3.strategy, 'all3');
+	if (least1) mergeSameResults(least1, 'least1');
+	if (points) mergeSameResults(points, 'points');
+	if (hits) mergeSameResults(hits, 'hits');
+	if (all3) mergeSameResults(all3, 'all3');
 
 	if (groupedMap.size > 0) {
 		addLogTitle("Top Correlated");
 		for (const groupedPlayer of groupedMap.values()) {
-			logReduced(groupedPlayer.result, maxResult, top.total, groupedPlayer.strategy);
+			logReduced(groupedPlayer.result, topResult, groupedPlayer.strategy);
 			addLog();
 			logSection++;
 			for (const strategyCombo of groupedPlayer.strategyCombos) addLog(strategyCombo, 'left');
