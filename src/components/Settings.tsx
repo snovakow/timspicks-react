@@ -31,7 +31,9 @@ export default function SettingsPanel(props: SettingsPanelProps) {
 	return (
 		<div className="settings-container">
 			<div className="settings-group">
-				<label className="settings-checkbox-item settings-checkbox-hoverable">
+				<label
+					className="settings-checkbox-item settings-checkbox settings-checkbox-hoverable"
+				>
 					<input
 						type="checkbox"
 						checked={showPercentage}
@@ -70,7 +72,7 @@ export default function SettingsPanel(props: SettingsPanelProps) {
 					{strategyOptions.map((option) => (
 						<label
 							key={option.key}
-							className={`settings-checkbox-item settings-strategy-checkbox settings-strategy-${option.key} settings-checkbox-hoverable`}
+							className={`settings-checkbox-item settings-checkbox settings-strategy-${option.key} settings-checkbox-hoverable`}
 						>
 							<input
 								type="checkbox"

@@ -1,12 +1,11 @@
-
 /* Restore border highlight for Pick Strategies (checkbox group) */
-.settings-strategy-checkbox.settings-checkbox-hoverable {
+.settings-checkbox.settings-checkbox-hoverable {
 	border: 1.5px solid transparent;
 	border-radius: 6px;
 	transition: border 0.15s;
 }
 
-.settings-strategy-checkbox.settings-checkbox-hoverable:hover {
+.settings-checkbox.settings-checkbox-hoverable:hover {
 	border: 1.5px solid #2563eb;
 }
 
@@ -91,7 +90,7 @@
 }
 
 /* Only apply custom circle style to Pick Strategies */
-.settings-strategy-checkbox input[type="checkbox"] {
+.settings-checkbox input[type="checkbox"] {
 	appearance: none;
 	-webkit-appearance: none;
 	border: 2px solid color-mix(in srgb, var(--strategy-color) 55%, #64748b);
@@ -101,7 +100,7 @@
 	place-items: center;
 }
 
-.settings-strategy-checkbox input[type="checkbox"]::after {
+.settings-checkbox input[type="checkbox"]::after {
 	content: "";
 	width: 8px;
 	height: 8px;
@@ -111,11 +110,11 @@
 	background: var(--strategy-color);
 }
 
-.settings-strategy-checkbox input[type="checkbox"]:checked {
+.settings-checkbox input[type="checkbox"]:checked {
 	border-color: var(--strategy-color);
 }
 
-.settings-strategy-checkbox input[type="checkbox"]:checked::after {
+.settings-checkbox input[type="checkbox"]:checked::after {
 	transform: scale(1);
 }
 
