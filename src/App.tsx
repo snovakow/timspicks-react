@@ -373,7 +373,7 @@ function App() {
 
 	if (isLoading || !memoizedDisplayData) {
 		return (
-			<div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+			<div className="loading-screen">
 				<p>Loading...</p>
 			</div>
 		);
@@ -470,8 +470,8 @@ function App() {
 					)}
 				</Popup>
 
-				<div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
-					<span className="section-title" style={{ display: 'inline-flex', alignItems: 'center', width: 'fit-content' }}>
+				<div className="section-header-center">
+					<span className="section-title">
 						Sportsbooks
 					</span>
 				</div>
@@ -493,7 +493,7 @@ function App() {
 				<CollapsibleSection title="Games">
 					<div className="scrollable-table-wrapper section-container">
 						{gamesList.length === 0 ? (
-							<div style={{ textAlign: 'center', fontSize: '1.2rem', margin: '1.5rem 0' }}>No games today</div>
+							<div className="no-games-message">No games today</div>
 						) : (
 							<Picks.Basic games={gamesList} darkTheme={darkTheme} />
 						)}

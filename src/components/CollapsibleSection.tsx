@@ -10,12 +10,11 @@ export default function CollapsibleSection({ title, children, defaultOpen = true
   const [open, setOpen] = useState(defaultOpen);
   return (
     <section>
-      <div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
-        <div className="collapsible-header" aria-expanded={open} aria-controls={title.replace(/\s+/g, '-') + '-content'} style={{ width: 'fit-content' }}>
+      <div className="section-header-center">
+        <div className="collapsible-header" aria-expanded={open} aria-controls={title.replace(/\s+/g, '-') + '-content'}>
           <span
             className="section-title"
             onClick={() => setOpen((v) => !v)}
-            style={{ display: 'inline-flex', alignItems: 'center', cursor: 'pointer', width: 'fit-content' }}
           >
             {title}
             <span className={open ? 'chevron chevron-down' : 'chevron chevron-right'} aria-hidden="true" />

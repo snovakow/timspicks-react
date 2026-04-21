@@ -45,15 +45,16 @@ button:hover {
 }
 
 .section-title {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: fit-content;
 	padding-top: 1rem;
 	flex: 1;
 	text-align: center;
 	font-size: 1.5em;
 	font-weight: 400;
 	color: rgba(255, 255, 255, 0.87);
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
 	gap: 0.5em;
 }
 
@@ -90,4 +91,23 @@ button:hover {
 
 .collapsible-content.open {
 	max-height: none;
+}
+
+.section-header-center {
+	display: flex;
+	justify-content: center;
+	width: 100%;
+}
+
+.loading-screen {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	height: 100vh;
+}
+
+.no-games-message {
+	text-align: center;
+	font-size: 1.2rem;
+	margin: 1.5rem 0;
 }
