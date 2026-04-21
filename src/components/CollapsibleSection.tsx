@@ -13,7 +13,7 @@ export default function CollapsibleSection({ title, children, defaultOpen = true
       <div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
         <div className="collapsible-header" aria-expanded={open} aria-controls={title.replace(/\s+/g, '-') + '-content'} style={{ width: 'fit-content' }}>
           <span
-            className="collapsible-title"
+            className="section-title"
             onClick={() => setOpen((v) => !v)}
             style={{ display: 'inline-flex', alignItems: 'center', cursor: 'pointer', width: 'fit-content' }}
           >

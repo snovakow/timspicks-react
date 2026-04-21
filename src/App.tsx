@@ -470,8 +470,12 @@ function App() {
 					)}
 				</Popup>
 
+				<div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
+				  <span className="section-title" style={{ display: 'inline-flex', alignItems: 'center', width: 'fit-content' }}>
+				    Sportsbooks
+				  </span>
+				</div>
 				<div className="table-container">
-					<h2>Sportsbooks</h2>
 					<div className="sportsbook-list">
 						{sportsbooks.map((book) => (
 							<button
