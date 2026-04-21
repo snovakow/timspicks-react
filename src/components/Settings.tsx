@@ -31,28 +31,12 @@ export default function SettingsPanel(props: SettingsPanelProps) {
 	return (
 		<div className="settings-container">
 			<div className="settings-group">
-				<label
-					className="settings-checkbox-item settings-checkbox settings-checkbox-hoverable"
-				>
-					<input
-						type="checkbox"
-						checked={showPercentage}
-						onChange={(e) => onShowPercentageChange(e.target.checked)}
-					/>
-					<span>Show Probabilities</span>
-				</label>
-				<div className="settings-description">
-					Show sportsbook odds as implied probability percentages, otherwise as American odds.
-				</div>
-			</div>
-
-			<div className="settings-group">
 				<label htmlFor="min-sportsbooks" className="settings-label">
-					Minimum Sportsbooks for Avg
+					Minimum Sportsbooks
 				</label>
 				<select
 					id="min-sportsbooks"
-					className="settings-select"
+					className="settings-select settings-min-sportsbooks-select"
 					value={minSportsbooks}
 					onChange={(e) => onMinSportsbooksChange(Number(e.target.value))}
 				>
@@ -63,6 +47,20 @@ export default function SettingsPanel(props: SettingsPanelProps) {
 				</select>
 				<div className="settings-description">
 					Highlight top Avg with at least this many sportsbooks having values.
+				</div>
+			</div>
+
+			<div className="settings-group">
+				<label className="settings-checkbox-item settings-checkbox settings-strategy-checkbox settings-label-single settings-checkbox-hoverable">
+					<input
+						type="checkbox"
+						checked={showPercentage}
+						onChange={(e) => onShowPercentageChange(e.target.checked)}
+					/>
+					<span>Show Probabilities</span>
+				</label>
+				<div className="settings-description">
+					Show sportsbook odds as implied probability percentages, otherwise as American odds.
 				</div>
 			</div>
 
@@ -88,7 +86,6 @@ export default function SettingsPanel(props: SettingsPanelProps) {
 					Select which strategies to display.
 				</div>
 			</div>
-
 		</div>
 	);
 }

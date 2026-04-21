@@ -14,8 +14,11 @@
 	flex-direction: column;
 	gap: 1.5rem;
 	padding: 1rem;
-	width: 100%;
-	max-width: 400px;
+	width: min-content;
+	min-width: 320px;
+	max-width: 100vw;
+	margin-left: auto;
+	margin-right: auto;
 	box-sizing: border-box;
 }
 
@@ -31,6 +34,16 @@
 	color: inherit;
 }
 
+.settings-label-single {
+	font-weight: 500;
+	font-size: 0.95rem;
+	color: inherit;
+}
+
+.settings-label,
+.settings-checkbox-item>span {
+	white-space: nowrap;
+}
 
 .settings-select {
 	padding: 0.5rem;
@@ -47,11 +60,22 @@
 	outline-offset: 2px;
 }
 
+.settings-select.settings-min-sportsbooks-select {
+	width: fit-content;
+	display: block;
+	margin-left: auto;
+	margin-right: auto;
+}
+
 .settings-description {
 	font-size: 0.85rem;
 	opacity: 0.7;
 	margin-top: 0.25rem;
 	text-align: left;
+	white-space: normal;
+	word-break: break-word;
+	overflow-wrap: anywhere;
+	max-width: 18rem;
 }
 
 .settings-checkbox-group {
@@ -136,4 +160,9 @@
 
 .settings-strategy-top {
 	--strategy-color: var(--highlight-top-dot, rgb(7, 76, 135));
+}
+
+.settings-checkbox-item.settings-label-single {
+	width: fit-content;
+	white-space: nowrap;
 }
