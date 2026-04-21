@@ -1,31 +1,4 @@
-/*
-\text{Stack Score} = \lambda \times (s_1 + s_2 + s_3)
-
-⸻
-
-Interpretation:
-
-* < 1.2 → Avoid stack
-* 1.2 – 1.8 → Hybrid
-* > 1.8 → Stack aggressively
-
-Instead of:
-
-* \lambda \cdot (s_1+s_2+s_3)
-
-You use:
-
-* \mu = \sum -\ln(1 - p_i)
-
-⸻
-
-Same thresholds apply:
-
-* μ < 1.2 → independent
-* μ 1.2–1.8 → hybrid
-* μ > 1.8 → stack
-
-*/
+import { type Team, isTeam } from "./components/logo";
 
 // Given data.selections (team total goals market), calculate the expected (mean) number of goals as a decimal
 type DataSelection = {
@@ -90,6 +63,7 @@ async function getTomorrowEventIds() {
 export async function getTeamTotalsForAllGames() {
     const json = await getTomorrowEventIds();
     const today = new Date().toDateString();
+    const results: Map<Team, number> = new Map();
     for (const event of json.events) {
         const startDate = new Date(event.startEventDate);
         if (startDate.toDateString() !== today) continue;
@@ -107,7 +81,25 @@ export async function getTeamTotalsForAllGames() {
             selections.get(name)!.push(selection);
         }
         for (const [name, selection] of selections) {
-            console.log(name, expectedGoals(selection)?.toFixed(3));
+            const xG = expectedGoals(selection);
+            if (xG === null) continue;
+            console.log(name, xG.toFixed(1));
+
+            const parse = name.split(" ");
+            if (parse.length < 1) continue;
+
+            const team = parse[0];
+            if (team.length === 2 && parse.length > 1) {
+                const initial = parse[1];
+                if (initial && initial.length > 0) {
+                    const name = (team + initial[0]);
+                    if (isTeam(name)) results.set(name, xG);
+                }
+                continue;
+            }
+            if (team.length === 3) {
+                if (isTeam(team)) results.set(team, xG);
+            }
         }
     }
 }
