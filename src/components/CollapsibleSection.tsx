@@ -9,7 +9,7 @@ interface CollapsibleSectionProps {
 export default function CollapsibleSection({ title, children, defaultOpen = true }: CollapsibleSectionProps) {
   const [open, setOpen] = useState(defaultOpen);
   return (
-    <section className="collapsible-section">
+    <section>
       <div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
         <div className="collapsible-header" aria-expanded={open} aria-controls={title.replace(/\s+/g, '-') + '-content'} style={{ width: 'fit-content' }}>
           <span

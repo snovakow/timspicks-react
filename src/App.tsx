@@ -471,11 +471,11 @@ function App() {
 				</Popup>
 
 				<div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
-				  <span className="section-title" style={{ display: 'inline-flex', alignItems: 'center', width: 'fit-content' }}>
-				    Sportsbooks
-				  </span>
+					<span className="section-title" style={{ display: 'inline-flex', alignItems: 'center', width: 'fit-content' }}>
+						Sportsbooks
+					</span>
 				</div>
-				<div className="table-container">
+				<div className="section-container">
 					<div className="sportsbook-list">
 						{sportsbooks.map((book) => (
 							<button
@@ -490,45 +490,35 @@ function App() {
 						))}
 					</div>
 				</div>
-				<div className="table-container">
-					<CollapsibleSection title="Games">
-						<div className="scrollable-table-wrapper">
-							{gamesList.length === 0 ? (
-								<div style={{ textAlign: 'center', fontSize: '1.2rem', margin: '1.5rem 0' }}>No games today</div>
-							) : (
-								<Picks.Basic games={gamesList} darkTheme={darkTheme} />
-							)}
-						</div>
-					</CollapsibleSection>
-				</div>
-				<div className="table-container">
-					<CollapsibleSection title="Pick #1">
-						<div className="scrollable-table-wrapper">
-							<Picks.Table columns={columns} sortedRows={table1Rows} requestSort={requestSort1} sortConfig={sortConfig1Ref.current} darkTheme={darkTheme} enabledStrategies={enabledStrategies} />
-						</div>
-					</CollapsibleSection>
-				</div>
-				<div className="table-container">
-					<CollapsibleSection title="Pick #2">
-						<div className="scrollable-table-wrapper">
-							<Picks.Table columns={columns} sortedRows={table2Rows} requestSort={requestSort2} sortConfig={sortConfig2Ref.current} darkTheme={darkTheme} enabledStrategies={enabledStrategies} />
-						</div>
-					</CollapsibleSection>
-				</div>
-				<div className="table-container">
-					<CollapsibleSection title="Pick #3">
-						<div className="scrollable-table-wrapper">
-							<Picks.Table columns={columns} sortedRows={table3Rows} requestSort={requestSort3} sortConfig={sortConfig3Ref.current} darkTheme={darkTheme} enabledStrategies={enabledStrategies} />
-						</div>
-					</CollapsibleSection>
-				</div>
-				<div className="table-container">
-					<CollapsibleSection title="Players">
-						<div className="scrollable-table-wrapper">
-							<Picks.Table columns={columnsPlayer} sortedRows={displayPlayerList} requestSort={requestSortPlayer} sortConfig={sortConfigPlayerRef.current} darkTheme={darkTheme} enabledStrategies={enabledStrategies} />
-						</div>
-					</CollapsibleSection>
-				</div>
+				<CollapsibleSection title="Games">
+					<div className="scrollable-table-wrapper section-container">
+						{gamesList.length === 0 ? (
+							<div style={{ textAlign: 'center', fontSize: '1.2rem', margin: '1.5rem 0' }}>No games today</div>
+						) : (
+							<Picks.Basic games={gamesList} darkTheme={darkTheme} />
+						)}
+					</div>
+				</CollapsibleSection>
+				<CollapsibleSection title="Pick #1">
+					<div className="scrollable-table-wrapper section-container">
+						<Picks.Table columns={columns} sortedRows={table1Rows} requestSort={requestSort1} sortConfig={sortConfig1Ref.current} darkTheme={darkTheme} enabledStrategies={enabledStrategies} />
+					</div>
+				</CollapsibleSection>
+				<CollapsibleSection title="Pick #2">
+					<div className="scrollable-table-wrapper section-container">
+						<Picks.Table columns={columns} sortedRows={table2Rows} requestSort={requestSort2} sortConfig={sortConfig2Ref.current} darkTheme={darkTheme} enabledStrategies={enabledStrategies} />
+					</div>
+				</CollapsibleSection>
+				<CollapsibleSection title="Pick #3">
+					<div className="scrollable-table-wrapper section-container">
+						<Picks.Table columns={columns} sortedRows={table3Rows} requestSort={requestSort3} sortConfig={sortConfig3Ref.current} darkTheme={darkTheme} enabledStrategies={enabledStrategies} />
+					</div>
+				</CollapsibleSection>
+				<CollapsibleSection title="Players">
+					<div className="scrollable-table-wrapper section-container">
+						<Picks.Table columns={columnsPlayer} sortedRows={displayPlayerList} requestSort={requestSortPlayer} sortConfig={sortConfigPlayerRef.current} darkTheme={darkTheme} enabledStrategies={enabledStrategies} />
+					</div>
+				</CollapsibleSection>
 			</main>
 		</>
 	)
