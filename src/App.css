@@ -87,21 +87,11 @@ button:hover {
 }
 
 .collapsible-content {
-  margin-top: 0.5em;
+  margin-top: 1em;
   overflow: hidden;
   max-height: 0;
-  opacity: 0;
-  padding-top: 0.5em;
-  padding-bottom: 0.5em;
-  transition:
-    max-height 0.7s cubic-bezier(0.4, 0, 0.2, 1),
-    opacity 0.7s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .collapsible-content.open {
   max-height: none;
-  opacity: 1;
-  transition:
-    max-height 0.7s cubic-bezier(0.4, 0, 0.2, 1),
-    opacity 0.7s cubic-bezier(0.4, 0, 0.2, 1);
 }
