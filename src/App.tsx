@@ -108,7 +108,6 @@ function App() {
 	const [data, setData] = useState<InitializedData | null>(null);
 
 	const [showPercentage, setShowPercentage] = useState(true);
-	const [deVigEnabled, setDeVigEnabled] = useState(true);
 	const [minSportsbooks, setMinSportsbooks] = useState(3);
 	const [enabledStrategies, setEnabledStrategies] = useState<Record<Picks.StrategyMode, boolean>>({
 		least1: true,
@@ -222,13 +221,8 @@ function App() {
 		const table3Rows = cloneRows(origTable3);
 
 		// Update player betting display values
-		const key1 = deVigEnabled ? 'bet1' : 'betRaw1';
-		const key2 = deVigEnabled ? 'bet2' : 'betRaw2';
-		const key3 = deVigEnabled ? 'bet3' : 'betRaw3';
-		const key4 = deVigEnabled ? 'bet4' : 'betRaw4';
-
 		for (const player of playerList) {
-			const values = [player[key1], player[key2], player[key3], player[key4]];
+			const values = [player.bet1, player.bet2, player.bet3, player.bet4];
 			const rawValues = [player.betRaw1, player.betRaw2, player.betRaw3, player.betRaw4];
 			const displays = ['betDisplay1', 'betDisplay2', 'betDisplay3', 'betDisplay4'] as const;
 
@@ -299,7 +293,7 @@ function App() {
 
 		// Expose minSportsbooks in the returned object for downstream consumers
 		return { gamesList, playerList, table1Rows, table2Rows, table3Rows, minSportsbooks };
-	}, [data, showPercentage, deVigEnabled, needsSort1, needsSort2, needsSort3, needsSortPlayer, minSportsbooks]);
+	}, [data, showPercentage, needsSort1, needsSort2, needsSort3, needsSortPlayer, minSportsbooks]);
 
 	// Memoize stats calculations - expensive O(n³) combo calculations
 	// Also applies stats-based highlights (opp/any) to rows after 'top' highlights are set
@@ -466,8 +460,6 @@ function App() {
 						<SettingsPanel
 							showPercentage={showPercentage}
 							onShowPercentageChange={setShowPercentage}
-							deVigEnabled={deVigEnabled}
-							onDeVigEnabledChange={setDeVigEnabled}
 							minSportsbooks={minSportsbooks}
 							onMinSportsbooksChange={setMinSportsbooks}
 							enabledStrategies={enabledStrategies}

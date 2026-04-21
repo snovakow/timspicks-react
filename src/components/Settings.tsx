@@ -4,8 +4,6 @@ import type { StrategyMode } from './Table';
 interface SettingsPanelProps {
 	showPercentage: boolean;
 	onShowPercentageChange: (value: boolean) => void;
-	deVigEnabled: boolean;
-	onDeVigEnabledChange: (value: boolean) => void;
 	minSportsbooks: number;
 	onMinSportsbooksChange: (value: number) => void;
 	enabledStrategies: Record<StrategyMode, boolean>;
@@ -16,8 +14,6 @@ export default function SettingsPanel(props: SettingsPanelProps) {
 	const {
 		showPercentage,
 		onShowPercentageChange,
-		deVigEnabled,
-		onDeVigEnabledChange,
 		minSportsbooks,
 		onMinSportsbooksChange,
 		enabledStrategies,
@@ -45,20 +41,6 @@ export default function SettingsPanel(props: SettingsPanelProps) {
 				</label>
 				<div className="settings-description">
 					Show sportsbook odds as implied probability percentages, otherwise as American odds.
-				</div>
-			</div>
-
-			<div className="settings-group">
-				<label className="settings-checkbox-item settings-checkbox-hoverable">
-					<input
-						type="checkbox"
-						checked={deVigEnabled}
-						onChange={(e) => onDeVigEnabledChange(e.target.checked)}
-					/>
-					<span>Normalize Sportsbooks</span>
-				</label>
-				<div className="settings-description">
-					Remove sportsbook bias by adjusting odds to a consensus value.
 				</div>
 			</div>
 

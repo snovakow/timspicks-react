@@ -26,25 +26,6 @@ export default function InfoPopupContent() {
 			</section>
 
 			<section className="info-popup-section">
-				<h3>How Odds Are Balanced</h3>
-				<p>
-					The percentages shown are implied probabilities derived from sportsbook odds.
-					The app then normalizes books to reduce systematic pricing differences so books are more comparable.
-				</p>
-				<p>
-					In practice, this means each sportsbook is scaled toward the consensus of the other books
-					(de-vig normalization), helping separate real player signal from sportsbook-specific bias.
-				</p>
-				<p>
-					Sportsbooks include a margin known as <strong>vig</strong> (also called <strong>juice</strong>),
-					so normalization helps align books onto a more comparable baseline.
-				</p>
-				<p>
-					Use the <strong>#</strong> button to switch between percentage view and American odds view.
-				</p>
-			</section>
-
-			<section className="info-popup-section">
 				<h3>Stats and Sportsbook Buttons</h3>
 				<p>
 					The <strong>📊</strong> stats button and sportsbook logo buttons display the top picks
