@@ -46,7 +46,7 @@ export default function SettingsPanel(props: SettingsPanelProps) {
 					<option value="4">All 4 sportsbooks</option>
 				</select>
 				<div className="settings-description">
-					Highlight top Avg with at least this many sportsbooks having values.
+					Highlight top Avg with a minimum number of sportsbooks.
 				</div>
 			</div>
 
