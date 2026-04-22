@@ -1,6 +1,11 @@
 .stats-layout {
   font-family: monospace;
   white-space: pre-wrap;
+  font-size: 1em;
+}
+
+.stats-title {
+  font-size: 1.2em;
 }
 
 .stats-section {
@@ -8,6 +13,10 @@
   max-width: 100%;
   margin-left: auto;
   margin-right: auto;
+}
+
+.stats-section:not(:last-child) {
+  margin-bottom: 0.7em;
 }
 
 .stats-bold {

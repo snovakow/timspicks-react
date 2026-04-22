@@ -9,6 +9,7 @@ export interface LogLine {
 	text: string;
 	align: LogStatAlign;
 	bold: boolean;
+	title: boolean;
 }
 export type LogLines = LogLine[][];
 
@@ -46,12 +47,11 @@ class LogHandler {
 	}
 	addTitle = (title: string) => {
 		this.addSection();
-		this.addLine(title, 'center', true);
-		this.addLine();
+		this.logSection.push({ text: title, align: 'center', bold: true, title: true });
 		this.addSection();
 	}
 	addLine = (line: string = "\n", align: LogStatAlign = "left", bold: boolean = false) => {
-		this.logSection.push({ text: line, align, bold });
+		this.logSection.push({ text: line, align, bold, title: false });
 	}
 	addLogLine = (line: LogLine) => {
 		this.logSection.push(line);
@@ -508,13 +508,11 @@ export const calculateStats = (
 		return " (" + sign + diff.toFixed(comboPrecision) + percent + ")";
 	}
 	const logCalcStats = (avgResult: Result) => {
-		logHandler.addLine();
 		logHandler.addSection();
 		logHandler.addLine(printStrategy('least1', calcAny(avgResult.prob1, avgResult.prob2, avgResult.prob3)), 'left');
 		logHandler.addLine(printStrategy('points', calcPnt(avgResult.prob1, avgResult.prob2, avgResult.prob3)), 'left');
 		logHandler.addLine(printStrategy('hits', calcHit(avgResult.prob1, avgResult.prob2, avgResult.prob3)), 'left');
 		logHandler.addLine(printStrategy('all3', calcAll(avgResult.prob1, avgResult.prob2, avgResult.prob3)), 'left');
-		logHandler.addLine();
 	}
 
 	const logHighlights = (avgResult: Result) => {
@@ -672,7 +670,8 @@ export const calculateStats = (
 			return {
 				text: printStrategy(strategy, value) + diff,
 				align: 'left',
-				bold: max
+				bold: max,
+				title: false
 			}
 		}
 		addStrategyStat(strategy: Picks.Strategy, value: number, max: boolean = true) {
@@ -710,7 +709,6 @@ export const calculateStats = (
 		logHandler.addTitle("Top Correlated");
 		for (const groupedPlayer of groupedMap.values()) {
 			logReduced(groupedPlayer.result, topResult, groupedPlayer.strategy);
-			logHandler.addLine();
 			logHandler.addSection();
 
 			groupedPlayer.logStrategyStat('least1');
@@ -719,7 +717,6 @@ export const calculateStats = (
 			groupedPlayer.logStrategyStat('all3');
 
 			logHandler.addSection();
-			logHandler.addLine();
 		}
 	}
 

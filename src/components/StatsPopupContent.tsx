@@ -14,6 +14,7 @@ export default function StatsPopupContent({ stats }: StatsPopupContentProps) {
 						{section.map((line, lineIndex) => {
 							const classes = [];
 							if (line.bold) classes.push('stats-bold');
+							if (line.title) classes.push('stats-title');
 							classes.push('stats-align-' + line.align);
 							const classNames = classes.join(' ');
 							return (
