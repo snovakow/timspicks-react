@@ -47,10 +47,14 @@ class LogHandler {
 	addTitle = (title: string) => {
 		this.addSection();
 		this.addLine(title, 'center', true);
+		this.addLine();
 		this.addSection();
 	}
 	addLine = (line: string = "\n", align: LogStatAlign = "left", bold: boolean = false) => {
 		this.logSection.push({ text: line, align, bold });
+	}
+	addLogLine = (line: LogLine) => {
+		this.logSection.push(line);
 	}
 }
 export const calculateStats = (
@@ -633,28 +637,20 @@ export const calculateStats = (
 		for (const player of set1) if (!set2.has(player)) return false;
 		return true;
 	}
-	const isSameResult = (top: Result, group: Result): boolean => {
-		if (!isSameSet(top.players1, group.players1)) return false;
-		if (!isSameSet(top.players2, group.players2)) return false;
-		if (!isSameSet(top.players3, group.players3)) return false;
-		return true;
-	}
 
-	const processSameGroup = (top: Result, groupKey: Picks.Strategy): strategyGroup | null => {
+	const processSameGroup = (groupKey: Picks.Strategy): strategyGroup | null => {
 		const group = findMax(groupKey);
 		if (group === null) return null;
 
 		logHighlights(group.result);
 		addStrategyHighlights(group.result, groupKey);
 
-		const same = isSameResult(top, group.result);
-		if (!same) return group;
 		return group;
 	}
-	const least1 = processSameGroup(topResult, 'least1');
-	const points = processSameGroup(topResult, 'points');
-	const hits = processSameGroup(topResult, 'hits');
-	const all3 = processSameGroup(topResult, 'all3');
+	const least1 = processSameGroup('least1');
+	const points = processSameGroup('points');
+	const hits = processSameGroup('hits');
+	const all3 = processSameGroup('all3');
 
 	logHandler.addTitle("Top Picks");
 	logTopPicks(topResult);
@@ -664,16 +660,28 @@ export const calculateStats = (
 	class GroupedPlayer {
 		result: Result;
 		strategy: strategyPattern;
-		strategyCombos: string[];
+		strategyCombos: Map<Picks.Strategy, LogLine>;
 		constructor(result: Result, strategy: strategyPattern, key: Picks.Strategy) {
 			this.result = result;
 			this.strategy = strategy;
-			this.strategyCombos = [];
+			this.strategyCombos = new Map();
 			this.addStrategyStat(key, result[key]);
 		}
-		addStrategyStat(strategy: Picks.Strategy, value: number) {
+		getLogStat(strategy: Picks.Strategy, value: number, max: boolean = true): LogLine {
 			const diff = printStrategyDiff(strategy, topResult[strategy], value);
-			this.strategyCombos.push(printStrategy(strategy, value) + diff);
+			return {
+				text: printStrategy(strategy, value) + diff,
+				align: 'left',
+				bold: max
+			}
+		}
+		addStrategyStat(strategy: Picks.Strategy, value: number, max: boolean = true) {
+			this.strategyCombos.set(strategy, this.getLogStat(strategy, value, max));
+		}
+		logStrategyStat(strategy: Picks.Strategy) {
+			const logLine = this.strategyCombos.get(strategy);
+			if (logLine) logHandler.addLogLine(logLine);
+			else logHandler.addLogLine(this.getLogStat(strategy, this.result[strategy], false));
 		}
 	}
 
@@ -704,7 +712,12 @@ export const calculateStats = (
 			logReduced(groupedPlayer.result, topResult, groupedPlayer.strategy);
 			logHandler.addLine();
 			logHandler.addSection();
-			for (const strategyCombo of groupedPlayer.strategyCombos) logHandler.addLine(strategyCombo, 'left');
+
+			groupedPlayer.logStrategyStat('least1');
+			groupedPlayer.logStrategyStat('points');
+			groupedPlayer.logStrategyStat('hits');
+			groupedPlayer.logStrategyStat('all3');
+
 			logHandler.addSection();
 			logHandler.addLine();
 		}
