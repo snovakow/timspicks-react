@@ -139,15 +139,30 @@ const loadAndValidate = async <T>(
 
 
 // Async loader/validator for games.json that merges players into each game
-export const loadGamesAndPlayers = async (src: string): Promise<[Picks.Player[], Picks.GameData[]]> => {
-	const response = await fetchData(src);
+export const loadGamesAndPlayers = async (processSrc: string, gamesSrc: string): Promise<[Picks.Player[], Picks.GameData[]]> => {
+	const metaDataResponse = await fetchData(processSrc);
+	let metaData: any;
+	try {
+		metaData = await metaDataResponse.json();
+	} catch (e) {
+		throw new Error(`Failed to parse process metadata from ${processSrc}`);
+	}
+	if (!metaData || typeof metaData !== 'object' || typeof metaData.processed !== 'string') {
+		throw new Error(`Invalid process metadata format in ${processSrc}`);
+	}
+	const cutoff = new Date(metaData.processed);
+	if (isNaN(cutoff.getTime())) {
+		throw new Error(`Invalid processed date in process metadata: ${metaData.processed}`);
+	}
+
+	const response = await fetchData(gamesSrc);
 	const gamesJsonRaw = await response.json();
 	if (!isGameDataInput(gamesJsonRaw)) {
-		throw new Error(`Invalid games listing data format in ${src}`);
+		throw new Error(`Invalid games listing data format in ${gamesSrc}`);
 	}
 	const gamesJson = gamesJsonRaw as GameListingData;
 	if (!gamesJson || typeof gamesJson !== 'object' || !Array.isArray(gamesJson.gameWeek) || gamesJson.gameWeek.length === 0) {
-		throw new Error(`Invalid games listing data format in ${src}`);
+		throw new Error(`Invalid games listing data format in ${gamesSrc}`);
 	}
 	const games: GameDataInput[] = gamesJson.gameWeek[0].games || [];
 	if (!Array.isArray(games) || games.length === 0) {
@@ -161,7 +176,7 @@ export const loadGamesAndPlayers = async (src: string): Promise<[Picks.Player[],
 	const gamesList: Picks.GameData[] = [];
 	for (const gameData of games) {
 		const game = new Picks.GameData(gameData);
-		gamesList.push(game);
+		if (cutoff < game.time) gamesList.push(game);
 	}
 
 	async function fetchAndValidatePlayers(
@@ -172,8 +187,7 @@ export const loadGamesAndPlayers = async (src: string): Promise<[Picks.Player[],
 	): Promise<Picks.Player[]> {
 		const code = team.code;
 		const url = `./players/players_${code}.json`;
-		const response = await fetch(url);
-		if (!response.ok) throw new Error(`Failed to load ${url}: ${response.status}`);
+		const response = await fetchData(url);
 		const json = await response.json();
 		if (!isPlayersJson(json)) throw new Error(`Invalid players file: ${url}`);
 		const allPlayers: RawPlayerJson[] = [...json.forwards, ...json.defensemen];
@@ -231,7 +245,7 @@ export interface InitialData {
 export const loadInitialData = async (): Promise<InitialData> => {
 	const [playerData, [playersListing, gamesListing], playerOddsDraftKings, playerOddsFanDuel, playerOddsBetMGM, playerOddsBetRivers] = await Promise.all([
 		loadAndValidate('./data/helper.json', isPlayerDataByPick, 'helper odds data'),
-		loadGamesAndPlayers('./data/games.json'),
+		loadGamesAndPlayers('./data/process.json', './data/games.json'),
 		loadAndValidate('./data/bet1.json', (value): value is SportsbookOddsItem[] => Array.isArray(value) && value.every(isSportsbookOddsItem), 'DraftKings odds data'),
 		loadAndValidate('./data/bet2.json', (value): value is SportsbookOddsItem[] => Array.isArray(value) && value.every(isSportsbookOddsItem), 'FanDuel odds data'),
 		loadAndValidate('./data/bet3.json', (value): value is SportsbookOddsItem[] => Array.isArray(value) && value.every(isSportsbookOddsItem), 'BetMGM odds data'),

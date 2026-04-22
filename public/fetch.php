@@ -673,6 +673,11 @@ if ($live) {
 		if (empty($games)) echo '<h3>No games scheduled for today</h3>';
 		else echo '<h3>No game found after the current time</h3>';
 	}
+
+	// Write $now as an object property called "processed" to process.json at the end of Backup
+	$processObj = ["processed" => $now->format(DateTime::ATOM)];
+	$local_file = $basePath . '/process.json';
+	file_put_contents($local_file, json_encode($processObj, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
 }
 
 echo "<h2>Complete</h2>";
