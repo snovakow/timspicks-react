@@ -141,12 +141,7 @@ const loadAndValidate = async <T>(
 // Async loader/validator for games.json that merges players into each game
 export const loadGamesAndPlayers = async (processSrc: string, gamesSrc: string): Promise<[Picks.Player[], Picks.GameData[]]> => {
 	const metaDataResponse = await fetchData(processSrc);
-	let metaData: any;
-	try {
-		metaData = await metaDataResponse.json();
-	} catch (e) {
-		throw new Error(`Failed to parse process metadata from ${processSrc}`);
-	}
+	const metaData = await metaDataResponse.json();
 	if (!metaData || typeof metaData !== 'object' || typeof metaData.processed !== 'string') {
 		throw new Error(`Invalid process metadata format in ${processSrc}`);
 	}
