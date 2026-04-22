@@ -669,9 +669,9 @@ export const calculateStats = (
 			this.result = result;
 			this.strategy = strategy;
 			this.strategyCombos = [];
-			this.add(key, result[key]);
+			this.addStrategyStat(key, result[key]);
 		}
-		add(strategy: Picks.Strategy, value: number) {
+		addStrategyStat(strategy: Picks.Strategy, value: number) {
 			const diff = printStrategyDiff(strategy, topResult[strategy], value);
 			this.strategyCombos.push(printStrategy(strategy, value) + diff);
 		}
@@ -685,7 +685,7 @@ export const calculateStats = (
 		for (const pick of group.result.players3) combined.add(pick);
 		for (const [set, groupedPlayer] of groupedMap) {
 			if (isSameSet(combined, set)) {
-				groupedPlayer.add(key, group.result[key]);
+				groupedPlayer.addStrategyStat(key, group.result[key]);
 				return;
 			};
 		}
