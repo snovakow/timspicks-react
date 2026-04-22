@@ -6,7 +6,7 @@ import InfoPopupContent, { LegendPopupContent } from './components/InfoPopupCont
 import StatsPopupContent from './components/StatsPopupContent';
 import SettingsPanel from './components/Settings';
 import { roundToPercent, probabilityToAmerican } from './utility';
-import { loadInitialData, buildNormalizedNameMap, mapPlayers, compilePlayerList } from './dataProcessor';
+import * as DataProcessor from './dataProcessor';
 import { precalculateLogStats, cloneLogStats, type LogStatsKey, type LogLines } from './statsCalculations';
 import logo1 from './images/sb-logo-16-draftkings.svg';
 import logo2 from './images/sb-logo-16-fanduel.svg';
@@ -141,10 +141,10 @@ function App() {
 	useEffect(() => {
 		const initializeData = async () => {
 			try {
-				const initialData = await loadInitialData();
+				const initialData = await DataProcessor.loadInitialData();
 				const playerList = initialData.playersListing;
 				const gamesList = initialData.gamesListing;
-				const normalizedNameMap = buildNormalizedNameMap(playerList);
+				const normalizedNameMap = DataProcessor.buildNormalizedNameMap(playerList);
 
 				if (SIMULATE) {
 					const now = new Date();
@@ -157,13 +157,13 @@ function App() {
 					SIMULATE = false;
 				}
 
-				const { table1Rows, table2Rows, table3Rows } = mapPlayers(
+				const { table1Rows, table2Rows, table3Rows } = DataProcessor.mapPlayers(
 					playerList,
 					initialData.playerData,
 					normalizedNameMap
 				);
 
-				compilePlayerList(
+				DataProcessor.compilePlayerList(
 					playerList,
 					initialData.playerOddsDraftKings,
 					initialData.playerOddsFanDuel,
@@ -174,7 +174,7 @@ function App() {
 				setData({ gamesList, playerList, table1Rows, table2Rows, table3Rows });
 				setError(null);
 			} catch (error: unknown) {
-				if (error instanceof Error && error.message === "NO GAMES") {
+				if (error instanceof Error && error.message === DataProcessor.NO_GAMES_ERROR) {
 					console.warn('No games found for today. Displaying empty tables.');
 				} else {
 					console.error('Failed to load initial data:', error);

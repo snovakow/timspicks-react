@@ -19,6 +19,8 @@ type GameListingData = {
 	}[];
 };
 
+export const NO_GAMES_ERROR = "NO_GAMES" as const;
+
 interface SportsbookOddsItem {
 	name: string;
 	odds: number;
@@ -177,7 +179,7 @@ export const loadGamesAndPlayers = async (processSrc: string, gamesSrc: string):
 	}
 	const games: GameDataInput[] = gamesJson.gameWeek[0].games || [];
 	if (!Array.isArray(games) || games.length === 0) {
-		throw new Error("NO GAMES");
+		throw new Error(NO_GAMES_ERROR);
 	}
 
 	if (!Array.isArray(games) || !games.every(isGamesListingItem)) {
