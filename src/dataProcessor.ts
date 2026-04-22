@@ -516,6 +516,18 @@ function deVig(playerList: Picks.Player[]) {
 		// console.log(`De-vig [${key}]: c=${c.toFixed(4)}, α=${alpha.toFixed(4)} (${n} players)`);
 	}
 
+	const min = (minVal: number | null, value: number | null): number | null => {
+		if (minVal === null) return value;
+		if (value === null) return minVal;
+		if (value < minVal) return value;
+		return minVal;
+	};
+	const max = (maxVal: number | null, value: number | null): number | null => {
+		if (maxVal === null) return value;
+		if (value === null) return maxVal;
+		if (value > maxVal) return value;
+		return maxVal;
+	};
 	// Apply all at once: fair = (book / c) ^ (1/α)
 	for (const key of betKeys) {
 		const corr = corrections[key];
@@ -524,7 +536,22 @@ function deVig(playerList: Picks.Player[]) {
 		for (const player of playerList) {
 			if (player[key] === null) continue;
 			const fair = Math.pow(player[key]! / corr.c, invAlpha);
-			player[key] = Math.min(maxProb, Math.max(minProb, fair));
+			// Clamp to min/max of original betRaw* value for this player
+			let minRaw = null;
+			let maxRaw = null;
+			// Find min/max across all betRaw* for this player
+			minRaw = min(minRaw, player.betRaw1);
+			minRaw = min(minRaw, player.betRaw2);
+			minRaw = min(minRaw, player.betRaw3);
+			minRaw = min(minRaw, player.betRaw4);
+			maxRaw = max(maxRaw, player.betRaw1);
+			maxRaw = max(maxRaw, player.betRaw2);
+			maxRaw = max(maxRaw, player.betRaw3);
+			maxRaw = max(maxRaw, player.betRaw4);
+			let clamped = fair;
+			if (minRaw !== null) clamped = Math.min(minRaw, clamped);
+			if (maxRaw !== null) clamped = Math.max(maxRaw, clamped);
+			player[key] = Math.min(maxProb, Math.max(minProb, clamped));
 		}
 	}
 }
