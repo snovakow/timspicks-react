@@ -478,7 +478,43 @@ function deVig(playerList: Picks.Player[]) {
 	const minBookPlayers = 10;
 	const betKeys = ["bet1", "bet2", "bet3", "bet4"] as const;
 
-	const corrections: Partial<Record<typeof betKeys[number], { c: number; alpha: number }>> = {};
+	interface Correction {
+		c: number;
+		alpha: number;
+	}
+	interface PlayerMinMax {
+		player: Picks.Player;
+		min: number | null;
+		max: number | null;
+	}
+	const minBet = (minVal: number | null, value: number | null): number | null => {
+		if (minVal === null) return value;
+		if (value === null) return minVal;
+		return Math.min(minVal, value);
+	};
+	const maxBet = (maxVal: number | null, value: number | null): number | null => {
+		if (maxVal === null) return value;
+		if (value === null) return maxVal;
+		return Math.max(maxVal, value);
+	};
+	const playersMinMax: PlayerMinMax[] = playerList.map(player => {
+		let min = null;
+		let max = null;
+		min = minBet(min, player.bet1);
+		min = minBet(min, player.bet2);
+		min = minBet(min, player.bet3);
+		min = minBet(min, player.bet4);
+		max = maxBet(max, player.bet1);
+		max = maxBet(max, player.bet2);
+		max = maxBet(max, player.bet3);
+		max = maxBet(max, player.bet4);
+		return {
+			player,
+			min,
+			max
+		}
+	});
+	const corrections: Partial<Record<typeof betKeys[number], Correction>> = {};
 	for (const key of betKeys) {
 		const xs: number[] = [];
 		const ys: number[] = [];
@@ -516,41 +552,18 @@ function deVig(playerList: Picks.Player[]) {
 		// console.log(`De-vig [${key}]: c=${c.toFixed(4)}, α=${alpha.toFixed(4)} (${n} players)`);
 	}
 
-	const min = (minVal: number | null, value: number | null): number | null => {
-		if (minVal === null) return value;
-		if (value === null) return minVal;
-		if (value < minVal) return value;
-		return minVal;
-	};
-	const max = (maxVal: number | null, value: number | null): number | null => {
-		if (maxVal === null) return value;
-		if (value === null) return maxVal;
-		if (value > maxVal) return value;
-		return maxVal;
-	};
 	// Apply all at once: fair = (book / c) ^ (1/α)
 	for (const key of betKeys) {
 		const corr = corrections[key];
 		if (corr === undefined) continue;
 		const invAlpha = 1 / corr.alpha;
-		for (const player of playerList) {
+		for (const playerMinMax of playersMinMax) {
+			const player = playerMinMax.player;
 			if (player[key] === null) continue;
 			const fair = Math.pow(player[key]! / corr.c, invAlpha);
-			// Clamp to min/max of original betRaw* value for this player
-			let minRaw = null;
-			let maxRaw = null;
-			// Find min/max across all betRaw* for this player
-			minRaw = min(minRaw, player.betRaw1);
-			minRaw = min(minRaw, player.betRaw2);
-			minRaw = min(minRaw, player.betRaw3);
-			minRaw = min(minRaw, player.betRaw4);
-			maxRaw = max(maxRaw, player.betRaw1);
-			maxRaw = max(maxRaw, player.betRaw2);
-			maxRaw = max(maxRaw, player.betRaw3);
-			maxRaw = max(maxRaw, player.betRaw4);
 			let clamped = fair;
-			if (minRaw !== null) clamped = Math.min(minRaw, clamped);
-			if (maxRaw !== null) clamped = Math.max(maxRaw, clamped);
+			if (playerMinMax.min !== null) clamped = Math.max(playerMinMax.min, clamped);
+			if (playerMinMax.max !== null) clamped = Math.min(playerMinMax.max, clamped);
 			player[key] = Math.min(maxProb, Math.max(minProb, clamped));
 		}
 	}

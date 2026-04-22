@@ -4,6 +4,8 @@ import type { StrategyMode } from './Table';
 interface SettingsPanelProps {
 	showPercentage: boolean;
 	onShowPercentageChange: (value: boolean) => void;
+	deVigEnabled: boolean;
+	onDeVigEnabledChange: (value: boolean) => void;
 	minSportsbooks: number;
 	onMinSportsbooksChange: (value: number) => void;
 	enabledStrategies: Record<StrategyMode, boolean>;
@@ -16,6 +18,8 @@ export default function SettingsPanel(props: SettingsPanelProps) {
 	const {
 		showPercentage,
 		onShowPercentageChange,
+		deVigEnabled,
+		onDeVigEnabledChange,
 		minSportsbooks,
 		onMinSportsbooksChange,
 		enabledStrategies,
@@ -32,6 +36,7 @@ export default function SettingsPanel(props: SettingsPanelProps) {
 		{ key: 'top', label: 'Top' },
 	];
 
+	const labelClassNames = "settings-checkbox-item settings-checkbox settings-strategy-checkbox settings-label-single settings-checkbox-hoverable";
 	return (
 		<div className="settings-container">
 			<div className="settings-group">
@@ -55,7 +60,7 @@ export default function SettingsPanel(props: SettingsPanelProps) {
 			</div>
 
 			<div className="settings-group">
-				<label className="settings-checkbox-item settings-checkbox settings-strategy-checkbox settings-label-single settings-checkbox-hoverable">
+				<label className={labelClassNames}>
 					<input
 						type="checkbox"
 						checked={showPercentage}
@@ -68,7 +73,20 @@ export default function SettingsPanel(props: SettingsPanelProps) {
 				</div>
 			</div>
 			<div className="settings-group">
-				<label className="settings-checkbox-item settings-checkbox settings-strategy-checkbox settings-label-single settings-checkbox-hoverable">
+				<label className={labelClassNames}>
+					<input
+						type="checkbox"
+						checked={deVigEnabled}
+						onChange={(e) => onDeVigEnabledChange(e.target.checked)}
+					/>
+					<span>Normalize Sportsbooks</span>
+				</label>
+				<div className="settings-description">
+					Remove sportsbook bias by adjusting odds to a consensus value.
+				</div>
+			</div>
+			<div className="settings-group">
+				<label className={labelClassNames}>
 					<input
 						type="checkbox"
 						checked={xgEnabled}
