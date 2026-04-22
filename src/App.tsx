@@ -7,7 +7,7 @@ import StatsPopupContent from './components/StatsPopupContent';
 import SettingsPanel from './components/Settings';
 import { roundToPercent, probabilityToAmerican } from './utility';
 import { loadInitialData, buildNormalizedNameMap, mapPlayers, compilePlayerList } from './dataProcessor';
-import { precalculateLogStats, cloneLogStats, type LogStatsKey, type LogStat } from './statsCalculations';
+import { precalculateLogStats, cloneLogStats, type LogStatsKey, type LogLines } from './statsCalculations';
 import logo1 from './images/sb-logo-16-draftkings.svg';
 import logo2 from './images/sb-logo-16-fanduel.svg';
 import logo3 from './images/sb-logo-16-mgm.svg';
@@ -324,7 +324,7 @@ function App() {
 	}, [memoizedDisplayData, minSportsbooks]);
 
 	const [showPopup, setShowPopup] = useState({ visible: false, title: 'Stats', key: 'betAvg' });
-	const [popupStats, setPopupStats] = useState<LogStat[]>([]);
+	const [popupStats, setPopupStats] = useState<LogLines>([]);
 	const [popupView, setPopupView] = useState<'info' | 'legend' | 'stats' | 'settings'>('stats');
 
 	const closePopup = () => {
@@ -334,13 +334,13 @@ function App() {
 	const openStatsPopup = (key: LogStatsKey, title: string) => {
 		// If there are no games, show a message in the popup
 		if (gamesList.length === 0) {
-			setPopupStats([
+			setPopupStats([[
 				{
-					isTitle: true,
+					text: 'No stats available',
 					align: 'center',
-					lines: ['No stats available'],
+					bold: true,
 				},
-			]);
+			]]);
 		} else if (statsCache) {
 			const cached = statsCache[key];
 			setPopupStats(cloneLogStats(cached.stats));

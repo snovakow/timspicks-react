@@ -1,24 +1,25 @@
-import type { LogStat } from '../statsCalculations';
-import styles from './StatsPopupContent.module.css';
+import type { LogLines } from '../statsCalculations';
+import './StatsPopupContent.css';
 
 interface StatsPopupContentProps {
-	stats: LogStat[];
+	stats: LogLines;
 }
 
 export default function StatsPopupContent({ stats }: StatsPopupContentProps) {
 	return (
-		<div className={styles.layout}>
-			{stats.map((stat, index) => {
-				const className = [
-					styles.section,
-					stat.isTitle ? styles.sectionTitle : '',
-				].filter(Boolean).join(' ');
-
+		<div className="layout">
+			{stats.map((section, index) => {
 				return (
-					<div key={index} className={className + ' stat-align-' + (stat.align)}>
-						{stat.lines.map((line, lineIndex) => (
-							<div key={lineIndex}>{line}</div>
-						))}
+					<div key={index} className="section">
+						{section.map((line, lineIndex) => {
+							const classes = [];
+							if (line.bold) classes.push('bold');
+							classes.push('stat-align-' + line.align);
+							const classNames = classes.join(' ');
+							return (
+								<div className={classNames} key={lineIndex}>{line.text}</div>
+							)
+						})}
 					</div>
 				);
 			})}

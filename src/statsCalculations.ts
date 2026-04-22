@@ -5,24 +5,22 @@ import type { Team } from './components/logo';
 const precision = Picks.precision;
 
 type LogStatAlign = 'left' | 'center';
-export interface LogStat {
-	isTitle: boolean;
+export interface LogLine {
+	text: string;
 	align: LogStatAlign;
-	lines: string[];
+	bold: boolean;
 }
+export type LogLines = LogLine[][];
 
 export type LogStatsKey = 'bet1' | 'bet2' | 'bet3' | 'bet4' | 'betAvg';
 export type PickIndex = 1 | 2 | 3;
 
 export interface LogStatsCacheItem {
-	stats: LogStat[];
+	stats: LogLines;
 }
 
-export const cloneLogStats = (stats: LogStat[]): LogStat[] => {
-	return stats.map((stat) => ({
-		...stat,
-		lines: [...stat.lines],
-	}));
+export const cloneLogStats = (stats: LogLines): LogLines => {
+	return stats.map((stat) => stat.map((line) => ({ ...line })));
 };
 
 export const allStrategies = [
@@ -33,41 +31,37 @@ export const allStrategies = [
 ] as const;
 export type strategyPattern = typeof allStrategies[number];
 
+class LogHandler {
+	logSection: LogLine[];
+	stats: LogLines;
+	constructor(stats: LogLines) {
+		this.stats = stats;
+		this.logSection = [];
+		this.stats.push(this.logSection);
+	}
+	addSection = () => {
+		if (this.logSection.length === 0) return;
+		this.logSection = [];
+		this.stats.push(this.logSection);
+	}
+	addTitle = (title: string) => {
+		this.addSection();
+		this.addLine(title, 'center', true);
+		this.addSection();
+	}
+	addLine = (line: string = "\n", align: LogStatAlign = "left", bold: boolean = false) => {
+		this.logSection.push({ text: line, align, bold });
+	}
+}
 export const calculateStats = (
 	betKey: LogStatsKey,
 	minSportsbooks: number,
 	table1Rows: Picks.PickOdds[],
 	table2Rows: Picks.PickOdds[],
 	table3Rows: Picks.PickOdds[],
-	stats: LogStat[]
+	stats: LogLines
 ): void => {
-	let logSection = 0;
-	let dataStatsPrev: LogStat | null = null;
-
-	const addLog = (line: string = "\n", align: LogStatAlign = "left", isTitle: boolean = false) => {
-		if (dataStatsPrev) {
-			const current = stats[logSection];
-			if (current) {
-				if (current.align === align && current.isTitle === isTitle) {
-					current.lines.push(line);
-				} else {
-					dataStatsPrev = { align, lines: [line], isTitle };
-					logSection++;
-					stats[logSection] = dataStatsPrev;
-				}
-			} else {
-				dataStatsPrev = { align, lines: [line], isTitle };
-				stats[logSection] = dataStatsPrev;
-			}
-		} else {
-			dataStatsPrev = { align, lines: [line], isTitle };
-			stats[logSection] = dataStatsPrev;
-		}
-	}
-
-	const addLogTitle = (title: string) => {
-		addLog(title, 'center', true);
-	}
+	const logHandler = new LogHandler(stats);
 
 	const addPlayersToHighlight = (players: Set<Picks.PickOdds>) => {
 		for (const pick of players) {
@@ -510,13 +504,13 @@ export const calculateStats = (
 		return " (" + sign + diff.toFixed(comboPrecision) + percent + ")";
 	}
 	const logCalcStats = (avgResult: Result) => {
-		addLog();
-		logSection++;
-		addLog(printStrategy('least1', calcAny(avgResult.prob1, avgResult.prob2, avgResult.prob3)), 'left');
-		addLog(printStrategy('points', calcPnt(avgResult.prob1, avgResult.prob2, avgResult.prob3)), 'left');
-		addLog(printStrategy('hits', calcHit(avgResult.prob1, avgResult.prob2, avgResult.prob3)), 'left');
-		addLog(printStrategy('all3', calcAll(avgResult.prob1, avgResult.prob2, avgResult.prob3)), 'left');
-		addLog();
+		logHandler.addLine();
+		logHandler.addSection();
+		logHandler.addLine(printStrategy('least1', calcAny(avgResult.prob1, avgResult.prob2, avgResult.prob3)), 'left');
+		logHandler.addLine(printStrategy('points', calcPnt(avgResult.prob1, avgResult.prob2, avgResult.prob3)), 'left');
+		logHandler.addLine(printStrategy('hits', calcHit(avgResult.prob1, avgResult.prob2, avgResult.prob3)), 'left');
+		logHandler.addLine(printStrategy('all3', calcAll(avgResult.prob1, avgResult.prob2, avgResult.prob3)), 'left');
+		logHandler.addLine();
 	}
 
 	const logHighlights = (avgResult: Result) => {
@@ -526,9 +520,9 @@ export const calculateStats = (
 	}
 
 	const logTopPicks = (avgResult: Result) => {
-		addLog(`1: ${roundToPercent(avgResult.prob1, precision)} - ${names(avgResult.players1)}`);
-		addLog(`2: ${roundToPercent(avgResult.prob2, precision)} - ${names(avgResult.players2)}`);
-		addLog(`3: ${roundToPercent(avgResult.prob3, precision)} - ${names(avgResult.players3)}`);
+		logHandler.addLine(`1: ${roundToPercent(avgResult.prob1, precision)} - ${names(avgResult.players1)}`);
+		logHandler.addLine(`2: ${roundToPercent(avgResult.prob2, precision)} - ${names(avgResult.players2)}`);
+		logHandler.addLine(`3: ${roundToPercent(avgResult.prob3, precision)} - ${names(avgResult.players3)}`);
 		logCalcStats(avgResult);
 	}
 
@@ -550,25 +544,25 @@ export const calculateStats = (
 			line3 += " " + roundToPercent(avgResult.prob3 - topResult.prob3, comboPrecision);
 		}
 
-		addLog(line1);
-		addLog(line2);
-		addLog(line3);
+		logHandler.addLine(line1);
+		logHandler.addLine(line2);
+		logHandler.addLine(line3);
 
 		if (reducedCount > 1) {
 			const total = avgResult.prob1 + avgResult.prob2 + avgResult.prob3;
 			const totalMax = topResult.prob1 + topResult.prob2 + topResult.prob3;
-			addLog(`Total: ${roundToPercent(total - totalMax, comboPrecision)}`, 'center');
+			logHandler.addLine(`Total: ${roundToPercent(total - totalMax, comboPrecision)}`, 'center');
 		}
-		addLog(strategyTitle(strategy), 'center');
+		logHandler.addLine(strategyTitle(strategy), 'center');
 	}
 
 	const logFooter = () => {
-		addLogTitle("Good Ranges");
-		logSection++;
-		addLog("Streak: 66-69% ", 'left');
-		addLog("Points: 23-24", 'left');
-		addLog("Leaderboard: 0.9-1.0", 'left');
-		addLog("All 3: 2-3%", 'left');
+		logHandler.addTitle("Good Ranges");
+		logHandler.addSection();
+		logHandler.addLine("Streak: 64-70% ", 'left');
+		logHandler.addLine("Points: 22-25", 'left');
+		logHandler.addLine("Leaderboard: 0.85-1.0", 'left');
+		logHandler.addLine("All 3: 2-3.5%", 'left');
 	}
 
 	const setStrategy = (pick: Picks.PickOdds, mode: Picks.StrategyMode) => {
@@ -662,7 +656,7 @@ export const calculateStats = (
 	const hits = processSameGroup(topResult, 'hits');
 	const all3 = processSameGroup(topResult, 'all3');
 
-	addLogTitle("Top Picks");
+	logHandler.addTitle("Top Picks");
 	logTopPicks(topResult);
 	logHighlights(topResult);
 	addStrategyHighlights(topResult, 'top');
@@ -705,14 +699,14 @@ export const calculateStats = (
 	if (all3) mergeSameResults(all3, 'all3');
 
 	if (groupedMap.size > 0) {
-		addLogTitle("Top Correlated");
+		logHandler.addTitle("Top Correlated");
 		for (const groupedPlayer of groupedMap.values()) {
 			logReduced(groupedPlayer.result, topResult, groupedPlayer.strategy);
-			addLog();
-			logSection++;
-			for (const strategyCombo of groupedPlayer.strategyCombos) addLog(strategyCombo, 'left');
-			logSection++;
-			addLog();
+			logHandler.addLine();
+			logHandler.addSection();
+			for (const strategyCombo of groupedPlayer.strategyCombos) logHandler.addLine(strategyCombo, 'left');
+			logHandler.addSection();
+			logHandler.addLine();
 		}
 	}
 
@@ -729,7 +723,7 @@ export const precalculateLogStats = (
 	const cache = {} as Record<LogStatsKey, LogStatsCacheItem>;
 
 	for (const key of keys) {
-		const stats: LogStat[] = [];
+		const stats: LogLines = [];
 		calculateStats(key, minSportsbooks, table1Rows, table2Rows, table3Rows, stats);
 		cache[key] = {
 			stats: cloneLogStats(stats),
