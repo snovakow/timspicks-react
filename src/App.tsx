@@ -130,7 +130,6 @@ function App() {
 		least1: true,
 		points: true,
 		hits: true,
-		all3: true,
 		top: true,
 	});
 

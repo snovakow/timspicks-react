@@ -84,7 +84,6 @@ export function LegendPopupContent() {
 						<span className="cell-strategy-dot cell-strategy-dot-least1 cell-strategy-dot-active" />
 						<span className="cell-strategy-dot cell-strategy-dot-points cell-strategy-dot-active" />
 						<span className="cell-strategy-dot cell-strategy-dot-hits cell-strategy-dot-active" />
-						<span className="cell-strategy-dot cell-strategy-dot-all3 cell-strategy-dot-active" />
 						<span className="cell-strategy-dot cell-strategy-dot-top cell-strategy-dot-active" />
 					</span>
 				</span>
@@ -96,23 +95,23 @@ export function LegendPopupContent() {
 				<p className="legend-strategy-row"><span className="legend-strategy-dot info-chip-least1-left-dot" aria-hidden="true" />
 					<span className="legend-strategy-text"><strong>Streak (Green): </strong>
 						Best picks for streaks. Getting at least one pick correct for 7 straight days earns free coffee for a week.
-					</span></p>
+					</span>
+				</p>
 				<p className="legend-strategy-row"><span className="legend-strategy-dot info-chip-points-left-dot" aria-hidden="true" />
-					<span className="legend-strategy-text"><strong>Points (Magenta): </strong>
+					<span className="legend-strategy-text"><strong>Points (Blue): </strong>
 						Best picks for maximum points. 1 correct = 25 points, 2 correct = 50 points, 3 correct = 100 points.
-					</span></p>
+					</span>
+				</p>
 				<p className="legend-strategy-row"><span className="legend-strategy-dot info-chip-hits-left-dot" aria-hidden="true" />
 					<span className="legend-strategy-text"><strong>Leaderboard (Amber): </strong>
 						Best picks for competing on the leaderboard.
-					</span></p>
-				<p className="legend-strategy-row"><span className="legend-strategy-dot info-chip-all3-left-dot" aria-hidden="true" />
-					<span className="legend-strategy-text"><strong>All 3 (Blue): </strong>
-						Best picks for getting all three correct.
-					</span></p>
+					</span>
+				</p>
 				<p className="legend-strategy-row"><span className="legend-strategy-dot info-chip-top-left-dot" aria-hidden="true" />
 					<span className="legend-strategy-text"><strong>Top (Navy): </strong>
 						Highest-probability picks.
-					</span></p>
+					</span>
+				</p>
 			</section>
 		</div>
 	);

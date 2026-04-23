@@ -198,7 +198,7 @@ export interface OddsItem {
 	goals: number;
 }
 
-export type Strategy = 'least1' | 'points' | 'hits' | 'all3';
+export type Strategy = 'least1' | 'points' | 'hits';
 export type StrategyMode = Strategy | 'top';
 export class PickOdds {
 	player: Player;
@@ -233,13 +233,12 @@ export function Table(props: {
 	enabledStrategies: Record<StrategyMode, boolean>
 }) {
 	const { columns, sortedRows, requestSort, sortConfig, darkTheme, enabledStrategies } = props;
-	const orderedModes: StrategyMode[] = ['least1', 'points', 'hits', 'all3', 'top'];
+	const orderedModes: StrategyMode[] = ['least1', 'points', 'hits', 'top'];
 	const enabledModes = orderedModes.filter((mode) => enabledStrategies[mode]);
 	const strategyLabel = (mode: StrategyMode): string => {
 		if (mode === 'least1') return 'Streak';
 		if (mode === 'points') return 'Points';
 		if (mode === 'hits') return 'Leaderboard';
-		if (mode === 'all3') return 'All 3';
 		return 'Top';
 	};
 	const strategyTitle = (strategy: Set<StrategyMode>): string => {

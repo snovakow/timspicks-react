@@ -143,23 +143,19 @@
 }
 
 .settings-strategy-least1 {
-	--strategy-color: var(--highlight-least1-dot, rgb(31, 157, 85));
+	--strategy-color: var(--highlight-least1-dot);
 }
 
 .settings-strategy-points {
-	--strategy-color: var(--highlight-points-dot, rgb(196, 58, 138));
+	--strategy-color: var(--highlight-points-dot);
 }
 
 .settings-strategy-hits {
-	--strategy-color: var(--highlight-hits-dot, rgb(200, 138, 0));
-}
-
-.settings-strategy-all3 {
-	--strategy-color: var(--highlight-all3-dot, rgb(74, 123, 192));
+	--strategy-color: var(--highlight-hits-dot);
 }
 
 .settings-strategy-top {
-	--strategy-color: var(--highlight-top-dot, rgb(7, 76, 135));
+	--strategy-color: var(--highlight-top-dot);
 }
 
 .settings-checkbox-item.settings-label-single {

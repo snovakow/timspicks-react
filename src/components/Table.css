@@ -156,10 +156,6 @@ td {
   background-color: var(--highlight-hits-dot);
 }
 
-.cell-strategy-dot-all3 {
-  background-color: var(--highlight-all3-dot);
-}
-
 .cell-strategy-dot-top {
   background-color: var(--highlight-top-dot);
 }
@@ -168,35 +164,14 @@ td {
   --highlight-top-bg: rgb(170, 235, 170);
 
   --highlight-least1-dot: rgb(31, 157, 85);
-  --highlight-points-dot: rgb(196, 58, 138);
+  --highlight-points-dot: rgb(74, 123, 192);
   --highlight-hits-dot: rgb(200, 138, 0);
-  --highlight-all3-dot: rgb(74, 123, 192);
   --highlight-top-dot: rgb(7, 76, 135);
 }
 
 .highlight-top-bg {
-  color: #000;
+  color: #111;
   background-color: var(--highlight-top-bg);
-}
-
-.highlight-least1-dot {
-  color: #111;
-  background-color: var(--highlight-least1-dot);
-}
-
-.highlight-points-dot {
-  color: #111;
-  background-color: var(--highlight-points-dot);
-}
-
-.highlight-hits-dot {
-  color: #111;
-  background-color: var(--highlight-hits-dot);
-}
-
-.highlight-all3-dot {
-  color: #111;
-  background-color: var(--highlight-all3-dot);
 }
 
 .cell-container {

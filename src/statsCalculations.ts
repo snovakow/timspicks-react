@@ -117,9 +117,6 @@ export const calculateStats = (
 	const calcAny = (prob1: number, prob2: number, prob3: number): number => {
 		return 1 - (1 - prob1) * (1 - prob2) * (1 - prob3);
 	}
-	const calcAll = (prob1: number, prob2: number, prob3: number): number => {
-		return prob1 * prob2 * prob3;
-	}
 	const calcPnt = (prob1: number, prob2: number, prob3: number): number => {
 		const not1 = 1 - prob1;
 		const not2 = 1 - prob2;
@@ -141,7 +138,6 @@ export const calculateStats = (
 		prob3: number;
 
 		least1: number;
-		all3: number;
 		points: number;
 		hits: number;
 
@@ -154,7 +150,6 @@ export const calculateStats = (
 			this.prob3 = combo.pick3.prob;
 
 			this.least1 = calcAny(this.prob1, this.prob2, this.prob3);
-			this.all3 = calcAll(this.prob1, this.prob2, this.prob3);
 			this.points = calcPnt(this.prob1, this.prob2, this.prob3);
 			this.hits = calcHit(this.prob1, this.prob2, this.prob3);
 		}
@@ -167,8 +162,6 @@ export const calculateStats = (
 		correlate(strategy: strategyPattern, ref: Correlation) {
 			const least1 = ref.least1[strategy];
 			if (least1 !== null) this.least1 *= least1;
-			const all3 = ref.all3[strategy];
-			if (all3 !== null) this.all3 *= all3;
 			const points = ref.points[strategy];
 			if (points !== null) this.points *= points;
 			const hits = ref.hits[strategy];
@@ -209,7 +202,6 @@ export const calculateStats = (
 
 	type Correlation = {
 		least1: Record<typeof allStrategies[number], number | null>;
-		all3: Record<typeof allStrategies[number], number | null>;
 		points: Record<typeof allStrategies[number], number | null>;
 		hits: Record<typeof allStrategies[number], number | null>;
 	};
@@ -233,20 +225,6 @@ export const calculateStats = (
 			"soo": 1.0005066302537835,
 			"sos": 1.0032197931415312,
 			"oss": 0.9874751028404549
-		},
-		"all3": {
-			"iii": null,
-			"sss": 1.3540216030239554,
-			"iss": null,
-			"sis": null,
-			"ssi": null,
-			"ioo": null,
-			"oio": null,
-			"ooi": null,
-			"oso": 0.8010380217902658,
-			"soo": 0.8024247814536987,
-			"sos": 0.5815555113456835,
-			"oss": 1.3517805525973952
 		},
 		"points": {
 			"iii": null,
@@ -297,20 +275,6 @@ export const calculateStats = (
 			"sos": 1.0022683070339111,
 			"oss": 1.0005349075489127
 		},
-		"all3": {
-			"iii": null,
-			"sss": 0.9605476613129262,
-			"iss": 1.100342288320579,
-			"sis": 0.9785793760669967,
-			"ssi": 1.19402566737729,
-			"ioo": 0.9566491417311466,
-			"oio": 0.618845392697283,
-			"ooi": 0.7596592405106297,
-			"oso": 1.1016757688746954,
-			"soo": 1.0967325479670793,
-			"sos": 1.0220746239499903,
-			"oss": 1.1731571213807046
-		},
 		"points": {
 			"iii": null,
 			"sss": 1.0050709299378218,
@@ -359,20 +323,6 @@ export const calculateStats = (
 			"soo": 0.9992127857830574,
 			"sos": 1.0078187801762248,
 			"oss": 1.0031276144454642
-		},
-		"all3": {
-			"iii": 1,
-			"sss": 0.9596266393469162,
-			"iss": 1.0141953472690364,
-			"sis": 1.0109199318960629,
-			"ssi": 0.9756804379927416,
-			"ioo": 0.9126589561526434,
-			"oio": 0.946397419250924,
-			"ooi": 0.9848933602193917,
-			"oso": 0.8616628915134652,
-			"soo": 0.8604581378232579,
-			"sos": 0.8571923803553235,
-			"oss": 0.9014267737994256
 		},
 		"points": {
 			"iii": 1,
@@ -490,13 +440,12 @@ export const calculateStats = (
 			case 'least1': return `Streak: ${roundToPercent(value, comboPrecision)}`;
 			case 'points': return `Points: ${value.toFixed(comboPrecision)}`;
 			case 'hits': return `Leaderboard: ${value.toFixed(comboPrecision)}`;
-			case 'all3': return `All 3: ${roundToPercent(value, comboPrecision)}`;
 		}
 	}
 	const printStrategyDiff = (strategy: Picks.Strategy, top: number, value: number): string => {
 		let diff = value - top;
 		let percent = "";
-		if (strategy === 'least1' || strategy === 'all3') {
+		if (strategy === 'least1') {
 			diff *= 100;
 			percent = "%";
 		}
@@ -512,7 +461,6 @@ export const calculateStats = (
 		logHandler.addLine(printStrategy('least1', calcAny(avgResult.prob1, avgResult.prob2, avgResult.prob3)), 'left');
 		logHandler.addLine(printStrategy('points', calcPnt(avgResult.prob1, avgResult.prob2, avgResult.prob3)), 'left');
 		logHandler.addLine(printStrategy('hits', calcHit(avgResult.prob1, avgResult.prob2, avgResult.prob3)), 'left');
-		logHandler.addLine(printStrategy('all3', calcAll(avgResult.prob1, avgResult.prob2, avgResult.prob3)), 'left');
 	}
 
 	const logHighlights = (avgResult: Result) => {
@@ -565,7 +513,6 @@ export const calculateStats = (
 		logHandler.addLine("Streak: 64-70% ", 'left');
 		logHandler.addLine("Points: 22-25", 'left');
 		logHandler.addLine("Leaderboard: 0.85-1.0", 'left');
-		logHandler.addLine("All 3: 2-3.5%", 'left');
 	}
 
 	const setStrategy = (pick: Picks.PickOdds, mode: Picks.StrategyMode) => {
@@ -649,7 +596,6 @@ export const calculateStats = (
 	const least1 = processSameGroup('least1');
 	const points = processSameGroup('points');
 	const hits = processSameGroup('hits');
-	const all3 = processSameGroup('all3');
 
 	logHandler.addTitle("Top Picks");
 	logTopPicks(topResult);
@@ -704,7 +650,6 @@ export const calculateStats = (
 	if (least1) mergeSameResults(least1, 'least1');
 	if (points) mergeSameResults(points, 'points');
 	if (hits) mergeSameResults(hits, 'hits');
-	if (all3) mergeSameResults(all3, 'all3');
 
 	if (groupedMap.size > 0) {
 		logHandler.addTitle("Top Correlated");
@@ -715,7 +660,6 @@ export const calculateStats = (
 			groupedPlayer.logStrategyStat('least1');
 			groupedPlayer.logStrategyStat('points');
 			groupedPlayer.logStrategyStat('hits');
-			groupedPlayer.logStrategyStat('all3');
 
 			logHandler.addSection();
 		}

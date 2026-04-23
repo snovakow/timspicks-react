@@ -18,12 +18,10 @@ function getRandomEntry(entries: PlayerSet = []): HistoryPlayer | undefined {
 
 class Result {
     least1: boolean
-    all3: boolean
     points: number
     hits: number
     constructor(hit1: boolean, hit2: boolean, hit3: boolean) {
         this.least1 = hit1 || hit2 || hit3;
-        this.all3 = hit1 && hit2 && hit3;
         const hitCount = (hit1 ? 1 : 0) + (hit2 ? 1 : 0) + (hit3 ? 1 : 0);
         this.points = hitCount === 0 ? 0 : hitCount === 1 ? 25 : hitCount === 2 ? 50 : 100;
         this.hits = hitCount;
@@ -33,7 +31,6 @@ interface Total {
     count: number;
     title: string;
     least1: number;
-    all3: number;
     points: number;
     hits: number;
 }
@@ -41,21 +38,18 @@ interface Total {
 class ResultTotal {
     title: string
     least1: number
-    all3: number
     points: number
     hits: number
     count: number
     constructor(title: string) {
         this.title = title;
         this.least1 = 0;
-        this.all3 = 0;
         this.points = 0;
         this.hits = 0;
         this.count = 0;
     }
     add(result: Result) {
         if (result.least1) this.least1++;
-        if (result.all3) this.all3++;
         this.points += result.points;
         this.hits += result.hits;
         this.count++;
@@ -65,7 +59,6 @@ class ResultTotal {
             count: this.count,
             title: this.title,
             least1: this.least1 / this.count,
-            all3: this.all3 / this.count,
             points: this.points / this.count,
             hits: this.hits / this.count,
         };
@@ -216,7 +209,6 @@ export const runSimulation = async (gamesCount: number, iterations: number) => {
     const compile = (gameResults: GameResults, baseline: Total) => {
         const corr = {
             least1: {} as Record<strategyPattern, number | null>,
-            all3: {} as Record<strategyPattern, number | null>,
             points: {} as Record<strategyPattern, number | null>,
             hits: {} as Record<strategyPattern, number | null>
         };
@@ -238,7 +230,6 @@ export const runSimulation = async (gamesCount: number, iterations: number) => {
         for (const [type, strategy] of gameResults.strategyResults) {
             const total = strategy.getTotal();
             assign('least1', type, total);
-            assign('all3', type, total);
             assign('points', type, total);
             assign('hits', type, total);
         }

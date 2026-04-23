@@ -86,27 +86,6 @@
     font-weight: 600;
 }
 
-.info-chip-four-dot {
-    position: relative;
-    background-color: var(--highlight-bg);
-    padding: 0.3em 0.6em;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    overflow: visible;
-    min-height: 1.45em;
-    min-width: 3.7em;
-    background-image:
-        radial-gradient(circle at 12.5% calc(100% - 0.42em), var(--highlight-least1-dot) 0 0.3em, transparent 0.32em),
-        radial-gradient(circle at 37.5% calc(100% - 0.42em), var(--highlight-points-dot) 0 0.3em, transparent 0.32em),
-        radial-gradient(circle at 62.5% calc(100% - 0.42em), var(--highlight-hits-dot) 0 0.3em, transparent 0.32em),
-        radial-gradient(circle at 87.5% calc(100% - 0.42em), var(--highlight-all3-dot) 0 0.3em, transparent 0.32em);
-}
-
-.info-chip-four-dot-top {
-    --highlight-bg: var(--highlight-top-bg);
-}
-
 .info-chip-left-dot {
     position: relative;
     background-color: transparent;
@@ -136,10 +115,6 @@
 
 .info-chip-hits-left-dot {
     --legend-dot-color: var(--highlight-hits-dot);
-}
-
-.info-chip-all3-left-dot {
-    --legend-dot-color: var(--highlight-all3-dot);
 }
 
 .info-chip-top-left-dot {
