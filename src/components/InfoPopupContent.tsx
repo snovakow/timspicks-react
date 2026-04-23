@@ -111,7 +111,7 @@ export function LegendPopupContent() {
 					</span></p>
 				<p className="legend-strategy-row"><span className="legend-strategy-dot info-chip-top-left-dot" aria-hidden="true" />
 					<span className="legend-strategy-text"><strong>Top (Navy): </strong>
-						Highest-probability pick.
+						Highest-probability picks.
 					</span></p>
 			</section>
 		</div>
