@@ -21,9 +21,10 @@ import iconHockeyLight from './images/sports_hockey_24dp_E3E3E3_FILL0_wght400_GR
 import { runSimulation } from './picksOptimizer';
 import CollapsibleSection from './components/CollapsibleSection';
 import { getTeamTotalsForAllGames } from './teamGoals';
+import * as Feature from './features';
 
 const precision = Picks.precision;
-let SIMULATE = false;
+let SIMULATE = Feature.simulate;
 
 type Sportsbook = {
 	key: "bet1" | "bet2" | "bet3" | "bet4";
