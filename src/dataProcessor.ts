@@ -467,13 +467,11 @@ export const compilePlayerList = (
 		player.bet3 = player.betRaw3;
 		player.bet4 = player.betRaw4;
 	}
-
-	if (Feature.normalize) deVig(playerList);
 };
 
 // De-vig: correct each sportsbook's bias AND compression toward the
 // peer average (leave-one-out mean).
-function deVig(playerList: Picks.Player[]) {
+export function deVig(playerList: Picks.Player[]) {
 	const minProb = 0.0001;
 	const maxProb = 0.9999;
 	const minBookPlayers = 10;

@@ -243,6 +243,16 @@ function App() {
 		const key3 = deVigEnabled ? 'bet3' : 'betRaw3';
 		const key4 = deVigEnabled ? 'bet4' : 'betRaw4';
 
+		if (Feature.normalize) {
+			for (const player of playerList) {
+				player.bet1 = player.betRaw1;
+				player.bet2 = player.betRaw2;
+				player.bet3 = player.betRaw3;
+				player.bet4 = player.betRaw4;
+			}
+			if (deVigEnabled) DataProcessor.deVig(playerList);
+		}
+
 		for (const player of playerList) {
 			const values = [player[key1], player[key2], player[key3], player[key4]];
 			const rawValues = [player.betRaw1, player.betRaw2, player.betRaw3, player.betRaw4];
