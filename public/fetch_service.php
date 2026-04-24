@@ -1,38 +1,50 @@
 <?php
+require_once dirname(__DIR__) . '/update/update_lib.php';
+
 $live = true;
 $secure = true;
 $savesrc = false;
-$debug = false;
 
 if ($live && $secure) {
 	session_start();
 
-	if (!isset($_SESSION['csrf_token'])) die();
+	if (!isset($_SESSION['csrf_token'])) die("CSRF token not found in session.");
 
 	$csrf_token = $_SESSION['csrf_token'];
 	// unset($_SESSION['csrf_token']);
 
-	if ($_SERVER['REQUEST_METHOD'] !== 'POST') die();
+	if ($_SERVER['REQUEST_METHOD'] !== 'POST') die("Invalid request method.");
 
 	$json_data = file_get_contents('php://input');
 
 	$data = json_decode($json_data, true);
 
-	if (!isset($data['code']) || !isset($data['name'])) die();
-	if (!hash_equals($csrf_token, $data['csrf_token'])) die();
-	if (!hash_equals('snovakow', $data['name'])) die();
+	if (!hash_equals($csrf_token, $data['csrf_token'])) die("Session expired.");
+	if (!isset($data['code']) || !isset($data['name'])) die("Missing required parameters.");
 
-	$source_file = './pwd.txt';
-	$stored_hash = file_get_contents($source_file);
-	$user_input_password = $data['code'];
-	if (password_verify($user_input_password, $stored_hash)) {
-		if (password_needs_rehash($stored_hash, PASSWORD_DEFAULT)) {
-			$stored_hash = password_hash($user_input_password, PASSWORD_DEFAULT);
-			file_put_contents($source_file, $stored_hash);
+	$auth_file = './auth.json';
+	$auth_data = file_get_contents($auth_file);
+	if ($auth_data === false) die('Authentication error.');
+
+	$auth_json = json_decode($auth_data, false);
+	if (json_last_error() !== JSON_ERROR_NONE) {
+		die('Authentication error: ' . json_last_error_msg());
+	}
+
+	if (!property_exists($auth_json, 'name') || !$auth_json->name) die("Authentication error.");
+	if (!property_exists($auth_json, 'code') || !$auth_json->code) die("Authentication error.");
+
+	if (!hash_equals($data['name'], $auth_json->name)) die("Incorrect username or password.");
+	if (password_verify($data['code'], $auth_json->code)) {
+		if (password_needs_rehash($auth_json->code, PASSWORD_DEFAULT)) {
+			$auth_json->code = password_hash($data['code'], PASSWORD_DEFAULT);
+			$auth_string = json_encode($auth_json, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
+			if (file_put_contents($auth_file, $auth_string) === false) {
+				die('Authentication error.');
+			}
 		}
 	} else {
-		if ($debug) die("Password is incorrect.");
-		else die();
+		die("Incorrect username or password.");
 	}
 }
 
@@ -150,7 +162,7 @@ if ($live && isset($_GET['history'])) {
 		$dateRange["files"] = $files;
 	}
 
-	$json_string = json_encode($dates, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+	$json_string = json_encode($dates, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
 
 	$local_file = $baseHistoryPath . '/history.json';
 	if (file_put_contents($local_file, $json_string) === false) {
@@ -177,22 +189,7 @@ $now = new DateTime('now', $timezone);
 
 */
 if ($live) {
-	echo '<h3>Games</h3>';
-
-	// Endpoint for today's schedule
-	$url = 'https://api-web.nhle.com/v1/schedule/' . $now->format('Y-m-d');
-
-	// Fetch the JSON data
-	$response = file_get_contents($url);
-	if ($response === false) {
-		die('Error fetching NHL data: ' . $url);
-	}
-
-	$local_file = $basePath . '/games.json';
-	if (file_put_contents($local_file, $response) === false) {
-		die('Error saving local JSON file.');
-	}
-	echo "Data has been written to $local_file";
+	updateGames($now, $basePath);
 }
 
 $ch = curl_init();
@@ -256,7 +253,7 @@ if ($live) {
 		}
 	}
 
-	$json_string = json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+	$json_string = json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
 
 	$local_file = $basePath . '/helper.json';
 	if (file_put_contents($local_file, $json_string) === false) {
@@ -298,7 +295,7 @@ if ($live) {
 		];
 	}
 
-	$json_string = json_encode($map, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+	$json_string = json_encode($map, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
 	$local_file = $basePath . '/bet1.json';
 	if (file_put_contents($local_file, $json_string) === false) die();
 
@@ -372,7 +369,7 @@ if ($live) {
 		}
 	}
 
-	$json_string = json_encode($map, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+	$json_string = json_encode($map, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
 	$local_file = $basePath . '/bet2.json';
 	if (file_put_contents($local_file, $json_string) === false) die();
 
@@ -423,15 +420,13 @@ if ($live) {
 
 	$response = curl_exec($ch);
 	if ($response === false) {
-		if ($debug) die('cURL Error: ' . curl_error($ch));
-		else die();
+		die('cURL Error: ' . curl_error($ch));
 	}
 
 	if ($savesrc) file_put_contents($basePath . '/src_bet3_0.json', $response);
 	$json_data = json_decode($response, false);
 	if (json_last_error() !== JSON_ERROR_NONE) {
-		if ($debug) die('Error decoding JSON: ' . json_last_error_msg());
-		else die();
+		die('Error decoding JSON: ' . json_last_error_msg());
 	}
 
 	$ids = [];
@@ -484,16 +479,14 @@ if ($live) {
 
 		$response = curl_exec($ch);
 		if ($response === false) {
-			if ($debug) die('cURL Error: ' . curl_error($ch));
-			else die();
+			die('cURL Error: ' . curl_error($ch));
 		}
 
 		if ($savesrc) file_put_contents($basePath . '/src_bet3_' . $id . '.json', $response);
 
 		$json_data = json_decode($response, false);
 		if (json_last_error() !== JSON_ERROR_NONE) {
-			if ($debug) die('Error decoding JSON: ' . json_last_error_msg());
-			else die();
+			die('Error decoding JSON: ' . json_last_error_msg());
 		}
 
 		foreach ($json_data->fixture->games as $game) {
@@ -513,11 +506,11 @@ if ($live) {
 
 	if ($savesrc) {
 		$items = array_merge([], ...$items);
-		$json_string = json_encode($items, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+		$json_string = json_encode($items, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
 		file_put_contents($basePath . '/src_bet3.json', $json_string, LOCK_EX);
 	}
 
-	$json_string = json_encode($map, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+	$json_string = json_encode($map, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
 	$local_file = $basePath . '/bet3.json';
 
 	if (file_put_contents($local_file, $json_string, LOCK_EX) === false) die();
@@ -545,8 +538,7 @@ if ($live) {
 
 		$data_array = json_decode($json_data, false);
 		if (json_last_error() !== JSON_ERROR_NONE) {
-			if ($debug) die('Error decoding JSON: ' . json_last_error_msg());
-			else die();
+			die('Error decoding JSON: ' . json_last_error_msg());
 		}
 
 		if ($savesrc) $items = [$data_array->items];
@@ -569,16 +561,14 @@ if ($live) {
 			$json_data = file_get_contents($remote_url);
 
 			if ($json_data === false) {
-				if ($debug) die("Error fetching $remote_url");
-				else die();
+				die("Error fetching $remote_url");
 			}
 
 			if ($savesrc) file_put_contents($basePath . '/src_bet4_' . $i . '.json', $json_data);
 
 			$data_array = json_decode($json_data, false);
 			if (json_last_error() !== JSON_ERROR_NONE) {
-				if ($debug) die('Error decoding JSON: ' . json_last_error_msg());
-				else die();
+				die('Error decoding JSON: ' . json_last_error_msg());
 			}
 
 			if ($savesrc) $items[] = $data_array->items;
@@ -597,17 +587,16 @@ if ($live) {
 
 		if ($savesrc) {
 			$items = array_merge([], ...$items);
-			$json_string = json_encode($items, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+			$json_string = json_encode($items, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
 			file_put_contents($basePath . '/src_bet4.json', $json_string);
 		}
 	}
 
-	$json_string = json_encode($map, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+	$json_string = json_encode($map, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
 	$local_file = $basePath . '/bet4.json';
 
 	if (file_put_contents($local_file, $json_string) === false) {
-		if ($debug) die('Error writing file: ' . $local_file);
-		else die();
+		die('Error writing file: ' . $local_file);
 	}
 
 	echo "{$pages} pages of data have been merged and written to $local_file";
@@ -678,7 +667,7 @@ if ($live) {
 	// Write $now as an object property called "processed" to process.json at the end of Backup
 	$processObj = ["processed" => $now->format(DateTime::ATOM)];
 	$local_file = $basePath . '/process.json';
-	file_put_contents($local_file, json_encode($processObj, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+	file_put_contents($local_file, json_encode($processObj, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR));
 }
 
 echo "<h2>Complete</h2>";
