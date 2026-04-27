@@ -64,17 +64,34 @@ export function expectedGoals(selections: Array<DataSelection>): number | null {
     return mean;
 }
 
-const NAV_URL = "https://sportsbook-nash.draftkings.com/sites/CA-ON-SB/api/sportscontent/controldata/league/leagueSubcategory/v1/markets?isBatchable=false&templateVars=42133&eventsQuery=%24filter%3DleagueId%20eq%20%2742133%27%20AND%20clientMetadata%2FSubcategories%2Fany%28s%3A%20s%2FId%20eq%20%2716716%27%29&marketsQuery=%24filter%3DclientMetadata%2FsubCategoryId%20eq%20%2716716%27%20AND%20tags%2Fall%28t%3A%20t%20ne%20%27SportcastBetBuilder%27%29&include=Events&entity=events";
-
-async function getEventIds() {
-    const res = await fetch(NAV_URL);
+async function getTeamOdds() {
+    const oddsURL = "https://sportsbook-nash.draftkings.com/sites/CA-ON-SB/api/sportscontent/controldata/league/leagueSubcategory/v1/markets?isBatchable=false&templateVars=42133&eventsQuery=%24filter%3DleagueId%20eq%20%2742133%27%20AND%20clientMetadata%2FSubcategories%2Fany%28s%3A%20s%2FId%20eq%20%2716716%27%29&marketsQuery=%24filter%3DclientMetadata%2FsubCategoryId%20eq%20%2716716%27%20AND%20tags%2Fall%28t%3A%20t%20ne%20%27SportcastBetBuilder%27%29&include=Events&entity=events";
+    const res = await fetch(oddsURL);
     const data = await res.json();
-    console.log(data);
     return data;
 }
 
-export async function getTeamTotalsForAllGames() {
-    const json = await getEventIds();
+const extractTeam = (name: string): Team | null => {
+    const parse = name.split(" ");
+    if (parse.length < 1) return null;
+
+    const team = parse[0];
+    if (team.length === 2 && parse.length > 1) {
+        const initial = parse[1];
+        if (initial && initial.length > 0) {
+            const name = (team + initial[0]);
+            if (isTeam(name)) return name;
+        }
+        return null;
+    }
+    if (team.length === 3) {
+        if (isTeam(team)) return team;
+    }
+    return null;
+}
+
+export async function getTeamTotals() {
+    const json = await getTeamOdds();
     const today = new Date().toDateString();
     const events = new Set<string>();
     const markets = new Set<string>();
@@ -107,21 +124,8 @@ export async function getTeamTotalsForAllGames() {
         const xG = expectedGoals(selection);
         if (xG === null) continue;
 
-        const parse = name.split(" ");
-        if (parse.length < 1) continue;
-
-        const team = parse[0];
-        if (team.length === 2 && parse.length > 1) {
-            const initial = parse[1];
-            if (initial && initial.length > 0) {
-                const name = (team + initial[0]);
-                if (isTeam(name)) results.set(name, xG);
-            }
-            continue;
-        }
-        if (team.length === 3) {
-            if (isTeam(team)) results.set(team, xG);
-        }
+        const team = extractTeam(name);
+        if (team) results.set(team, xG);
     }
 
     return results;

@@ -21,7 +21,7 @@ import iconHockeyDark from './images/sports_hockey_24dp_000000_FILL0_wght400_GRA
 import iconHockeyLight from './images/sports_hockey_24dp_E3E3E3_FILL0_wght400_GRAD0_opsz24.svg';
 import { runSimulation } from './picksOptimizer';
 import CollapsibleSection from './components/CollapsibleSection';
-import { getTeamTotalsForAllGames } from './teamGoals';
+import { getTeamTotals, getGameTotals } from './teamGoals';
 import * as Feature from './features';
 
 const precision = Picks.precision;
@@ -114,7 +114,7 @@ function App() {
 	// Lazy-load xG data only if enabled and not already loaded
 	useEffect(() => {
 		if (xgEnabled && !xgLoadedRef.current) {
-			getTeamTotalsForAllGames().then((map) => {
+			getTeamTotals().then((map) => {
 				setXgMap(map);
 				xgLoadedRef.current = true;
 			});
