@@ -50,57 +50,63 @@ export function expectedGoals(selections: Array<DataSelection>): number | null {
 
 const NAV_URL = "https://sportsbook-nash.draftkings.com/sites/CA-ON-SB/api/sportscontent/controldata/league/leagueSubcategory/v1/markets?isBatchable=false&templateVars=42133&eventsQuery=%24filter%3DleagueId%20eq%20%2742133%27%20AND%20clientMetadata%2FSubcategories%2Fany%28s%3A%20s%2FId%20eq%20%2716716%27%29&marketsQuery=%24filter%3DclientMetadata%2FsubCategoryId%20eq%20%2716716%27%20AND%20tags%2Fall%28t%3A%20t%20ne%20%27SportcastBetBuilder%27%29&include=Events&entity=events";
 
-const odds1 = "https://sportsbook-nash.draftkings.com/sites/CA-ON-SB/api/sportscontent/controldata/event/eventSubcategory/v1/markets?isBatchable=false&templateVars=";
-const odds2 = "&marketsQuery=%24filter%3DeventId%20eq%20%27";
-const odds3 = "%27%20AND%20clientMetadata%2FsubCategoryId%20eq%20%2716716%27%20AND%20tags%2Fall%28t%3A%20t%20ne%20%27SportcastBetBuilder%27%29&entity=markets";
-async function getTomorrowEventIds() {
+async function getEventIds() {
     const res = await fetch(NAV_URL);
     const data = await res.json();
-
+    console.log(data);
     return data;
 }
 
 export async function getTeamTotalsForAllGames() {
-    const json = await getTomorrowEventIds();
+    const json = await getEventIds();
     const today = new Date().toDateString();
-    const results: Map<Team, number> = new Map();
+    const events = new Set<string>();
+    const markets = new Set<string>();
+
     for (const event of json.events) {
         const startDate = new Date(event.startEventDate);
         if (startDate.toDateString() !== today) continue;
+        events.add(event.id);
+    }
 
-        const url = odds1 + event.id + odds2 + event.id + odds3;
-        const res = await fetch(url);
-        const data = await res.json();
+    for (const market of json.markets) {
+        if (events.has(market.eventId)) markets.add(market.id);
+    }
 
-        const selections: Map<string, DataSelection[]> = new Map();
-        for (const selection of data.selections) {
-            const name = selection.participants[0].name;
-            if (!selections.has(name)) {
-                selections.set(name, []);
-            }
-            selections.get(name)!.push(selection);
+    const results: Map<Team, number> = new Map();
+    const selections: Map<string, DataSelection[]> = new Map();
+    for (const selection of json.selections) {
+        if (!markets.has(selection.marketId)) continue;
+
+        const name = selection.participants[0].name;
+        let selectionList = selections.get(name);
+        if (!selectionList) {
+            selectionList = [];
+            selections.set(name, selectionList);
         }
-        for (const [name, selection] of selections) {
-            const xG = expectedGoals(selection);
-            if (xG === null) continue;
-            // console.log(name, xG.toFixed(1));
+        selectionList.push(selection);
+    }
 
-            const parse = name.split(" ");
-            if (parse.length < 1) continue;
+    for (const [name, selection] of selections) {
+        const xG = expectedGoals(selection);
+        if (xG === null) continue;
 
-            const team = parse[0];
-            if (team.length === 2 && parse.length > 1) {
-                const initial = parse[1];
-                if (initial && initial.length > 0) {
-                    const name = (team + initial[0]);
-                    if (isTeam(name)) results.set(name, xG);
-                }
-                continue;
+        const parse = name.split(" ");
+        if (parse.length < 1) continue;
+
+        const team = parse[0];
+        if (team.length === 2 && parse.length > 1) {
+            const initial = parse[1];
+            if (initial && initial.length > 0) {
+                const name = (team + initial[0]);
+                if (isTeam(name)) results.set(name, xG);
             }
-            if (team.length === 3) {
-                if (isTeam(team)) results.set(team, xG);
-            }
+            continue;
+        }
+        if (team.length === 3) {
+            if (isTeam(team)) results.set(team, xG);
         }
     }
+
     return results;
 }
