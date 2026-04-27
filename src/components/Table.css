@@ -212,6 +212,10 @@ td {
   left: 0;
 }
 
+.center-stack {
+  align-items: center;
+}
+
 .right-align {
   justify-content: flex-end;
   text-align: right;

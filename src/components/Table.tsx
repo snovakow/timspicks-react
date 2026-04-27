@@ -67,53 +67,59 @@ export function Basic(props: {
 	xgMap?: Map<string, number> | null
 }) {
 	const { games, darkTheme, xgMap } = props;
-	const formatXG = (teamCode: string) => {
-		if (!xgMap) return null;
-		const val = xgMap.get(teamCode);
-		return val !== undefined ? `xG: ${val.toFixed(2)}` : null;
-	};
+	const formatXG = (val: number): string => `xG: ${val.toFixed(2)}`;
 	return (
 		<table>
 			<tbody>
-				{games.map((game, idx) => (
-					<tr key={game.link} className={idx % 2 === 0 ? 'row-color' : 'row-color-alt'}>
-						<td>
-							<span className='cell-container right-align'>
-								<span className="team-name-stack">
-									{game.away.name}
-									{xgMap && <span className="xg-value away">{formatXG(game.away.code)}</span>}
+				{games.map((game, idx) => {
+					const xgHome = xgMap?.get(game.home.code) ?? null;
+					const xgAway = xgMap?.get(game.away.code) ?? null;
+					const xgGame = xgHome !== null && xgAway !== null ? xgHome + xgAway : null;
+					return (
+						<tr key={game.link} className={idx % 2 === 0 ? 'row-color' : 'row-color-alt'}>
+							<td>
+								<span className='cell-container right-align'>
+									<span className="team-name-stack">
+										{game.away.name}
+										{xgAway !== null && <span className="xg-value away">{formatXG(xgAway)}</span>}
+									</span>
+									<img
+										className='td-name-logo'
+										src={darkTheme ? game.away.logoDark : game.away.logoLight}
+										alt=""
+										onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+									/>
 								</span>
-								<img
-									className='td-name-logo'
-									src={darkTheme ? game.away.logoDark : game.away.logoLight}
-									alt=""
-									onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-								/>
-							</span>
-						</td>
-						<td>@</td>
-						<td>
-							<span className='cell-container'>
-								<img
-									className='td-name-logo'
-									src={darkTheme ? game.home.logoDark : game.home.logoLight}
-									alt=""
-									onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-								/>
-								<span className="team-name-stack">
-									{game.home.name}
-									{xgMap && <span className="xg-value home">{formatXG(game.home.code)}</span>}
+							</td>
+							<td className="cell-container">
+								<span className="team-name-stack center-stack">
+									@
+									{xgGame !== null && <span className="xg-value">{formatXG(xgGame)}</span>}
 								</span>
-							</span>
-						</td>
-						<td className="cell-container">
-							{game.time.toLocaleTimeString([], timeFormat)}
-						</td>
-						{includeLinks && (
-							<td><a href={game.link} target="_blank" rel="noopener noreferrer">🔗</a></td>
-						)}
-					</tr>
-				))}
+							</td>
+							<td>
+								<span className='cell-container'>
+									<img
+										className='td-name-logo'
+										src={darkTheme ? game.home.logoDark : game.home.logoLight}
+										alt=""
+										onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+									/>
+									<span className="team-name-stack">
+										{game.home.name}
+										{xgHome !== null && <span className="xg-value home">{formatXG(xgHome)}</span>}
+									</span>
+								</span>
+							</td>
+							<td className="cell-container">
+								{game.time.toLocaleTimeString([], timeFormat)}
+							</td>
+							{includeLinks && (
+								<td><a href={game.link} target="_blank" rel="noopener noreferrer">🔗</a></td>
+							)}
+						</tr>
+					)
+				})}
 			</tbody>
 		</table>
 	);
