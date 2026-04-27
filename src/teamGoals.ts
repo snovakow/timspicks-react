@@ -17,23 +17,39 @@ export function expectedGoals(selections: Array<DataSelection>): number | null {
         if (sel.label === 'Over') grouped[pts].over = dec;
         if (sel.label === 'Under') grouped[pts].under = dec;
     }
-    // For each interval, calculate implied probability for "exactly" that goal total
-    // P(exact k) = P(over k-0.5) - P(over k+0.5)
-    // For each integer k, find the interval (k-0.5, k+0.5)
+    // For each interval, calculate implied probability for that goal total
+    // Use de-vig: always normalize both Over and Under
     const probs: Record<number, number> = {};
     const sortedPoints = Object.keys(grouped).map(Number).sort((a, b) => a - b);
     for (let i = 0; i < sortedPoints.length - 1; ++i) {
         const lower = sortedPoints[i];
         const upper = sortedPoints[i + 1];
+        // For lower line
+        let pOverLower: number | undefined = undefined;
         const overLower = grouped[lower].over;
+        const underLower = grouped[lower].under;
+        if (overLower && underLower) {
+            const invOver = 1 / overLower;
+            const invUnder = 1 / underLower;
+            const sum = invOver + invUnder;
+            pOverLower = invOver / sum;
+        } else if (overLower) {
+            pOverLower = 1 / overLower;
+        }
+        // For upper line
+        let pOverUpper: number | undefined = undefined;
         const overUpper = grouped[upper].over;
-        if (overLower && overUpper) {
-            // Implied probability for over at each line
-            const pLower = 1 / overLower;
-            const pUpper = 1 / overUpper;
-            // Normalize (de-vig)
-            const norm = pLower - pUpper;
-            // The most probable integer is at lower+0.5 (i.e., lower+1)
+        const underUpper = grouped[upper].under;
+        if (overUpper && underUpper) {
+            const invOver = 1 / overUpper;
+            const invUnder = 1 / underUpper;
+            const sum = invOver + invUnder;
+            pOverUpper = invOver / sum;
+        } else if (overUpper) {
+            pOverUpper = 1 / overUpper;
+        }
+        if (pOverLower !== undefined && pOverUpper !== undefined) {
+            const norm = pOverLower - pOverUpper;
             probs[lower + 0.5] = norm;
         }
     }
