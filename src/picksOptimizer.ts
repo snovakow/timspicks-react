@@ -28,7 +28,7 @@ class Result {
     }
 }
 
-interface Total {
+export interface Total {
     least1: number;
     points: number;
     hits: number;
@@ -51,6 +51,16 @@ class ResultTotal implements Total {
         this.hits += result.hits;
         this.count++;
     }
+}
+
+export type SimTotal = Record<strategyPattern | 'random', Total>;
+export interface SimItem {
+    slotTotal: number;
+    slotIndex: number;
+    gameCount: number;
+    gameDay: string;
+    picksCount: number;
+    totals: SimTotal;
 }
 
 const simulateRandom = (set1: PlayerSet, set2: PlayerSet, set3: PlayerSet): Result | null => {
@@ -228,9 +238,9 @@ export const runSimulation = async (iterations: number) => {
     }
 
     const compile = () => {
-        const results = [];
+        const results: SimItem[] = [];
         for (const [index, result] of gameResults) {
-            const totals = {} as Record<strategyPattern | 'random', Total>;
+            const totals = {} as SimTotal;
             totals.random = { ...result.randomResults };
             for (const [type, strategy] of result.strategyResults) {
                 totals[type] = { ...strategy };

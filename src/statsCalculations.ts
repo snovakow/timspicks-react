@@ -1,6 +1,7 @@
 import * as Picks from './components/Table';
 import { roundToPercent } from './utility';
 import type { Team } from './components/logo';
+import { Correlation, correlations } from './dataProcessor';
 
 const precision = Picks.precision;
 
@@ -160,12 +161,12 @@ export const calculateStats = (
 			this.players3.add(combo.pick3.pick);
 		}
 
-		correlate(strategy: strategyPattern, ref: Correlation) {
-			const least1 = ref.least1[strategy];
+		correlate(strategy: strategyPattern, ref: Correlation): void {
+			const least1 = ref.correlate.least1[strategy];
 			if (least1 !== null) this.least1 *= least1;
-			const points = ref.points[strategy];
+			const points = ref.correlate.points[strategy];
 			if (points !== null) this.points *= points;
-			const hits = ref.hits[strategy];
+			const hits = ref.correlate.hits[strategy];
 			if (hits !== null) this.hits *= hits;
 		}
 	}
@@ -200,160 +201,6 @@ export const calculateStats = (
 			return prev;
 		}
 	}
-
-	type Correlation = {
-		least1: Record<typeof allStrategies[number], number | null>;
-		points: Record<typeof allStrategies[number], number | null>;
-		hits: Record<typeof allStrategies[number], number | null>;
-	};
-
-	// 1000000 iterations per night
-	/*
-		1 Game Night
-		aa71 nights simulated
-	*/
-	const historical1Night: Correlation = {
-		"least1": {
-			"iii": null,
-			"sss": 0.996044409833046,
-			"iss": null,
-			"sis": null,
-			"ssi": null,
-			"ioo": null,
-			"oio": null,
-			"ooi": null,
-			"oso": 1.000471434119312,
-			"soo": 1.0005066302537835,
-			"sos": 1.0032197931415312,
-			"oss": 0.9874751028404549
-		},
-		"points": {
-			"iii": null,
-			"sss": 1.0000044621770354,
-			"iss": null,
-			"sis": null,
-			"ssi": null,
-			"ioo": null,
-			"oio": null,
-			"ooi": null,
-			"oso": 0.9982959010571092,
-			"soo": 0.9984362009567944,
-			"sos": 0.9926526374958418,
-			"oss": 0.9984341962105899
-		},
-		"hits": {
-			"iii": null,
-			"sss": 0.9980372747743135,
-			"iss": null,
-			"sis": null,
-			"ssi": null,
-			"ioo": null,
-			"oio": null,
-			"ooi": null,
-			"oso": 0.9993920152572664,
-			"soo": 0.9995253888823101,
-			"sos": 0.9949370045350285,
-			"oss": 0.996470736194448
-		}
-	};
-
-	/*
-		2 Game Nights
-		66 nights simulated
-	*/
-	const historical2Night: Correlation = {
-		"least1": {
-			"iii": null,
-			"sss": 1.001891024635451,
-			"iss": 0.9945713961806759,
-			"sis": 0.9978982650536891,
-			"ssi": 1.0015005405341784,
-			"ioo": 0.9891612031697926,
-			"oio": 0.9921797804707926,
-			"ooi": 1.0022393189575538,
-			"oso": 0.9964253606142546,
-			"soo": 0.9962914349062009,
-			"sos": 1.0022683070339111,
-			"oss": 1.0005349075489127
-		},
-		"points": {
-			"iii": null,
-			"sss": 1.0050709299378218,
-			"iss": 0.9938816350410576,
-			"sis": 0.9956518085772835,
-			"ssi": 1.00243616322993,
-			"ioo": 0.9882783239160793,
-			"oio": 0.9870636694984828,
-			"ooi": 0.9972667318124117,
-			"oso": 0.9983220650447268,
-			"soo": 0.9981049164277052,
-			"sos": 1.0017908411020824,
-			"oss": 0.9953538337725771
-		},
-		"hits": {
-			"iii": null,
-			"sss": 1.0052540709643187,
-			"iss": 0.9934437221490953,
-			"sis": 0.995722033942835,
-			"ssi": 1.0016480832093186,
-			"ioo": 0.9884084266931554,
-			"oio": 0.9885782903983196,
-			"ooi": 0.9982441012015953,
-			"oso": 0.997896932209778,
-			"soo": 0.9976992237137838,
-			"sos": 1.0017074062392177,
-			"oss": 0.9946224616695668
-		}
-	};
-
-	/*
-		3+ Game Nights
-		485 nights simulated
-	*/
-	const historical3PlusNight: Correlation = {
-		"least1": {
-			"iii": 1,
-			"sss": 0.9955411129995313,
-			"iss": 0.9960620128161661,
-			"sis": 0.9972240240199007,
-			"ssi": 0.998841124703338,
-			"ioo": 1.0008954025396748,
-			"oio": 0.9962086403180294,
-			"ooi": 1.0082513551168613,
-			"oso": 0.9992936683818823,
-			"soo": 0.9992127857830574,
-			"sos": 1.0078187801762248,
-			"oss": 1.0031276144454642
-		},
-		"points": {
-			"iii": 1,
-			"sss": 0.9916880244789621,
-			"iss": 0.9957658650221768,
-			"sis": 0.9967264916116636,
-			"ssi": 0.9958811701609408,
-			"ioo": 0.9981700461974617,
-			"oio": 0.9941509948861489,
-			"ooi": 1.0044981724413817,
-			"oso": 0.9922012869409813,
-			"soo": 0.9920786005371944,
-			"sos": 1.0005809152874516,
-			"oss": 0.9972299228351148
-		},
-		"hits": {
-			"iii": 1,
-			"sss": 0.9918963658990133,
-			"iss": 0.9956461064875312,
-			"sis": 0.9966342597417027,
-			"ssi": 0.9960124386388516,
-			"ioo": 0.99872571470201,
-			"oio": 0.9944613073607782,
-			"ooi": 1.0046255685099341,
-			"oso": 0.9930495520599889,
-			"soo": 0.992933897150135,
-			"sos": 1.0015126832339643,
-			"oss": 0.9978524712382256
-		}
-	};
 
 	/*	
 		iii = independent
@@ -543,7 +390,7 @@ export const calculateStats = (
 
 	if (gameCount === 0) return;
 
-	const ref = gameCount === 1 ? historical1Night : gameCount === 2 ? historical2Night : historical3PlusNight;
+	const ref = gameCount === 1 ? correlations['1'] : gameCount === 2 ? correlations['2'] : correlations['3+'];
 
 	const { top, strategies } = calcCombos();
 	const topResultRaw = top.merge();
