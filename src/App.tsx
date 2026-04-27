@@ -34,10 +34,10 @@ type Sportsbook = {
 };
 
 const sportsbooks: Sportsbook[] = [
-	{ key: "bet1", title: "DraftKings", logo: logo1 },
-	{ key: "bet2", title: "FanDuel", logo: logo2 },
-	{ key: "bet3", title: "BetMGM", logo: logo3 },
-	{ key: "bet4", title: "BetRivers", logo: logo4 },
+	{ key: 'bet1', title: "DraftKings", logo: logo1 },
+	{ key: 'bet2', title: "FanDuel", logo: logo2 },
+	{ key: 'bet3', title: "BetMGM", logo: logo3 },
+	{ key: 'bet4', title: "BetRivers", logo: logo4 },
 ];
 
 const betDisplayRounded = (chance: number | null): string => {

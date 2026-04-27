@@ -14,8 +14,11 @@ export interface LogLine {
 }
 export type LogLines = LogLine[][];
 
-export type SportsbookKey = 'bet1' | 'bet2' | 'bet3' | 'bet4';
-export type LogStatsKey = SportsbookKey | 'betAvg';
+export const SportsbookKeys = ['bet1', 'bet2', 'bet3', 'bet4'] as const;;
+export const LogStatsKeys = [...SportsbookKeys, 'betAvg'] as const;;
+
+export type SportsbookKey = typeof SportsbookKeys[number];
+export type LogStatsKey = typeof LogStatsKeys[number];
 export type PickIndex = 1 | 2 | 3;
 
 export interface LogStatsCacheItem {
@@ -523,10 +526,9 @@ export const precalculateLogStats = (
 	table2Rows: Picks.PickOdds[],
 	table3Rows: Picks.PickOdds[]
 ): Record<LogStatsKey, LogStatsCacheItem> => {
-	const keys: LogStatsKey[] = ['bet1', 'bet2', 'bet3', 'bet4', 'betAvg'];
 	const cache = {} as Record<LogStatsKey, LogStatsCacheItem>;
 
-	for (const key of keys) {
+	for (const key of LogStatsKeys) {
 		const stats: LogLines = [];
 		calculateStats(key, minSportsbooks, table1Rows, table2Rows, table3Rows, stats);
 		cache[key] = {

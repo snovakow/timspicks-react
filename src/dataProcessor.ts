@@ -1,6 +1,6 @@
 import * as Picks from './components/Table';
 import type { SimTotal, SimItem, Total } from './picksOptimizer';
-import { allStrategies } from './statsCalculations';
+import { allStrategies, SportsbookKeys } from './statsCalculations';
 
 // Raw player structure from players_XXX.json
 type RawPlayerJson = {
@@ -575,22 +575,21 @@ export function deVig(playerList: Picks.Player[]) {
 	const minProb = 0.0001;
 	const maxProb = 0.9999;
 	const minBookPlayers = 10;
-	const betKeys = ["bet1", "bet2", "bet3", "bet4"] as const;
 
 	interface Correction {
 		c: number;
 		alpha: number;
 	}
 
-	const corrections: Partial<Record<typeof betKeys[number], Correction>> = {};
-	for (const key of betKeys) {
+	const corrections: Partial<Record<typeof SportsbookKeys[number], Correction>> = {};
+	for (const key of SportsbookKeys) {
 		const xs: number[] = [];
 		const ys: number[] = [];
 		for (const player of playerList) {
 			const bookProb = player[key];
 			if (bookProb === null) continue;
 			let peerSum = 0, peerCount = 0;
-			for (const other of betKeys) {
+			for (const other of SportsbookKeys) {
 				if (other === key) continue;
 				if (player[other] !== null) { peerSum += player[other]!; peerCount++; }
 			}
@@ -621,7 +620,7 @@ export function deVig(playerList: Picks.Player[]) {
 	}
 
 	// Apply all at once: fair = (book / c) ^ (1/α)
-	for (const key of betKeys) {
+	for (const key of SportsbookKeys) {
 		const corr = corrections[key];
 		if (corr === undefined) continue;
 		const invAlpha = 1 / corr.alpha;
