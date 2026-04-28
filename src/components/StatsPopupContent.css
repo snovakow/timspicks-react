@@ -1,36 +1,36 @@
 .stats-layout {
-  font-family: monospace;
-  white-space: pre-wrap;
-  font-size: 1em;
+	font-family: monospace;
+	white-space: pre-wrap;
+	font-size: 1em;
 }
 
 .stats-layout:not(:first-child) {
-  margin-top: 1em;
+	margin-top: 1em;
 }
 
 .stats-title {
-  font-size: 1.2em;
+	font-size: 1.2em;
 }
 
 .stats-section {
-  width: fit-content;
-  max-width: 100%;
-  margin-left: auto;
-  margin-right: auto;
+	width: fit-content;
+	max-width: 100%;
+	margin-left: auto;
+	margin-right: auto;
 }
 
 .stats-section:not(:last-child) {
-  margin-bottom: 0.7em;
+	margin-bottom: 0.7em;
 }
 
 .stats-bold {
-  font-weight: bold;
+	font-weight: bold;
 }
 
 .stats-align-left {
-  text-align: left;
+	text-align: left;
 }
 
 .stats-align-center {
-  text-align: center;
+	text-align: center;
 }
