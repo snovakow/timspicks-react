@@ -361,7 +361,7 @@ export const loadInitialData = async (): Promise<InitialData> => {
 		loadAndValidate('./data/bet2.json', (value): value is SportsbookOddsItem[] => Array.isArray(value) && value.every(isSportsbookOddsItem), 'FanDuel odds data'),
 		loadAndValidate('./data/bet3.json', (value): value is SportsbookOddsItem[] => Array.isArray(value) && value.every(isSportsbookOddsItem), 'BetMGM odds data'),
 		loadAndValidate('./data/bet4.json', (value): value is SportsbookOddsItem[] => Array.isArray(value) && value.every(isSportsbookOddsItem), 'BetRivers odds data'),
-		loadData('./data/sim.json') as unknown as SimItem[],
+		loadData('./sim.json') as unknown as SimItem[],
 	]);
 
 	compileSimItems(simData);
