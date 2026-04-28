@@ -1,15 +1,49 @@
-import type { LogLines } from '../statsCalculations';
+import { useState } from 'react';
+
+import { sportsbooks } from '../sportsbookTypes';
+import { getEntries } from '../utility';
+import type { LogStatsKey, SportsbookKey, LogLines } from '../sportsbookTypes';
+
 import './StatsPopupContent.css';
+import './sportsbook.css';
+
+export type SportsbookLog = Record<LogStatsKey, LogLines>
 
 interface StatsPopupContentProps {
-	stats: LogLines;
+	bookStats: SportsbookLog | null;
 }
 
-export default function StatsPopupContent({ stats }: StatsPopupContentProps) {
+const emptyStats: LogLines = [[
+	{
+		text: 'No stats available',
+		align: 'center',
+		bold: true,
+		title: true,
+	}
+]];
+
+export default function StatsPopupContent({ bookStats }: StatsPopupContentProps) {
+	const [selectedKey, setSelectedKey] = useState<LogStatsKey>('betAvg');
+
+	const display = bookStats?.[selectedKey] ?? emptyStats;
 	return (
-		<div className="stats-layout">
-			{stats.map((section, index) => {
-				return (
+		<>
+			{(bookStats && <div className="sportsbook-list">
+				{getEntries(sportsbooks).map(([key, book]) => (
+					<button
+						key={key}
+						type="button"
+						className={`sportsbook-item${selectedKey === key ? ' sportsbook-selected' : ''}`}
+						aria-label={book.title}
+						onClick={() => setSelectedKey(selectedKey === key ? 'betAvg' : key as SportsbookKey)}
+					>
+						<img className="sportsbook-logo sportsbook-logo-rounded" src={book.logo} alt={`${book.title} logo`} />
+						<span>{book.title}</span>
+					</button>
+				))}
+			</div>)}
+			<div className="stats-layout">
+				{display.map((section, index) => (
 					<div key={index} className="stats-section">
 						{section.map((line, lineIndex) => {
 							const classes = [];
@@ -19,11 +53,11 @@ export default function StatsPopupContent({ stats }: StatsPopupContentProps) {
 							const classNames = classes.join(' ');
 							return (
 								<div className={classNames} key={lineIndex}>{line.text}</div>
-							)
+							);
 						})}
 					</div>
-				);
-			})}
-		</div>
+				))}
+			</div>
+		</>
 	);
 }

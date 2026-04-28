@@ -10,3 +10,6 @@ export const probabilityToAmerican = (chance: number | null): string => {
 		: Math.round(100 / (1 - decimal));
 	return (american > 0 ? "+" : "") + american;
 };
+
+type Entries<T> = { [K in keyof T]: [K, T[K]] }[keyof T][];
+export const getEntries = <T extends object>(obj: T) => Object.entries(obj) as Entries<T>;

@@ -2,31 +2,19 @@ import * as Picks from './components/Table';
 import { roundToPercent } from './utility';
 import type { Team } from './components/logo';
 import { Correlation, correlations } from './dataProcessor';
+import { LogStatsKeys, sportsbooks } from './sportsbookTypes';
+import type { LogStatsKey, LogLines, LogLine, LogStatAlign, SportsbookLog } from './sportsbookTypes';
+
 
 const precision = Picks.precision;
 
-type LogStatAlign = 'left' | 'center';
-export interface LogLine {
-	text: string;
-	align: LogStatAlign;
-	bold: boolean;
-	title: boolean;
-}
-export type LogLines = LogLine[][];
 
-export const SportsbookKeys = ['bet1', 'bet2', 'bet3', 'bet4'] as const;;
-export const LogStatsKeys = [...SportsbookKeys, 'betAvg'] as const;;
-
-export type SportsbookKey = typeof SportsbookKeys[number];
-export type LogStatsKey = typeof LogStatsKeys[number];
-export type PickIndex = 1 | 2 | 3;
-
-export interface LogStatsCacheItem {
-	stats: LogLines;
-}
-
-export const cloneLogStats = (stats: LogLines): LogLines => {
-	return stats.map((stat) => stat.map((line) => ({ ...line })));
+export const cloneLogStats = (stats: SportsbookLog): SportsbookLog => {
+	const cache = {} as SportsbookLog;
+	for (const key of LogStatsKeys) {
+		cache[key] = stats[key].map((stat) => stat.map((line) => ({ ...line })));
+	}
+	return cache;
 };
 
 export const allStrategies = [
@@ -449,7 +437,8 @@ export const calculateStats = (
 	const points = processSameGroup('points');
 	const hits = processSameGroup('hits');
 
-	logHandler.addTitle("Top Picks");
+	const header = betKey === 'betAvg' ? "Average" : `${sportsbooks[betKey].title}`;
+	logHandler.addTitle(header + " Top Picks");
 	logTopPicks(topResult);
 	logHighlights(topResult);
 	addStrategyHighlights(topResult, 'top');
@@ -504,7 +493,7 @@ export const calculateStats = (
 	if (hits) mergeSameResults(hits, 'hits');
 
 	if (groupedMap.size > 0) {
-		logHandler.addTitle("Top Correlated");
+		logHandler.addTitle("Correlated");
 		for (const groupedPlayer of groupedMap.values()) {
 			logReduced(groupedPlayer.result, topResult, groupedPlayer.strategy);
 			logHandler.addSection();
@@ -525,16 +514,14 @@ export const precalculateLogStats = (
 	table1Rows: Picks.PickOdds[],
 	table2Rows: Picks.PickOdds[],
 	table3Rows: Picks.PickOdds[]
-): Record<LogStatsKey, LogStatsCacheItem> => {
-	const cache = {} as Record<LogStatsKey, LogStatsCacheItem>;
+): SportsbookLog => {
+	const cache = {} as SportsbookLog;
 
 	for (const key of LogStatsKeys) {
 		const stats: LogLines = [];
 		calculateStats(key, minSportsbooks, table1Rows, table2Rows, table3Rows, stats);
-		cache[key] = {
-			stats: cloneLogStats(stats),
-		};
+		cache[key] = stats;
 	}
 
-	return cache;
+	return cloneLogStats(cache);
 };

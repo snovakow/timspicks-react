@@ -1,6 +1,6 @@
 import * as Picks from './components/Table';
 import type { SimTotal, SimItem, Total } from './picksOptimizer';
-import { allStrategies, SportsbookKeys } from './statsCalculations';
+import { allStrategies, SportsbookKeys } from './sportsbookTypes';
 
 // Raw player structure from players_XXX.json
 type RawPlayerJson = {

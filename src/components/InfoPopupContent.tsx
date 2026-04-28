@@ -1,5 +1,9 @@
-import './InfoPopupContent.css';
 import * as Feature from '../features';
+import { sportsbooks } from '../sportsbookTypes';
+import { getEntries } from '../utility';
+
+import './InfoPopupContent.css';
+import "./sportsbook.css";
 
 export default function InfoPopupContent() {
 	return (
@@ -11,6 +15,18 @@ export default function InfoPopupContent() {
 					It ranks candidates for Pick #1, Pick #2, and Pick #3 using implied probabilities
 					from sportsbook odds, with normalization to improve book-to-book comparability.
 				</p>
+			</section>
+
+			<section className="info-popup-section">
+				<h3>Sportsbooks</h3>
+				<div className="sportsbook-list" >
+					{getEntries(sportsbooks).map(([key, book]) => (
+						<div key={key} className="sportsbook-item">
+							<img className="sportsbook-logo sportsbook-logo-rounded" src={book.logo} alt={`${book.title} logo`} />
+							<span>{book.title}</span>
+						</div>
+					))}
+				</div>
 			</section>
 
 			<section className="info-popup-section">
@@ -50,19 +66,21 @@ export default function InfoPopupContent() {
 			)}
 
 			<section className="info-popup-section">
-				<h3>Stats and Sportsbook Buttons</h3>
+				<h3>Stats</h3>
 				<p>
-					The <strong>📊</strong> stats button and sportsbook logo buttons display the top picks
-					and, when multiple picks are from the same game, the next-best alternatives from different games when available.
+					The <strong>Stats</strong> button displays the top picks from the average sportsbook's odds,
+					with sportsbook buttons to dispaly the top picks specific to each sportsbook.
 				</p>
 				<p>
-					The sportsbook buttons (DraftKings, FanDuel, BetMGM, or BetRivers)
-					display the picks using that sportsbook's odds.
-					The <strong>📊</strong> stats button displays the picks based on the average odds across all
-					sportsbooks.
+					Selecting an already selected sportsbook deselects it,
+					restores the display to the average results.
 				</p>
 				<p>
-					This lets you compare how picks change by source while keeping one consistent optimization method.
+					Correlated picks are displayed based historical data comparing players from the same game,
+					whether on opposing teams or same team,
+					to independent results where all players are from different games.
+					With 2 or less games where all three picks cannot be independent,
+					correlation is based on random results.
 				</p>
 			</section>
 

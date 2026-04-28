@@ -1,18 +1,14 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import './App.css';
 import * as Picks from './components/Table';
 import Popup from './components/Popup';
 import InfoPopupContent, { LegendPopupContent } from './components/InfoPopupContent';
 import StatsPopupContent from './components/StatsPopupContent';
+import type { SportsbookLog, LogStatsKey } from './sportsbookTypes';
 import SettingsPanel from './components/Settings';
-import { roundToPercent, probabilityToAmerican } from './utility';
+import { roundToPercent, probabilityToAmerican, getEntries } from './utility';
 import * as DataProcessor from './dataProcessor';
 import { precalculateLogStats, cloneLogStats } from './statsCalculations';
-import type { LogStatsKey, LogLines, SportsbookKey } from './statsCalculations';
-import logo1 from './images/sb-logo-16-draftkings.svg';
-import logo2 from './images/sb-logo-16-fanduel.svg';
-import logo3 from './images/sb-logo-16-mgm.svg';
-import logo4 from './images/sb-logo-16-betrivers.svg';
+import { sportsbooks } from './sportsbookTypes';
 import iconSettings from './images/settings_24dp_000000_FILL0_wght400_GRAD0_opsz24.svg';
 import iconStats from './images/leaderboard_24dp_000000_FILL0_wght400_GRAD0_opsz24.svg';
 import iconInfo from './images/info_i_24dp_000000_FILL0_wght400_GRAD0_opsz24.svg';
@@ -24,21 +20,10 @@ import CollapsibleSection from './components/CollapsibleSection';
 import { getTeamTotals } from './teamGoals';
 import * as Feature from './features';
 
+import './App.css';
+
 const precision = Picks.precision;
 let SIMULATE = Feature.simulate;
-
-type Sportsbook = {
-	key: SportsbookKey;
-	title: string;
-	logo: string;
-};
-
-const sportsbooks: Sportsbook[] = [
-	{ key: 'bet1', title: "DraftKings", logo: logo1 },
-	{ key: 'bet2', title: "FanDuel", logo: logo2 },
-	{ key: 'bet3', title: "BetMGM", logo: logo3 },
-	{ key: 'bet4', title: "BetRivers", logo: logo4 },
-];
 
 const betDisplayRounded = (chance: number | null): string => {
 	if (chance === null) return "-";
@@ -337,7 +322,7 @@ function App() {
 	}, [memoizedDisplayData, minSportsbooks]);
 
 	const [showPopup, setShowPopup] = useState({ visible: false, title: 'Stats', key: 'betAvg' });
-	const [popupStats, setPopupStats] = useState<LogLines>([]);
+	const [popupStats, setPopupStats] = useState<SportsbookLog | null>(null);
 	const [popupView, setPopupView] = useState<'info' | 'legend' | 'stats' | 'settings'>('stats');
 
 	const closePopup = () => {
@@ -345,19 +330,8 @@ function App() {
 	};
 
 	const openStatsPopup = (key: LogStatsKey, title: string) => {
-		// If there are no games, show a message in the popup
-		if (gamesList.length === 0) {
-			setPopupStats([[
-				{
-					text: 'No stats available',
-					align: 'center',
-					bold: true,
-					title: true,
-				},
-			]]);
-		} else if (statsCache) {
-			const cached = statsCache[key];
-			setPopupStats(cloneLogStats(cached.stats));
+		if (gamesList.length > 0 && statsCache) {
+			setPopupStats(cloneLogStats(statsCache));
 		}
 		setPopupView('stats');
 		setShowPopup({ visible: true, title, key });
@@ -410,8 +384,8 @@ function App() {
 
 	const { gamesList, table1Rows, table2Rows, table3Rows, playerList: displayPlayerList } = memoizedDisplayData;
 
-	const oddsColumns: Picks.ColumnData[] = sportsbooks.map((book) => ({
-		key: book.key,
+	const oddsColumns: Picks.ColumnData[] = getEntries(sportsbooks).map(([key, book]) => ({
+		key: key,
 		title: book.title,
 		sort: true,
 		logo: book.logo,
@@ -499,30 +473,10 @@ function App() {
 							onXgEnabledChange={setXgEnabled}
 						/>
 					) : (
-						<StatsPopupContent stats={popupStats} />
+						<StatsPopupContent bookStats={popupStats} />
 					)}
 				</Popup>
 
-				<div className="section-header-center">
-					<span className="section-title">
-						Sportsbooks
-					</span>
-				</div>
-				<div className="section-container">
-					<div className="sportsbook-list">
-						{sportsbooks.map((book) => (
-							<button
-								key={book.key}
-								type="button"
-								className="sportsbook-item"
-								aria-label={book.title}
-								onClick={() => openStatsPopup(book.key, book.title)}>
-								<img className="sportsbook-logo logo-rounded" src={book.logo} alt={`${book.title} logo`} />
-								<span>{book.title}</span>
-							</button>
-						))}
-					</div>
-				</div>
 				<CollapsibleSection title="Games">
 					<div className="scrollable-table-wrapper section-container">
 						{gamesList.length === 0 ? (

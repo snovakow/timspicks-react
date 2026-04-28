@@ -1,6 +1,8 @@
-import type { LogStatsKey } from "../statsCalculations";
+import type { LogStatsKey } from "../sportsbookTypes";
 import { type Team } from "./logo";
+
 import "./Table.css";
+import "./sportsbook.css";
 
 export const precision = 1;
 
@@ -303,7 +305,7 @@ export function Table(props: {
 										{item.sort && <span className={'theader-pad'}>▲</span>}
 										{item.logo ? (
 											<img
-												className='theader-logo-bg logo-rounded'
+												className='theader-logo-bg sportsbook-logo-rounded'
 												src={item.logo}
 												title={item.title}
 												alt=''

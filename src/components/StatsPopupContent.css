@@ -4,6 +4,10 @@
   font-size: 1em;
 }
 
+.stats-layout:not(:first-child) {
+  margin-top: 1em;
+}
+
 .stats-title {
   font-size: 1.2em;
 }

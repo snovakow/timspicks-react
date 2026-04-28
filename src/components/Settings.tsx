@@ -1,6 +1,6 @@
-import './Settings.css';
 import type { StrategyMode } from './Table';
 import * as Feature from '../features';
+import './Settings.css';
 
 interface SettingsPanelProps {
 	showPercentage: boolean;

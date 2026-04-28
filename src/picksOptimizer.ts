@@ -1,4 +1,4 @@
-import { allStrategies, type strategyPattern } from "./statsCalculations";
+import { allStrategies, type strategyPattern } from "./sportsbookTypes";
 
 interface HistoryPlayer {
     "nhlPlayerId": number;
