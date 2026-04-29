@@ -56,7 +56,8 @@ export const calculateStats = (
 	table1Rows: Picks.PickOdds[],
 	table2Rows: Picks.PickOdds[],
 	table3Rows: Picks.PickOdds[],
-	stats: LogLines
+	stats: LogLines,
+	factor: number = 1
 ): void => {
 	const logHandler = new LogHandler(stats);
 
@@ -153,12 +154,12 @@ export const calculateStats = (
 		}
 
 		correlate(strategy: strategyPattern, ref: Correlation): void {
-			const least1 = ref.correlate.least1[strategy];
-			if (least1 !== null) this.least1 *= least1;
-			const points = ref.correlate.points[strategy];
-			if (points !== null) this.points *= points;
-			const hits = ref.correlate.hits[strategy];
-			if (hits !== null) this.hits *= hits;
+			const least1 = ref.strategy.least1[strategy];
+			if (least1 !== null) this.least1 *= (least1 - 1) * factor + 1;
+			const points = ref.strategy.points[strategy];
+			if (points !== null) this.points *= (points - 1) * factor + 1;
+			const hits = ref.strategy.hits[strategy];
+			if (hits !== null) this.hits *= (hits - 1) * factor + 1;
 		}
 	}
 
@@ -398,20 +399,19 @@ export const calculateStats = (
 		strategy: strategyPattern;
 		result: Result;
 	}
-	const findMax = (key: Picks.Strategy): strategyGroup | null => {
+	const findMax = (key: Picks.Strategy): strategyGroup[] => {
 		let max = 0;
-		let maxResult: Result | null = null;
-		let maxStrategy: strategyPattern | null = null;
+		for (const result of strategyResults.values()) {
+			const value = result[key];
+			if (value > max) max = value;
+		}
+
+		const maxResults: strategyGroup[] = [];
 		for (const [strategy, result] of strategyResults) {
 			const value = result[key];
-			if (value > max) {
-				max = value;
-				maxResult = result;
-				maxStrategy = strategy;
-			}
+			if (value === max) maxResults.push({ strategy, result });
 		}
-		if (maxStrategy === null || maxResult === null) return null;
-		return { strategy: maxStrategy, result: maxResult };
+		return maxResults;
 	}
 
 	for (const [strategy, result] of strategyResults) {
@@ -424,14 +424,14 @@ export const calculateStats = (
 		return true;
 	}
 
-	const processSameGroup = (groupKey: Picks.Strategy): strategyGroup | null => {
-		const group = findMax(groupKey);
-		if (group === null) return null;
+	const processSameGroup = (groupKey: Picks.Strategy): strategyGroup[] => {
+		const groups = findMax(groupKey);
+		for (const group of groups) {
+			logHighlights(group.result);
+			addStrategyHighlights(group.result, groupKey);
+		}
 
-		logHighlights(group.result);
-		addStrategyHighlights(group.result, groupKey);
-
-		return group;
+		return groups;
 	}
 	const least1 = processSameGroup('least1');
 	const points = processSameGroup('points');
@@ -473,19 +473,25 @@ export const calculateStats = (
 	}
 
 	const groupedMap: Map<Set<Picks.PickOdds>, GroupedPlayer> = new Map();
-	const mergeSameResults = (group: strategyGroup, key: Picks.Strategy): void => {
-		const combined = new Set<Picks.PickOdds>();
-		for (const pick of group.result.players1) combined.add(pick);
-		for (const pick of group.result.players2) combined.add(pick);
-		for (const pick of group.result.players3) combined.add(pick);
-		for (const [set, groupedPlayer] of groupedMap) {
-			if (isSameSet(combined, set)) {
-				groupedPlayer.addStrategyStat(key, group.result[key]);
-				return;
-			};
+	const mergeSameResults = (groups: strategyGroup[], key: Picks.Strategy): void => {
+		for (const group of groups) {
+			let same = false;
+			const combined = new Set<Picks.PickOdds>();
+			for (const pick of group.result.players1) combined.add(pick);
+			for (const pick of group.result.players2) combined.add(pick);
+			for (const pick of group.result.players3) combined.add(pick);
+			for (const [set, groupedPlayer] of groupedMap) {
+				if (isSameSet(combined, set)) {
+					groupedPlayer.addStrategyStat(key, group.result[key]);
+					same = true;
+					break;
+				};
+			}
+			if (!same) {
+				const groupedPlayer = new GroupedPlayer(group.result, group.strategy, key);
+				groupedMap.set(combined, groupedPlayer);
+			}
 		}
-		const groupedPlayer = new GroupedPlayer(group.result, group.strategy, key);
-		groupedMap.set(combined, groupedPlayer);
 	}
 
 	if (least1) mergeSameResults(least1, 'least1');
@@ -513,13 +519,14 @@ export const precalculateLogStats = (
 	minSportsbooks: number,
 	table1Rows: Picks.PickOdds[],
 	table2Rows: Picks.PickOdds[],
-	table3Rows: Picks.PickOdds[]
+	table3Rows: Picks.PickOdds[],
+	correlationFactor: number
 ): SportsbookLog => {
 	const cache = {} as SportsbookLog;
 
 	for (const key of LogStatsKeys) {
 		const stats: LogLines = [];
-		calculateStats(key, minSportsbooks, table1Rows, table2Rows, table3Rows, stats);
+		calculateStats(key, minSportsbooks, table1Rows, table2Rows, table3Rows, stats, correlationFactor);
 		cache[key] = stats;
 	}
 

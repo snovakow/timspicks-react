@@ -112,6 +112,7 @@ function App() {
 	const [showPercentage, setShowPercentage] = useState(true);
 	const [deVigEnabled, setDeVigEnabled] = useState(true);
 	const [minSportsbooks, setMinSportsbooks] = useState(3);
+	const [correlationFactor, setCorrelationFactor] = useState(1);
 	const [enabledStrategies, setEnabledStrategies] = useState<Record<Picks.StrategyMode, boolean>>({
 		least1: true,
 		points: true,
@@ -305,8 +306,8 @@ function App() {
 		playerList.sort(sortFunctionPlayer);
 
 		// Expose minSportsbooks in the returned object for downstream consumers
-		return { gamesList, playerList, table1Rows, table2Rows, table3Rows, minSportsbooks };
-	}, [data, showPercentage, deVigEnabled, needsSort1, needsSort2, needsSort3, needsSortPlayer, minSportsbooks]);
+		return { gamesList, playerList, table1Rows, table2Rows, table3Rows, minSportsbooks, correlationFactor };
+	}, [data, showPercentage, deVigEnabled, needsSort1, needsSort2, needsSort3, needsSortPlayer, minSportsbooks, correlationFactor]);
 
 	// Memoize stats calculations - expensive O(n³) combo calculations
 	// Also applies stats-based highlights (opp/any) to rows after 'top' highlights are set
@@ -316,10 +317,10 @@ function App() {
 			minSportsbooks,
 			memoizedDisplayData.table1Rows,
 			memoizedDisplayData.table2Rows,
-			memoizedDisplayData.table3Rows
+			memoizedDisplayData.table3Rows,
+			correlationFactor
 		);
 		return cache;
-	}, [memoizedDisplayData, minSportsbooks]);
 
 	const [showPopup, setShowPopup] = useState({ visible: false, title: 'Stats', key: 'betAvg' });
 	const [popupStats, setPopupStats] = useState<SportsbookLog | null>(null);
@@ -328,6 +329,7 @@ function App() {
 	const closePopup = () => {
 		setShowPopup({ ...showPopup, visible: false });
 	};
+	}, [memoizedDisplayData, minSportsbooks, correlationFactor]);
 
 	const openStatsPopup = (key: LogStatsKey, title: string) => {
 		if (gamesList.length > 0 && statsCache) {

@@ -75,8 +75,16 @@ export default function InfoPopupContent() {
 					Selecting an already selected sportsbook deselects it,
 					restores the display to the average results.
 				</p>
+			</section>
+
+			<section className="info-popup-section">
+				<h3>Log Points (<i>𝑳%</i>) Correlation</h3>
 				<p>
-					Baseline log-ratio correlation is used to estimate how much picks from the same game,
+					Log points: Used to denote logarithmic changes scaled to act like percentages,
+					used as a baseline for relative change.
+				</p>
+				<p>
+					A log-ratio baseline correlation is used to estimate how much picks from the same game,
 					whether on opposing teams or the same team,
 					are correlated relative to a baseline of independent picks from different games.
 				</p>
