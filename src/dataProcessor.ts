@@ -257,11 +257,6 @@ export class Correlation {
 		hits: {} as CorrelationData,
 		count: {} as CorrelationData
 	}
-	correlate = {
-		least1: {} as CorrelationData,
-		points: {} as CorrelationData,
-		hits: {} as CorrelationData
-	}
 	baseline: Total = {
 		least1: 0,
 		points: 0,
@@ -277,10 +272,6 @@ export class Correlation {
 			this.strategy.points[combo] = 0;
 			this.strategy.hits[combo] = 0;
 			this.strategy.count[combo] = 0;
-
-			this.correlate.least1[combo] = 0;
-			this.correlate.points[combo] = 0;
-			this.correlate.hits[combo] = 0;
 		}
 	}
 	add(result: SimTotal) {
@@ -304,13 +295,13 @@ export class Correlation {
 		for (const combo of allStrategies) {
 			const count = this.strategy.count[combo];
 			if (count === 0) continue;
-			this.strategy.least1[combo] /= count;
-			this.strategy.points[combo] /= count;
-			this.strategy.hits[combo] /= count;
+			this.strategy.least1[combo] /= count * this.baseline.least1;
+			this.strategy.points[combo] /= count * this.baseline.points;
+			this.strategy.hits[combo] /= count * this.baseline.hits;
 
-			this.correlate.least1[combo] = this.strategy.least1[combo] / this.baseline.least1;
-			this.correlate.points[combo] = this.strategy.points[combo] / this.baseline.points;
-			this.correlate.hits[combo] = this.strategy.hits[combo] / this.baseline.hits;
+			this.strategy.least1[combo] = Math.log(this.strategy.least1[combo]) + 1;
+			this.strategy.points[combo] = Math.log(this.strategy.points[combo]) + 1;
+			this.strategy.hits[combo] = Math.log(this.strategy.hits[combo]) + 1;
 		}
 	}
 };

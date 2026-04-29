@@ -76,10 +76,12 @@ export default function InfoPopupContent() {
 					restores the display to the average results.
 				</p>
 				<p>
-					Correlated picks are displayed based historical data comparing players from the same game,
-					whether on opposing teams or same team,
-					to independent results where all players are from different games.
-					With 2 or less games where all three picks cannot be independent,
+					Baseline log-ratio correlation is used to estimate how much picks from the same game,
+					whether on opposing teams or the same team,
+					are correlated relative to a baseline of independent picks from different games.
+				</p>
+				<p>
+					With 2 or less games where all three picks cannot be independent from different games,
 					correlation is based on random results.
 				</p>
 			</section>
