@@ -311,6 +311,15 @@ function App() {
 		return { gamesList, playerList, table1Rows, table2Rows, table3Rows, minSportsbooks, correlationFactor };
 	}, [data, showPercentage, deVigEnabled, needsSort1, needsSort2, needsSort3, needsSortPlayer, minSportsbooks, correlationFactor]);
 
+	// Only stats popup uses 'key', others do not
+	const [showPopup, setShowPopup] = useState<{ visible: boolean; title: string; key?: LogStatsKey }>({ visible: false, title: 'Stats', key: 'betAvg' });
+	const [popupStats, setPopupStats] = useState<SportsbookLog | null>(null);
+	const [popupView, setPopupView] = useState<'info' | 'legend' | 'stats' | 'settings'>('stats');
+
+	const closePopup = () => {
+		setShowPopup({ ...showPopup, visible: false });
+	};
+
 	// Memoize stats calculations - expensive O(n³) combo calculations
 	// Also applies stats-based highlights (opp/any) to rows after 'top' highlights are set
 	const statsCache = useMemo(() => {
@@ -322,15 +331,10 @@ function App() {
 			memoizedDisplayData.table3Rows,
 			correlationFactor
 		);
+		if (popupView === 'stats' && showPopup.visible) {
+			setPopupStats(cloneLogStats(cache));
+		}
 		return cache;
-
-	const [showPopup, setShowPopup] = useState({ visible: false, title: 'Stats', key: 'betAvg' });
-	const [popupStats, setPopupStats] = useState<SportsbookLog | null>(null);
-	const [popupView, setPopupView] = useState<'info' | 'legend' | 'stats' | 'settings'>('stats');
-
-	const closePopup = () => {
-		setShowPopup({ ...showPopup, visible: false });
-	};
 	}, [memoizedDisplayData, minSportsbooks, correlationFactor]);
 
 	const openStatsPopup = (key: LogStatsKey, title: string) => {
@@ -343,17 +347,17 @@ function App() {
 
 	const openInfoPopup = () => {
 		setPopupView('info');
-		setShowPopup({ visible: true, title: 'Info', key: showPopup.key });
+		setShowPopup({ visible: true, title: 'Info' });
 	};
 
 	const openLegendPopup = () => {
 		setPopupView('legend');
-		setShowPopup({ visible: true, title: 'Legend', key: showPopup.key });
+		setShowPopup({ visible: true, title: 'Legend' });
 	};
 
 	const openSettingsPopup = () => {
 		setPopupView('settings');
-		setShowPopup({ visible: true, title: 'Settings', key: showPopup.key });
+		setShowPopup({ visible: true, title: 'Settings' });
 	};
 
 	const [darkTheme, setDarkTheme] = useState(() => {
