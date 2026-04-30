@@ -6,20 +6,21 @@ interface PopupProps {
     title: string;
     closePopUp: () => void;
     children: ReactNode;
+    top?: boolean;
 }
 
-function Popup({ showPopUp, title, closePopUp, children }: PopupProps) {
+function Popup({ showPopUp, title, closePopUp, children, top }: PopupProps) {
     if (!showPopUp) {
         return null;
     }
 
     return (
         <div
-            className="popup-overlay"
+            className={`popup-overlay${top ? ' popup-overlay-top' : ''}`}
             onClick={closePopUp}
         >
             <div
-                className="popup-content"
+                className={`popup-content${top ? ' popup-content-top' : ''}`}
                 onClick={(e) => e.stopPropagation()}
             >
                 <div className="popup-header">

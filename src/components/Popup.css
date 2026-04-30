@@ -7,27 +7,34 @@
 	background: rgba(0, 0, 0, 0.7);
 	display: flex;
 	justify-content: center;
-	align-items: flex-start;
+	align-items: center;
 	z-index: 1;
 	box-sizing: border-box;
 	overscroll-behavior: contain;
 }
 
+.popup-overlay-top {
+	align-items: flex-start;
+}
+
 .popup-content {
-	--vertical-buffer: 2rem;
 	color: black;
 	background: white;
 	padding: 0;
 	border-radius: 5px;
 	max-width: 90%;
-	max-height: calc(100% - var(--vertical-buffer) * 2);
+	max-height: calc(100% - 3rem);
 	box-sizing: border-box;
 	display: flex;
 	flex-direction: column;
 	overflow: hidden;
-	margin-top: var(--vertical-buffer);
 }
 
+.popup-content-top {
+	--vertical-buffer: 2rem;
+	max-height: calc(100% - var(--vertical-buffer) * 2);
+	margin-top: var(--vertical-buffer);
+}
 
 .popup-header-title {
 	flex: 1 1 0;

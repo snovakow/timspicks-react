@@ -458,7 +458,7 @@ function App() {
 				</div>
 			</header>
 			<main className='content'>
-				<Popup title={showPopup.title} showPopUp={showPopup.visible} closePopUp={closePopup}>
+				<Popup title={showPopup.title} showPopUp={showPopup.visible} closePopUp={closePopup} top={popupView === 'stats'}>
 					{popupView === 'info' ? (
 						<InfoPopupContent />
 					) : popupView === 'legend' ? (
