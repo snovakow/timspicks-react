@@ -114,6 +114,7 @@ function App() {
 	const [deVigEnabled, setDeVigEnabled] = useState(true);
 	const [minSportsbooks, setMinSportsbooks] = useState(3);
 	const [correlationFactor, setCorrelationFactor] = useState(1);
+	const [showCorrelate, setShowCorrelate] = useState(false);
 	const [enabledStrategies, setEnabledStrategies] = useState<Record<Picks.StrategyMode, boolean>>({
 		least1: true,
 		points: true,
