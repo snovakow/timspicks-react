@@ -321,21 +321,23 @@ function App() {
 	};
 
 	// Memoize stats calculations - expensive O(n³) combo calculations
-	// Also applies stats-based highlights (opp/any) to rows after 'top' highlights are set
 	const statsCache = useMemo(() => {
 		if (!memoizedDisplayData) return null;
-		const cache = precalculateLogStats(
+		return precalculateLogStats(
 			minSportsbooks,
 			memoizedDisplayData.table1Rows,
 			memoizedDisplayData.table2Rows,
 			memoizedDisplayData.table3Rows,
 			correlationFactor
 		);
-		if (popupView === 'stats' && showPopup.visible) {
-			setPopupStats(cloneLogStats(cache));
-		}
-		return cache;
 	}, [memoizedDisplayData, minSportsbooks, correlationFactor]);
+
+	// Update popupStats only when stats popup is open and cache is available
+	useEffect(() => {
+		if (popupView === 'stats' && showPopup.visible && statsCache) {
+			setPopupStats(cloneLogStats(statsCache));
+		}
+	}, [popupView, showPopup.visible, statsCache]);
 
 	const openStatsPopup = (key: LogStatsKey, title: string) => {
 		if (gamesList.length > 0 && statsCache) {
