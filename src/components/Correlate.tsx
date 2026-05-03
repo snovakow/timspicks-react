@@ -8,7 +8,7 @@ interface CorrelateProps {
     onClose?: () => void;
 }
 
-const decimals = 1;
+const DECIMALS = 1;
 
 const Correlate: React.FC<CorrelateProps> = ({ value, setValue, max = 10, onClose = null }) => {
     return (
@@ -31,13 +31,13 @@ const Correlate: React.FC<CorrelateProps> = ({ value, setValue, max = 10, onClos
                 type="range"
                 min={0}
                 max={max}
-                step={decimals / Math.pow(10, decimals)}
+                step={10 ** -DECIMALS}
                 value={value}
                 onChange={e => setValue(Number(e.target.value))}
                 className="correlate-slider-range"
             />
             <div className="correlate-slider-value">
-                {value.toFixed(decimals)}
+                {value.toFixed(DECIMALS)}
             </div>
         </div>
     );
