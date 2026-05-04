@@ -58,7 +58,6 @@ export interface SimItem {
     slotTotal: number;
     slotIndex: number;
     gameCount: number;
-    gameDay: string;
     picksCount: number;
     totals: SimTotal;
 }
@@ -163,11 +162,9 @@ export const runSimulation = async (iterations: number) => {
         randomResults = new ResultTotal();
         strategyResults: Map<strategyPattern, ResultTotal> = new Map();
 
-        gameDay: string;
         picksCount = 0;
 
-        constructor(date: string) {
-            this.gameDay = date;
+        constructor() {
             for (const strategy of allStrategies) {
                 this.strategyResults.set(strategy, new ResultTotal());
             }
@@ -216,7 +213,7 @@ export const runSimulation = async (iterations: number) => {
                 }
                 let gameResult = gameResults.get(index);
                 if (!gameResult) {
-                    gameResult = new GameResult(fileData.date);
+                    gameResult = new GameResult();
                     gameResults.set(index, gameResult);
                 }
                 gameResult.picksCount++;
@@ -249,7 +246,6 @@ export const runSimulation = async (iterations: number) => {
             results.push({
                 totals,
                 ...index,
-                gameDay: result.gameDay,
                 picksCount: result.picksCount
             });
         }
