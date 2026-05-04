@@ -358,8 +358,6 @@ const compileSimItems = (simItems: SimItem[]) => {
 	game1.calculate();
 	game2.calculate();
 	game3.calculate();
-
-	return { 1: game1, 2: game2, 3: game3 };
 }
 
 export interface InitialData {
