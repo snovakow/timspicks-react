@@ -112,6 +112,40 @@ const isSportsbookOddsItem = (value: unknown): value is SportsbookOddsItem => {
 	return typeof value.name === 'string' && typeof value.odds === 'number';
 };
 
+const isTotal = (value: unknown): value is Total => {
+	if (!isRecord(value)) return false;
+	return (
+		typeof value.least1 === 'number'
+		&& typeof value.points === 'number'
+		&& typeof value.hits === 'number'
+		&& typeof value.count === 'number'
+	);
+};
+
+const isSimTotal = (value: unknown): value is SimTotal => {
+	if (!isRecord(value)) return false;
+	if (!isTotal(value.random)) return false;
+	for (const strategy of allStrategies) {
+		if (!isTotal(value[strategy])) return false;
+	}
+	return true;
+};
+
+const isSimItem = (value: unknown): value is SimItem => {
+	if (!isRecord(value)) return false;
+	return (
+		typeof value.slotTotal === 'number'
+		&& typeof value.slotIndex === 'number'
+		&& typeof value.gameCount === 'number'
+		&& typeof value.picksCount === 'number'
+		&& isSimTotal(value.totals)
+	);
+};
+
+const isSimData = (value: unknown): value is SimItem[] => {
+	return Array.isArray(value) && value.every(isSimItem);
+};
+
 const fetchData = async (src: string) => {
 	const response = await fetch(src + "?t=" + new Date().getTime());
 	if (!response.ok) throw new Error(`Failed to load ${src}: ${response.status} ${response.statusText}`);
@@ -354,7 +388,7 @@ export const loadInitialData = async (): Promise<InitialData> => {
 		loadAndValidate('./data/bet2.json', (value): value is SportsbookOddsItem[] => Array.isArray(value) && value.every(isSportsbookOddsItem), 'FanDuel odds data'),
 		loadAndValidate('./data/bet3.json', (value): value is SportsbookOddsItem[] => Array.isArray(value) && value.every(isSportsbookOddsItem), 'BetMGM odds data'),
 		loadAndValidate('./data/bet4.json', (value): value is SportsbookOddsItem[] => Array.isArray(value) && value.every(isSportsbookOddsItem), 'BetRivers odds data'),
-		loadData('./sim.json') as unknown as SimItem[],
+		loadAndValidate('./sim.json', isSimData, 'Simulation data'),
 	]);
 
 	compileSimItems(simData);
