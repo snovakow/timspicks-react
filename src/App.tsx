@@ -112,8 +112,6 @@ interface InitializedData {
 
 if (SIMULATE) {
 	runSimulation(1000000).then((results) => {
-		console.log(results.length);
-		console.log(results);
 		console.log(JSON.stringify(results));
 	});
 	SIMULATE = false;
