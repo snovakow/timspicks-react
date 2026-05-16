@@ -5,7 +5,7 @@ import { deVig, oddsNameMap, removeAccentsNormalize } from "./dataProcessor";
 import type { ComboPattern, LogStatsKey, Strategy, PoolSlots } from "./dataTypes";
 import { AllCombos, SportsbookKeys, LogStatsKeys, StrategyLabels, AllStrategies, Sportsbooks } from "./dataTypes";
 import type { MergedSelection, SelectionCandidate } from "./strategySelection";
-import { ComboGroup } from "./strategySelection";
+import { ComboGroup, selectStrategyCombos } from "./strategySelection";
 import * as Feature from './features';
 import { roundToPercent } from "./utility";
 
@@ -1034,6 +1034,7 @@ export const bestPicks = async (
 	for (const strategy of AllStrategies) {
 		const candidateBooks = strategyConfig[strategy];
 
+		let bestScore = Number.NEGATIVE_INFINITY;
 		const bestCombos = new Map<string, Pick<BestPicksResult, "1" | "2" | "3">>();
 
 		for (const book of candidateBooks) {
@@ -1057,6 +1058,32 @@ export const bestPicks = async (
 							prob3,
 							strategy: getPlayerStrategy(pick1.player, pick2.player, pick3.player),
 						});
+					}
+				}
+			}
+
+			const { strategies } = selectStrategyCombos(candidates);
+			for (const combos of strategies.values()) {
+				const selection = combos.merge();
+				if (!selection) continue;
+
+				const score = strategy === 'least1'
+					? calcAny(selection.prob1, selection.prob2, selection.prob3)
+					: strategy === 'points'
+						? calcPnt(selection.prob1, selection.prob2, selection.prob3)
+						: calcHit(selection.prob1, selection.prob2, selection.prob3);
+
+				if (score > bestScore + epsilon) {
+					bestScore = score;
+					bestCombos.clear();
+					for (const combo of selection.combos) {
+						const resultCombo: Pick<BestPicksResult, "1" | "2" | "3"> = { "1": combo.pick1, "2": combo.pick2, "3": combo.pick3 };
+						bestCombos.set(comboCode(resultCombo), resultCombo);
+					}
+				} else if (Math.abs(score - bestScore) <= epsilon) {
+					for (const combo of selection.combos) {
+						const resultCombo: Pick<BestPicksResult, "1" | "2" | "3"> = { "1": combo.pick1, "2": combo.pick2, "3": combo.pick3 };
+						bestCombos.set(comboCode(resultCombo), resultCombo);
 					}
 				}
 			}
