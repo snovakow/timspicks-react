@@ -5,7 +5,7 @@ import { deVig, oddsNameMap, removeAccentsNormalize } from "./dataProcessor";
 import type { ComboPattern, LogStatsKey, Strategy, PoolSlots } from "./dataTypes";
 import { AllCombos, SportsbookKeys, LogStatsKeys, StrategyLabels, AllStrategies, Sportsbooks } from "./dataTypes";
 import type { MergedSelection, SelectionCandidate } from "./strategySelection";
-import { ComboGroup, selectStrategyCombos } from "./strategySelection";
+import { ComboGroup } from "./strategySelection";
 import * as Feature from './features';
 import { roundToPercent } from "./utility";
 
@@ -1007,7 +1007,7 @@ export const bestPicks = async (
 		const bestCombos = new Map<string, Pick<BestPicksResult, "1" | "2" | "3">>();
 
 		for (const book of candidateBooks) {
-			const candidates: SelectionCandidate<Picks.PickOdds>[] = [];
+			const top = new ComboGroup<Picks.PickOdds>();
 			for (const pick1 of picks1) {
 				const prob1 = pick1.player[book];
 				if (prob1 === null || pick1.player.betCount < minSportsbooks) continue;
@@ -1018,42 +1018,39 @@ export const bestPicks = async (
 						const prob3 = pick3.player[book];
 						if (prob3 === null || pick3.player.betCount < minSportsbooks) continue;
 
-						candidates.push({
+						top.add({
 							pick1,
 							pick2,
 							pick3,
 							prob1,
 							prob2,
 							prob3,
-							strategy: getPlayerStrategy(pick1.player, pick2.player, pick3.player),
+							strategy: null,
 						});
 					}
 				}
 			}
 
-			const { strategies } = selectStrategyCombos(candidates);
-			for (const combos of strategies.values()) {
-				const selection = combos.merge();
-				if (!selection) continue;
+			const selection = top.merge();
+			if (!selection) continue;
 
-				const score = strategy === 'least1'
-					? calcAny(selection.prob1, selection.prob2, selection.prob3)
-					: strategy === 'points'
-						? calcPnt(selection.prob1, selection.prob2, selection.prob3)
-						: calcHit(selection.prob1, selection.prob2, selection.prob3);
+			const score = strategy === 'least1'
+				? calcAny(selection.prob1, selection.prob2, selection.prob3)
+				: strategy === 'points'
+					? calcPnt(selection.prob1, selection.prob2, selection.prob3)
+					: calcHit(selection.prob1, selection.prob2, selection.prob3);
 
-				if (score > bestScore + epsilon) {
-					bestScore = score;
-					bestCombos.clear();
-					for (const combo of selection.combos) {
-						const resultCombo: Pick<BestPicksResult, "1" | "2" | "3"> = { "1": combo.pick1, "2": combo.pick2, "3": combo.pick3 };
-						bestCombos.set(comboCode(resultCombo), resultCombo);
-					}
-				} else if (Math.abs(score - bestScore) <= epsilon) {
-					for (const combo of selection.combos) {
-						const resultCombo: Pick<BestPicksResult, "1" | "2" | "3"> = { "1": combo.pick1, "2": combo.pick2, "3": combo.pick3 };
-						bestCombos.set(comboCode(resultCombo), resultCombo);
-					}
+			if (score > bestScore + epsilon) {
+				bestScore = score;
+				bestCombos.clear();
+				for (const combo of selection.combos) {
+					const resultCombo: Pick<BestPicksResult, "1" | "2" | "3"> = { "1": combo.pick1, "2": combo.pick2, "3": combo.pick3 };
+					bestCombos.set(comboCode(resultCombo), resultCombo);
+				}
+			} else if (Math.abs(score - bestScore) <= epsilon) {
+				for (const combo of selection.combos) {
+					const resultCombo: Pick<BestPicksResult, "1" | "2" | "3"> = { "1": combo.pick1, "2": combo.pick2, "3": combo.pick3 };
+					bestCombos.set(comboCode(resultCombo), resultCombo);
 				}
 			}
 		}
@@ -1469,10 +1466,58 @@ export const bestPicks = async (
 		},
 	];
 	const rankReasonLabel = Object.fromEntries(rankMeta.map(m => [m.key, m.label]));
+	const formatHitPct = (value: number): string => `${(value * 100).toFixed(2)}%`;
+	const formatPointValue = (value: number): string => value.toFixed(2);
+	const metricSnapshot = (metrics: RankMetrics): string => (
+		`strategies=${metrics.strategyCount} | least1=${formatHitPct(metrics.least1)} | hits=${formatHitPct(metrics.hits)} | points=${formatPointValue(metrics.points)} | xG=${metrics.xg.toFixed(3)}`
+	);
+	const consensusSlotSummary = (profile: SlotConsensusProfile): string => {
+		if (profile.topBookRank === Number.POSITIVE_INFINITY) return 'topBook=none, support=0, topValue=n/a';
+		const topBook = rankedConsensusBooks[profile.topBookRank];
+		const topValue = profile.supportByBook.get(topBook);
+		const topValueStr = topValue === undefined ? 'n/a' : topValue.toFixed(3);
+		return `topBook=${topBook} (rank ${profile.topBookRank}), support=${profile.supportCount}, topValue=${topValueStr}`;
+	};
+	const explainRankDelta = (
+		current: RankMetrics,
+		previous: RankMetrics,
+		rankedBy: BestPicksResult['rankedBy'],
+	): string => {
+		switch (rankedBy) {
+			case 'strategies':
+				return `Strategies: ${current.strategyCount} vs ${previous.strategyCount}`;
+			case 'least1':
+				return `least1: ${formatHitPct(current.least1)} vs ${formatHitPct(previous.least1)}`;
+			case 'hits':
+				return `hits: ${formatHitPct(current.hits)} vs ${formatHitPct(previous.hits)}`;
+			case 'points':
+				return `points: ${formatPointValue(current.points)} vs ${formatPointValue(previous.points)}`;
+			case 'xg':
+				return `xG: ${current.xg.toFixed(3)} vs ${previous.xg.toFixed(3)}`;
+			case 'consensus': {
+				const slots: SlotKey[] = ['1', '2', '3'];
+				for (const slot of slots) {
+					if (compareSlotConsensus(current.consensus[slot], previous.consensus[slot]) !== 0) {
+						return `${`Pick${slot}`} consensus: ${consensusSlotSummary(current.consensus[slot])} vs ${consensusSlotSummary(previous.consensus[slot])}`;
+					}
+				}
+				return 'Consensus profile wins by ranked-book tie-break rules';
+			}
+			case 'tied':
+				return 'Fully tied on all ranking metrics';
+			case 'top':
+			default:
+				return 'Top-ranked result';
+		}
+	};
 
 	// --- Precompute display payloads for ranking/logging ---
 	const displayPayloads = ranked.map((item, idx) => {
 		const { result, metrics } = item;
+		const previousMetrics = idx > 0 ? ranked[idx - 1].metrics : null;
+		const rankExplain = previousMetrics && result.rankedBy
+			? explainRankDelta(metrics, previousMetrics, result.rankedBy)
+			: 'Top-ranked result';
 		const bets: Set<LogStatsKey> = new Set();
 		const strategies: Set<Strategy> = new Set();
 		for (const strategy of result.strategies) {
@@ -1498,11 +1543,14 @@ export const bestPicks = async (
 		});
 		return {
 			index: idx,
+			rank: idx + 1,
 			rankedBy: result.rankedBy,
 			isTied: result.isTied,
 			tieGroup: tieGroupByIndex[idx],
 			bets: Array.from(bets),
 			strategies: Array.from(strategies),
+			metricSnapshot: metricSnapshot(metrics),
+			rankExplain,
 			consensusDetails,
 			picks: [result['1'], result['2'], result['3']],
 		};
@@ -1584,19 +1632,21 @@ export const bestPicks = async (
 	}
 
 	for (const payload of displayPayloads) {
+		console.log(makeTitle(`Result #${payload.rank} of ${displayPayloads.length}`));
+		console.log(`• Metric snapshot: ${payload.metricSnapshot}`);
+		console.log(`• Why at this rank: ${payload.rankExplain}`);
+		if (payload.rankedBy) {
+			const tieSuffix = payload.tieGroup !== null ? ` | tie group #${payload.tieGroup}` : '';
+			console.log(`• Rank reason: ${rankReasonLabel[payload.rankedBy]}${tieSuffix}`);
+		}
+		for (const slotDetail of payload.consensusDetails) {
+			const slotLabel = `Pick${slotDetail.slot}`;
+			const topBookStr = slotDetail.topBook !== undefined && slotDetail.topBook !== null ? `${slotDetail.topBook}` : 'none';
+			const topValueStr = slotDetail.topValue !== undefined && slotDetail.topValue !== null ? slotDetail.topValue.toFixed(3) : 'n/a';
+			console.log(`• ${slotLabel} consensus: TopBook=${topBookStr} (rank ${slotDetail.topBookRank}), Support=${slotDetail.supportCount}, TopValue=${topValueStr}`);
+		}
 		for (const bet of payload.bets) {
 			console.log(`${bookName(bet)}`);
-			if (payload.rankedBy) {
-				const tieSuffix = payload.tieGroup !== null ? ` | tie group #${payload.tieGroup}` : '';
-				console.log(`→ Rank reason: ${rankReasonLabel[payload.rankedBy]}${tieSuffix}`);
-			}
-			// Consensus details for auditability
-			for (const slotDetail of payload.consensusDetails) {
-				const slotLabel = `Pick${slotDetail.slot}`;
-				const topBookStr = slotDetail.topBook !== undefined && slotDetail.topBook !== null ? `${slotDetail.topBook}` : 'none';
-				const topValueStr = slotDetail.topValue !== undefined && slotDetail.topValue !== null ? slotDetail.topValue.toFixed(3) : 'n/a';
-				console.log(`   [${slotLabel}] TopBook: ${topBookStr} (rank ${slotDetail.topBookRank}), Support: ${slotDetail.supportCount}, TopValue: ${topValueStr}`);
-			}
 			// Show picks
 			payload.picks.forEach((pick, i) => {
 				console.log(`${i + 1}: ${format(pick, bet)}`);
